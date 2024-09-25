@@ -233,7 +233,7 @@
                 const similarity = cosineSimilarity(keywordVector, bookVector);
 
                 // Check similarity threshold (e.g., > 0.5) and avoid duplicate recommendations
-                if (similarity > 0.5 && !seenTitles.has(book.title.toLowerCase())) {
+                if (similarity > 0.8 && !seenTitles.has(book.title.toLowerCase())) {
                     seenTitles.add(book.title.toLowerCase());
                     recommendations.push(book);
                 }
