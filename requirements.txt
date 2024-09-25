@@ -1,8 +1,9 @@
-Flask
+
+flask
+gunicorn
+requests
 lime
 shap
-dice-ml
+numpy
+scipy
 scikit-learn
-gunicorn
-numpy==1.19.3
-scipy==1.5.4
