@@ -11,11 +11,6 @@ def index():
     return render_template('index.html')
 
 # Route to handle XAI explanations
-from flask import Flask, render_template, request, jsonify
-
-app = Flask(__name__)
-
-# Route to handle XAI explanations
 @app.route('/explain_xai', methods=['POST'])
 def explain_xai():
     app.logger.info("Received POST request for explanation")  # Log the request arrival
