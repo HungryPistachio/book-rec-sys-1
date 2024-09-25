@@ -122,6 +122,14 @@
                      vector[word] = tfidfVectors[i][word];
                  }
              }
+                // Handle case where the keywords result in an empty or single-word vector
+             if (keywordsArray.length === 0) {
+              console.error("Empty or invalid keyword vector");
+              return new Array(Object.keys(vector).length).fill(0);  // Return a zero-filled vector of the same length
+          }
+    
+    return keywordsArray.map(word => vector[word] || 0);
+}
          
              return keywordsArray.map(word => vector[word] || 0);
          }
