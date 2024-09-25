@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
-from lime_explanation import get_lime_explanation  # Import explanation functions
-from shap_explanation import get_shap_explanation
-from counterfactual_explanation import get_counterfactual_explanation
+from xai.lime_explanation import get_lime_explanation  # Import explanation functions
+from xai.shap_explanation import get_shap_explanation
+from xai.counterfactual_explanation import get_counterfactual_explanation
 
 app = Flask(__name__)
 
