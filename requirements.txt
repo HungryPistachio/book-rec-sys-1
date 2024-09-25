@@ -6,3 +6,4 @@ shap
 numpy
 scipy
 scikit-learn
+dice_ml
