@@ -111,25 +111,31 @@
          
          // Vectorizes keywords for cosine similarity
          function vectorizeKeywords(keywords, allDocuments) {
-             const documents = allDocuments.map(doc => doc.split(' '));
-             const tfidfVectors = computeTFIDF(documents);
+         const documents = allDocuments.map(doc => doc.split(' '));
+         const tfidfVectors = computeTFIDF(documents);
          
-             const keywordsArray = keywords.split(' ');
-             const vector = {};
+         const keywordsArray = keywords.split(' ');
+         const vector = {};
          
-             for (let i = 0; i < tfidfVectors.length; i++) {
-                 for (let word in tfidfVectors[i]) {
-                     vector[word] = tfidfVectors[i][word];
-                 }
-             }
-                // Handle case where the keywords result in an empty or single-word vector
-             if (keywordsArray.length === 0) {
-              console.error("Empty or invalid keyword vector");
-              return new Array(Object.keys(vector).length).fill(0);  // Return a zero-filled vector of the same length
-          }
-    
-    return keywordsArray.map(word => vector[word] || 0);
-}
+         for (let i = 0; i < tfidfVectors.length; i++) {
+         for (let word in tfidfVectors[i]) {
+            vector[word] = tfidfVectors[i][word];
+         }
+         }
+         
+         // Handle case where the keywords result in an empty or single-word vector
+         if (keywordsArray.length === 0) {
+         console.error("Empty or invalid keyword vector");
+         return new Array(Object.keys(vector).length).fill(0);  // Return a zero-filled vector of the same length
+         }
+         
+         // Logging statements outside the loop
+         console.log(`Vectorizing keywords: ${keywords}`);
+         console.log(`All descriptions length: ${allDocuments.length}`);
+         
+         return keywordsArray.map(word => vector[word] || 0);
+         }
+         
          
              return keywordsArray.map(word => vector[word] || 0);
          }
@@ -181,11 +187,16 @@
          
          // Computes cosine similarity between two vectors
          function cosineSimilarity(vecA, vecB) {
-             const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
-             const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-             const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-             return dotProduct / (magnitudeA * magnitudeB);
+         const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+         const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+         const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+         
+         // Logging before return
+         console.log(`Cosine similarity calculation for vectors: ${vecA} and ${vecB}`);
+         
+         return dotProduct / (magnitudeA * magnitudeB);
          }
+         
          
          // Fetches recommendations from the Google Books API and processes XAI explanations
          async function getRecommendations(model) {
@@ -235,32 +246,42 @@
              const recommendations = [];
          
              // Ensure we're not recommending the same book
-             processedBooks.forEach((book, idx) => {
-             const bookVector = vectorizeKeywords(filterDescription(book.description), allDescriptions);
-             const similarity = cosineSimilarity(keywordVector, bookVector);
+         // Ensure we're not recommending the same book
+         processedBooks.forEach((book, idx) => {
+         const bookVector = vectorizeKeywords(filterDescription(book.description), allDescriptions);
+         const similarity = cosineSimilarity(keywordVector, bookVector);
          
-             const normalizedTitle = book.title.toLowerCase();
-             const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
+         const normalizedTitle = book.title.toLowerCase();
+         const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
          
-             if (similarity > 0.5 && normalizedTitle !== bookTitle) { // Ensure it's not the same book
-                 if (!seenTitles.has(normalizedTitle)) {
-                     if (includeSameAuthor || !isSameAuthor) { // Respect the same author toggle
-                         seenTitles.add(normalizedTitle);
-                         recommendations.push(book);
-                     }
-                 }
-             }
+         if (similarity > 0.5 && normalizedTitle !== bookTitle) { // Ensure it's not the same book
+         if (!seenTitles.has(normalizedTitle)) {
+            if (includeSameAuthor || !isSameAuthor) { // Respect the same author toggle
+                seenTitles.add(normalizedTitle);
+                recommendations.push(book);
+            }
+         }
+         }
          });
          
-             // Display recommendations
-             recommendations.forEach(bookInfo => {
-                 const li = document.createElement("li");
-                 const link = document.createElement("a");
-                 link.href = bookInfo.link;
-                 link.target = "_blank";
-                 link.textContent = `${bookInfo.title} by ${bookInfo.authors.join(', ')}`;
-                 li.appendChild(link);
-                 recommendationsList.appendChild(li);
+         // Handle empty recommendations
+         if (recommendations.length === 0) {
+         recommendationsList.innerHTML = "<li>No valid recommendations found.</li>";
+         return;
+         }
+         
+         // Display recommendations
+         recommendations.forEach(bookInfo => {
+         const li = document.createElement("li");
+         const link = document.createElement("a");
+         link.href = bookInfo.link;
+         link.target = "_blank";
+         link.textContent = `${bookInfo.title} by ${bookInfo.authors.join(', ')}`;
+         li.appendChild(link);
+         recommendationsList.appendChild(li);
+         });
+         
+         
              });
          
          // Send XAI request to the backend if a model is selected
