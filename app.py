@@ -19,6 +19,8 @@ def explain_xai():
     book_description = data.get('book_description')
     all_books = data.get('all_books')
 
+    print(f"Received model: {model}, book_title: {book_title}")
+
     explanation = None
     if model == 'lime':
         explanation = get_lime_explanation(book_title, book_description, [book['description'] for book in all_books])
@@ -36,4 +38,4 @@ if __name__ == '__main__':
     app.run(debug=True)
 
 
-print(f"Received model: {model}, book_title: {book_title}")
+
