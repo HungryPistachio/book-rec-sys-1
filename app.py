@@ -34,3 +34,6 @@ def explain_xai():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+
+print(f"Received model: {model}, book_title: {book_title}")
