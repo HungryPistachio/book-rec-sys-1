@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Book Recommendation</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Book Recommendation System</h1>
+
+        <!-- Tabs for selecting XAI methods -->
+        <div class="tabs">
+            <button class="tab active" onclick="openTab(event, 'noXAI')">No XAI</button>
+            <button class="tab" onclick="openTab(event, 'lime')">Lime</button>
+            <button class="tab" onclick="openTab(event, 'shap')">SHAP</button>
+            <button class="tab" onclick="openTab(event, 'counterfactual')">Counterfactual</button>
+        </div>
+
+        <!-- No XAI (Standard Recommendation) Tab Content -->
+        <div id="noXAI" class="tab-content">
+            <h2>Book Recommendations</h2>
+            <input type="text" id="bookTitleNoXAI" placeholder="Enter a book title">
+            <div class="toggle-label">
+                <label>
+                    <input type="checkbox" id="includeSameAuthorNoXAI" checked>
+                    Include recommendations by the same author
+                </label>
+            </div>
+            <button onclick="getRecommendations('noXAI')">Get Recommendations</button>
+            <ul id="recommendationsNoXAI"></ul>
+        </div>
+
+        <!-- LIME Tab Content -->
+        <div id="lime" class="tab-content" style="display:none;">
+            <h2>LIME Explanation</h2>
+            <input type="text" id="bookTitleLime" placeholder="Enter a book title">
+            <div class="toggle-label">
+                <label>
+                    <input type="checkbox" id="includeSameAuthorLime" checked>
+                    Include recommendations by the same author
+                </label>
+            </div>
+            <button onclick="getRecommendations('lime')">Get Recommendations</button>
+            <ul id="recommendationsLime"></ul>
+
+            <div id="limeExplanation" class="lime-explanation" style="display: none;">
+                <h2>LIME Explanation for <span id="explainedTitleLime"></span></h2>
+                <ul id="limeExplanationList"></ul>
+            </div>
+        </div>
+
+        <!-- SHAP Tab Content -->
+        <div id="shap" class="tab-content" style="display:none;">
+            <h2>SHAP Explanation</h2>
+            <input type="text" id="bookTitleShap" placeholder="Enter a book title">
+            <div class="toggle-label">
+                <label>
+                    <input type="checkbox" id="includeSameAuthorShap" checked>
+                    Include recommendations by the same author
+                </label>
+            </div>
+            <button onclick="getRecommendations('shap')">Get Recommendations</button>
+            <ul id="recommendationsShap"></ul>
+
+            <div id="shapExplanation" class="shap-explanation" style="display: none;">
+                <h2>SHAP Explanation for <span id="explainedTitleShap"></span></h2>
+                <ul id="shapExplanationList"></ul>
+            </div>
+        </div>
+
+        <!-- Counterfactual Tab Content -->
+        <div id="counterfactual" class="tab-content" style="display:none;">
+            <h2>Counterfactual Explanation</h2>
+            <input type="text" id="bookTitleCounterfactual" placeholder="Enter a book title">
+            <div class="toggle-label">
+                <label>
+                    <input type="checkbox" id="includeSameAuthorCounterfactual" checked>
+                    Include recommendations by the same author
+                </label>
+            </div>
+            <button onclick="getRecommendations('counterfactual')">Get Recommendations</button>
+            <ul id="recommendationsCounterfactual"></ul>
+
+            <div id="counterfactualExplanation" class="counterfactual-explanation" style="display: none;">
+                <h2>Counterfactual Explanation for <span id="explainedTitleCounterfactual"></span></h2>
+                <ul id="counterfactualExplanationList"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to handle tab switching
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].style.display = "none"; 
+            }
+            document.getElementById(tabName).style.display = "block";
+
+            const tabs = document.getElementsByClassName("tab");
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+            evt.currentTarget.classList.add("active");
+        }
+
+        // Function to fetch recommendations and XAI explanations based on the selected model
+        async function getRecommendations(model) {
+            const inputId = `bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
+            const bookTitle = document.getElementById(inputId).value.toLowerCase();
+            const recommendationsId = `recommendations${model.charAt(0).toUpperCase() + model.slice(1)}`;
+            const recommendationsList = document.getElementById(recommendationsId);
+            recommendationsList.innerHTML = ''; // Clear previous recommendations
+
+            const includeSameAuthor = document.getElementById(`includeSameAuthor${model.charAt(0).toUpperCase() + model.slice(1)}`).checked;
+
+            // Fetch book recommendations and XAI explanation from the backend
+            const response = await fetch(`/recommendations?model=${model}&book_title=${encodeURIComponent(bookTitle)}&includeSameAuthor=${includeSameAuthor}`, {
+                method: 'GET'
+            });
+
+            const data = await response.json();
+
+            // Display the recommendations
+            data.recommendations.forEach(bookInfo => {
+                const li = document.createElement("li");
+                const link = document.createElement("a");
+                link.href = bookInfo.link;
+                link.target = "_blank"; 
+                link.textContent = `${bookInfo.title} by ${bookInfo.authors.join(', ')}`;
+                li.appendChild(link);
+                recommendationsList.appendChild(li);
+            });
+
+            // If explanations are available (for LIME, SHAP, or Counterfactual), display them
+            if (model !== 'noXAI') {
+                displayExplanation(model, data.explanation);
+            }
+        }
+
+        // Function to display XAI explanations (LIME, SHAP, Counterfactual)
+        function displayExplanation(model, explanation) {
+            const explanationId = `${model}ExplanationList`;
+            const explanationList = document.getElementById(explanationId);
+            explanationList.innerHTML = ''; // Clear previous explanations
+
+            explanation.forEach(item => {
+                const li = document.createElement("li");
+                li.innerText = `${item[0]}: ${item[1].toFixed(2)}`;
+                explanationList.appendChild(li);
+            });
+
+            const explainedTitleId = `explainedTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
+            document.getElementById(explainedTitleId).innerText = document.getElementById(`bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`).value;
+
+            document.getElementById(`${model}Explanation`).style.display = "block";
+        }
+    </script>
+</body>
+</html>
