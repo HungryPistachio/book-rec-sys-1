@@ -228,16 +228,23 @@
             const seenTitles = new Set();
             const recommendations = [];
 
+            // Ensure we're not recommending the same book
             processedBooks.forEach((book, idx) => {
-                const bookVector = vectorizeKeywords(filterDescription(book.description), allDescriptions);
-                const similarity = cosineSimilarity(keywordVector, bookVector);
+            const bookVector = vectorizeKeywords(filterDescription(book.description), allDescriptions);
+            const similarity = cosineSimilarity(keywordVector, bookVector);
 
-                // Check similarity threshold (e.g., > 0.5) and avoid duplicate recommendations
-                if (similarity > 0.8 && !seenTitles.has(book.title.toLowerCase())) {
-                    seenTitles.add(book.title.toLowerCase());
-                    recommendations.push(book);
+            const normalizedTitle = book.title.toLowerCase();
+            const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
+
+            if (similarity > 0.5 && normalizedTitle !== bookTitle) { // Ensure it's not the same book
+                if (!seenTitles.has(normalizedTitle)) {
+                    if (includeSameAuthor || !isSameAuthor) { // Respect the same author toggle
+                        seenTitles.add(normalizedTitle);
+                        recommendations.push(book);
+                    }
                 }
-            });
+            }
+        });
 
             // Display recommendations
             recommendations.forEach(bookInfo => {
