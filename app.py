@@ -11,17 +11,22 @@ def index():
     return render_template('index.html')
 
 # Route to handle XAI explanations
+from flask import Flask, render_template, request, jsonify
+
+app = Flask(__name__)
+
+# Route to handle XAI explanations
 @app.route('/explain_xai', methods=['POST'])
 def explain_xai():
+    app.logger.info("Received POST request for explanation")  # Log the request arrival
     data = request.json
+    
+    app.logger.info(f"Data received: {data}")  # Log the data received
+
     model = data.get('model')
     book_title = data.get('book_title')
     book_description = data.get('book_description')
     all_books = data.get('all_books')
-
-    # Debugging: Print the received data
-    print(f"Received model: {model}, book_title: {book_title}, book_description: {book_description}")
-    print(f"All books: {all_books}")
 
     explanation = None
     try:
@@ -34,10 +39,14 @@ def explain_xai():
         else:
             return jsonify({"error": "Invalid model specified"}), 400
     except Exception as e:
-        print(f"Error generating explanation: {str(e)}")
+        app.logger.error(f"Error generating explanation: {str(e)}")  # Log the error
         return jsonify({"error": str(e)}), 500
 
     if explanation:
         return jsonify({"explanation": explanation['explanation']})
     else:
         return jsonify({"error": "Failed to generate explanation"}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
