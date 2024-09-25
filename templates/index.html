@@ -259,18 +259,19 @@
 
             // If XAI explanation is needed, call the backend
             if (model !== 'noXAI') {
-                const response = await fetch('/explain_xai', {
+                const response = await fetch('https://book-rec-sys-1-6bd168a0d556.herokuapp.com/explain_xai', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         model: model,
-                        book_title: processedBooks[0].title,
-                        book_description: processedBooks[0].description,
-                        all_books: processedBooks // Send all books for context if necessary
+                        book_title: selectedBook.title,
+                        book_description: selectedBook.description,
+                        all_books: processedBooks
                     })
                 });
+
 
                 if (response.ok) {
                     const data = await response.json();
