@@ -1,53 +1,36 @@
-from flask import Flask, request, jsonify, render_template
-from xai.lime_explanation import get_lime_explanation
-from xai.shap_explanation import get_shap_explanation
-from xai.counterfactual_explanation import get_counterfactual_explanation
+from flask import Flask, render_template, request, jsonify
+from lime_explanation import get_lime_explanation  # Import explanation functions
+from shap_explanation import get_shap_explanation
+from counterfactual_explanation import get_counterfactual_explanation
 
 app = Flask(__name__)
 
+# Route to serve the index.html frontend
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/lime_explanation', methods=['POST'])
-def lime_explanation():
+# Route to handle XAI explanations
+@app.route('/explain_xai', methods=['POST'])
+def explain_xai():
     data = request.json
-    book_title = data['book_title']
-    book_description = data['book_description']
-    all_titles = data['all_titles']
-    all_descriptions = data['all_descriptions']
-    
-    explained_title, explanation = get_lime_explanation(book_title, book_description, all_titles, all_descriptions)
-    
-    return jsonify({
-        "book_title": explained_title,
-        "explanation": explanation
-    })
+    model = data.get('model')
+    book_title = data.get('book_title')
+    book_description = data.get('book_description')
+    all_books = data.get('all_books')
 
-@app.route('/shap_explanation', methods=['POST'])
-def shap_explanation():
-    data = request.json
-    book_title = data['book_title']
-    book_description = data['book_description']
-    all_titles = data['all_titles']
-    all_descriptions = data['all_descriptions']
-    
-    explanation = get_shap_explanation(book_title, book_description, all_titles, all_descriptions)
-    
-    return jsonify(explanation)
+    explanation = None
+    if model == 'lime':
+        explanation = get_lime_explanation(book_title, book_description, [book['description'] for book in all_books])
+    elif model == 'shap':
+        explanation = get_shap_explanation(book_title, book_description, [book['description'] for book in all_books])
+    elif model == 'counterfactual':
+        explanation = get_counterfactual_explanation(book_title, book_description, [book['description'] for book in all_books])
 
-@app.route('/counterfactual_explanation', methods=['POST'])
-def counterfactual_explanation():
-    data = request.json
-    book_title = data['book_title']
-    book_description = data['book_description']
-    all_titles = data['all_titles']
-    all_descriptions = data['all_descriptions']
-    
-    counterfactuals = get_counterfactual_explanation(book_title, book_description, all_titles, all_descriptions)
-    
-    return jsonify(counterfactuals)
+    if explanation:
+        return jsonify({"explanation": explanation['explanation']})
+    else:
+        return jsonify({"error": "Failed to generate explanation"}), 500
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
-
