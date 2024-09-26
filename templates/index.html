@@ -314,15 +314,17 @@
     }
 
 //display recommendations in UI
-    recommendations.forEach(bookInfo => {
-      const li = document.createElement("li");
-      const link = document.createElement("a");
-      link.href = bookInfo.link;
-      link.target = "_blank";
-      link.textContent = `${bookInfo.title} by ${bookInfo.authors.join(', ')}`;
-      li.appendChild(link);
-      recommendationsList.appendChild(li);
-    });
+recommendations.forEach(({book}) => {
+  const li = document.createElement("li");
+  const link = document.createElement("a");
+  link.href = book.link;
+  link.target = "_blank";
+//book.authors is an array and if not providing a fallback
+  const authors = book.authors && Array.isArray(book.authors) ? book.authors.join(', ') : "Unknown Author";
+  link.textContent = `${book.title} by ${authors}`;
+  li.appendChild(link);
+  recommendationsList.appendChild(li);
+});
 
   }
 
