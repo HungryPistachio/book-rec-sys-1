@@ -7,85 +7,100 @@
   <title>Book Recommendation System with XAI</title>
 </head>
 <body>
-<div class="container">
-  <h1>Book Recommendation System</h1>
-  <!-- Tab navigation -->
-    <div class="tabs">
-      <button class="tab" data-tab="noXAI">No XAI</button>
-      <button class="tab" data-tab="lime">LIME</button>
-      <button class="tab" data-tab="shap">SHAP</button>
-      <button class="tab" data-tab="counterfactual">Counterfactual</button>
-    </div>
-  <!-- Container for dynamically generated tab content -->
-  <div id="tabContentContainer"></div>
+<div class="tabs">
+  <button class="tab" data-tab="noXAI">No XAI</button>
+  <button class="tab" data-tab="lime">LIME</button>
+  <button class="tab" data-tab="shap">SHAP</button>
+  <button class="tab" data-tab="counterfactual">Counterfactual</button>
 </div>
-<!-- JavaScript file -->
-<!-- JavaScript file -->
-<script >
 
-  
-const tabData = [
-  {
-    id: "noXAI",
-    title: "No XAI Explanation",
-    checkboxId: "includeSameAuthorNoXAI",
-    checkboxLabel: "Include recommendations by the same author",
-    buttonLabel: "Get Recommendations",
-  },
-  {
-    id: "lime",
-    title: "LIME Explanation",
-    checkboxId: "includeSameAuthorLime",
-    checkboxLabel: "Include recommendations by the same author",
-    buttonLabel: "Get Recommendations",
-  },
-  {
-    id: "shap",
-    title: "SHAP Explanation",
-    checkboxId: "includeSameAuthorShap",
-    checkboxLabel: "Include recommendations by the same author",
-    buttonLabel: "Get Recommendations",
-  },
-  {
-    id: "counterfactual",
-    title: "Counterfactual Explanation",
-    checkboxId: "includeSameAuthorCounterfactual",
-    checkboxLabel: "Include recommendations by the same author",
-    buttonLabel: "Get Recommendations",
-  }
-];
-
-// Dynamically generate tab content based on the tabData array
-const tabContentContainer = document.getElementById("tabContentContainer");
-tabContentContainer.innerHTML = tabData.map(tab => `
-  <div id="${tab.id}" class="tab-content" style="display:none;">
-    <h2>${tab.title}</h2>
-    <input type="text" id="bookTitle${tab.id}" placeholder="Enter a book title">
+<!-- Dynamically generated content for each tab -->
+<div id="tabContentContainer">
+  <!-- No XAI Tab -->
+  <div id="noXAI" class="tab-content" style="display:none;">
+    <h2>No XAI Explanation</h2>
+    <input type="text" id="bookTitleNoXAI" placeholder="Enter a book title">
     <div class="toggle-label">
       <label>
-        <input type="checkbox" id="${tab.checkboxId}" checked>
-        ${tab.checkboxLabel}
+        <input type="checkbox" id="includeSameAuthorNoXAI" checked>
+        Include recommendations by the same author
       </label>
     </div>
-    <button onclick="getRecommendations('${tab.id}')">${tab.buttonLabel}</button>
-    <ul id="recommendations${tab.id}"></ul>
-    <div id="${tab.id}Explanation" class="${tab.id.toLowerCase()}-explanation" style="display:none;">
-      <h2>${tab.title} for <span id="explainedTitle${tab.id}"></span></h2>
-      <ul id="${tab.id}ExplanationList"></ul>
+    <button onclick="getRecommendations('noXAI')">Get Recommendations</button>
+    <ul id="recommendationsNoXAI"></ul>
+    <div id="noXAIExplanation" class="noXAI-explanation" style="display:none;">
+      <h2>No XAI Explanation for <span id="explainedTitleNoXAI"></span></h2>
+      <ul id="noXAIExplanationList"></ul>
     </div>
   </div>
-`).join('');
 
-// Simplified event listener with arrow function
-const tabs = document.querySelectorAll(".tab");
+  <!-- LIME Tab -->
+  <div id="lime" class="tab-content" style="display:none;">
+    <h2>LIME Explanation</h2>
+    <input type="text" id="bookTitleLime" placeholder="Enter a book title">
+    <div class="toggle-label">
+      <label>
+        <input type="checkbox" id="includeSameAuthorLime" checked>
+        Include recommendations by the same author
+      </label>
+    </div>
+    <button onclick="getRecommendations('lime')">Get Recommendations</button>
+    <ul id="recommendationsLime"></ul>
+    <div id="limeExplanation" class="lime-explanation" style="display:none;">
+      <h2>LIME Explanation for <span id="explainedTitleLime"></span></h2>
+      <ul id="limeExplanationList"></ul>
+    </div>
+  </div>
 
-tabs.forEach(tab => {
-  tab.addEventListener("click", event => {
-    const tabName = event.target.getAttribute("data-tab");
-    openTab(tabName, event);
+  <!-- SHAP Tab -->
+  <div id="shap" class="tab-content" style="display:none;">
+    <h2>SHAP Explanation</h2>
+    <input type="text" id="bookTitleShap" placeholder="Enter a book title">
+    <div class="toggle-label">
+      <label>
+        <input type="checkbox" id="includeSameAuthorShap" checked>
+        Include recommendations by the same author
+      </label>
+    </div>
+    <button onclick="getRecommendations('shap')">Get Recommendations</button>
+    <ul id="recommendationsShap"></ul>
+    <div id="shapExplanation" class="shap-explanation" style="display:none;">
+      <h2>SHAP Explanation for <span id="explainedTitleShap"></span></h2>
+      <ul id="shapExplanationList"></ul>
+    </div>
+  </div>
+
+  <!-- Counterfactual Tab -->
+  <div id="counterfactual" class="tab-content" style="display:none;">
+    <h2>Counterfactual Explanation</h2>
+    <input type="text" id="bookTitleCounterfactual" placeholder="Enter a book title">
+    <div class="toggle-label">
+      <label>
+        <input type="checkbox" id="includeSameAuthorCounterfactual" checked>
+        Include recommendations by the same author
+      </label>
+    </div>
+    <button onclick="getRecommendations('counterfactual')">Get Recommendations</button>
+    <ul id="recommendationsCounterfactual"></ul>
+    <div id="counterfactualExplanation" class="counterfactual-explanation" style="display:none;">
+      <h2>Counterfactual Explanation for <span id="explainedTitleCounterfactual"></span></h2>
+      <ul id="counterfactualExplanationList"></ul>
+    </div>
+  </div>
+</div>
+<!-- JavaScript -->
+<script>
+
+  // Simplified event listener with arrow function
+  const tabs = document.querySelectorAll(".tab");
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", event => {
+      const tabName = event.target.getAttribute("data-tab");
+      openTab(tabName, event);
+    });
   });
-});
-// Add event listeners for recommendation buttons
+  // Add event listeners for recommendation buttons
   const recommendationButtons = document.querySelectorAll(".recommend-button");
 
   recommendationButtons.forEach(button => {
@@ -95,7 +110,7 @@ tabs.forEach(tab => {
     });
   });
 
-// Function to handle tab switching
+  // Function to handle tab switching
   function openTab(tabName, evt) {
     const tabContents = document.getElementsByClassName("tab-content");
 
@@ -117,7 +132,7 @@ tabs.forEach(tab => {
     evt.currentTarget.classList.add("active");
   }
 
-// Function to clean and filter book descriptions
+  // Function to clean and filter book descriptions
   function filterDescription(description) {
     const stopwords = ["the", "a", "an", "in", "on", "and", "or", "of", "to", "is", "for", "by"]; // Add more stopwords as needed
     return description
@@ -128,7 +143,7 @@ tabs.forEach(tab => {
         .join(' '); // Rejoin the words
   }
 
-// Vectorizes keywords for cosine similarity
+  // Vectorizes keywords for cosine similarity
   function vectorizeKeywords(keywords, allDocuments) {
     const documents = allDocuments.map(doc => doc.split(' '));
     const tfidfVectors = computeTFIDF(documents);
@@ -155,7 +170,7 @@ tabs.forEach(tab => {
     return keywordsArray.map(word => vector[word] || 0);
   }
 
-// Computes term frequency (TF) for each word in a document
+  // Computes term frequency (TF) for each word in a document
   function computeTF(words) {
     const tf = {};
     const totalWords = words.length;
@@ -168,7 +183,7 @@ tabs.forEach(tab => {
     return tf;
   }
 
-// Computes inverse document frequency (IDF)
+  // Computes inverse document frequency (IDF)
   function computeIDF(documents) {
     const idf = {};
     const totalDocs = documents.length;
@@ -187,7 +202,7 @@ tabs.forEach(tab => {
     return idf;
   }
 
-// Computes TF-IDF vectors for a set of documents
+  // Computes TF-IDF vectors for a set of documents
   function computeTFIDF(documents) {
     const idf = computeIDF(documents);
     return documents.map(doc => {
@@ -200,7 +215,7 @@ tabs.forEach(tab => {
     });
   }
 
-// Computes cosine similarity between two vectors
+  // Computes cosine similarity between two vectors
   function cosineSimilarity(vecA, vecB) {
     const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
     const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
@@ -212,7 +227,7 @@ tabs.forEach(tab => {
     return dotProduct / (magnitudeA * magnitudeB);
   }
 
-// Fetches recommendations from the Google Books API and processes XAI explanations
+  // Fetches recommendations from the Google Books API and processes XAI explanations
   async function getRecommendations(model) {
     const inputId = `bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
     const bookTitle = document.getElementById(inputId).value.toLowerCase();
@@ -294,6 +309,7 @@ tabs.forEach(tab => {
     });
 
   }
+
 
 </script>
 </body>
