@@ -60,6 +60,16 @@ tabs.forEach(tab => {
   });
 });
 
+// Add event listeners for recommendation buttons
+const recommendationButtons = document.querySelectorAll(".recommend-button");
+
+recommendationButtons.forEach(button => {
+  button.addEventListener("click", event => {
+    const tabId = event.target.getAttribute("data-tab");
+    getRecommendations(tabId);
+  });
+});
+
 // Function to handle tab switching
 function openTab(tabName, evt) {
   const tabContents = document.getElementsByClassName("tab-content");
@@ -225,7 +235,6 @@ async function getRecommendations(model) {
   const seenTitles = new Set();
   const recommendations = [];
 
-  // Ensure we're not recommending the same book
 // Ensure we're not recommending the same book
   processedBooks.forEach((book, idx) => {
     const bookVector = vectorizeKeywords(filterDescription(book.description), allDescriptions);
