@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" type="text/css" href="/static/styles.css">
     <title>Book Recommendation</title>
 </head>
 <body>
@@ -281,7 +281,7 @@
       const normalizedTitle = book.title.toLowerCase();
       const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
 
-      if (similarity > 0.5 && normalizedTitle !== bookTitle) { // Ensure it's not the same book
+      if (similarity > 0.2 && normalizedTitle !== bookTitle) { // Ensure it's not the same book
         if (!seenTitles.has(normalizedTitle)) {
           if (includeSameAuthor || !isSameAuthor) { // Respect the same author toggle
             seenTitles.add(normalizedTitle);
