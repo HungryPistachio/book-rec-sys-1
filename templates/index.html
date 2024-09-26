@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+  <link rel="stylesheet" type="text/css" href="static/styles.css">
   <title>Book Recommendation System with XAI</title>
 </head>
 <body>
@@ -11,10 +11,10 @@
   <h1>Book Recommendation System</h1>
   <!-- Tab navigation -->
   <div class="tabs">
-    <button class="tab active" onclick="openTab(event, 'noXAI')">No XAI</button>
-    <button class="tab" onclick="openTab(event, 'lime')">LIME</button>
-    <button class="tab" onclick="openTab(event, 'shap')">SHAP</button>
-    <button class="tab" onclick="openTab(event, 'counterfactual')">Counterfactual</button>
+    <button class="tab" onclick="openTab('noXAI')">No XAI</button>
+    <button class="tab" onclick="openTab('lime')">LIME</button>
+    <button class="tab" onclick="openTab('shap')">SHAP</button>
+    <button class="tab" onclick="openTab('counterfactual')">Counterfactual</button>
   </div>
   <!-- No XAI Tab -->
   <div id="noXAI" class="tab-content">
@@ -83,18 +83,36 @@
 </div>
 <!-- JavaScript -->
 <script>
+  // Select all the tab buttons
+  const tabs = document.querySelectorAll(".tab");
+
+  // Loop through each tab button and add an event listener
+  tabs.forEach(function(tab) {
+    tab.addEventListener("click", function(event) {
+      const tabName = event.currentTarget.getAttribute("data-tab");
+      openTab(tabName, event);
+    });
+  });
+
   // Function to handle tab switching
-  function openTab(evt, tabName) {
+  function openTab(tabName, evt) {
     const tabContents = document.getElementsByClassName("tab-content");
+
+    // Hide all tab contents
     for (let i = 0; i < tabContents.length; i++) {
       tabContents[i].style.display = "none";
     }
+
+    // Show the current tab content
     document.getElementById(tabName).style.display = "block";
 
+    // Remove "active" class from all tabs
     const tabs = document.getElementsByClassName("tab");
     for (let i = 0; i < tabs.length; i++) {
       tabs[i].classList.remove("active");
     }
+
+    // Add "active" class to the clicked tab
     evt.currentTarget.classList.add("active");
   }
 
