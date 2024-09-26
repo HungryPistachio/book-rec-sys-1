@@ -143,7 +143,7 @@
         .join(' '); // Rejoin the words
   }
 
-  // Vectorizes keywords for cosine similarity
+  // Vectorises keywords for cosine similarity
   function vectorizeKeywords(keywords, allDocuments) {
     const documents = allDocuments.map(doc => doc.split(' '));
     const tfidfVectors = computeTFIDF(documents);
@@ -202,7 +202,7 @@
     return idf;
   }
 
-  // Computes TF-IDF vectors for a set of documents
+  // computes TF-IDF vectors for a set of documents
   function computeTFIDF(documents) {
     const idf = computeIDF(documents);
     return documents.map(doc => {
@@ -215,19 +215,19 @@
     });
   }
 
-  // Computes cosine similarity between two vectors
+// computes cosine similarity between two vectors
   function cosineSimilarity(vecA, vecB) {
     const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
     const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
     const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
 
-    // Logging before return
+// Logging before return
     console.log(`Cosine similarity calculation for vectors: ${vecA} and ${vecB}`);
 
     return dotProduct / (magnitudeA * magnitudeB);
   }
 
-  // Fetches recommendations from the Google Books API and processes XAI explanations
+//main function for getting recommendations
   async function getRecommendations(model) {
     const inputId = `bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
     const bookTitle = document.getElementById(inputId).value.toLowerCase();
@@ -237,7 +237,7 @@
 
     const includeSameAuthor = document.getElementById(`includeSameAuthor${model.charAt(0).toUpperCase() + model.slice(1)}`).checked;
 
-    // Fetch book data from Google Books API
+//fetchbook data from Google Books API
     const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs';
     const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
 
@@ -258,7 +258,7 @@
       link: book.volumeInfo.infoLink || "#"
     }));
 
-    // Find the selected book (first book that matches user input)
+//this it to find the selected book (user input)
     const selectedBook = processedBooks.find(book => book.title.toLowerCase() === bookTitle);
 
     if (!selectedBook) {
@@ -269,11 +269,11 @@
     const allDescriptions = processedBooks.map(book => filterDescription(book.description));
     const keywordVector = vectorizeKeywords(selectedBook.description, allDescriptions);
 
-    // Find recommendations based on cosine similarity
+//recommendations based on cosine similarity
     const seenTitles = new Set();
     const recommendations = [];
 
-// Ensure we're not recommending the same book
+
     processedBooks.forEach((book, idx) => {
       const bookVector = vectorizeKeywords(filterDescription(book.description), allDescriptions);
       const similarity = cosineSimilarity(keywordVector, bookVector);
@@ -281,23 +281,39 @@
       const normalizedTitle = book.title.toLowerCase();
       const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
 
-      if (similarity > 0.2 && normalizedTitle !== bookTitle) { // Ensure it's not the same book
+      if (similarity > 0.15 && normalizedTitle !== bookTitle) { //not the same book
         if (!seenTitles.has(normalizedTitle)) {
-          if (includeSameAuthor || !isSameAuthor) { // Respect the same author toggle
+          if (includeSameAuthor || !isSameAuthor) { // check for the same author toggle on/off
             seenTitles.add(normalizedTitle);
             recommendations.push(book);
           }
         }
       }
     });
+      
+  // Sort out recommendations based by highest similarity, to prioritize better matches at top of list
+  recommendations.sort((a, b) => b.similarity - a.similarity);
 
-// Handle empty recommendations
+  //If have fewer than 10 recommendations, continue adding until reaches 10
+  while (recommendations.length < 10 && processedBooks.length > recommendations.length) {
+    const remainingBooks = processedBooks.filter(book => !seenTitles.has(book.title.toLowerCase()) && book.title.toLowerCase() !== bookTitle);
+    if (remainingBooks.length === 0) break;
+
+    const nextBook = remainingBooks.shift();
+    seenTitles.add(nextBook.title.toLowerCase());
+    recommendations.push({book: nextBook, similarity: 0});  // Add with 0 similarity (since we ran out of good matches)
+  }
+
+  //Limit 10 recommendations
+  recommendations = recommendations.slice(0, 10);
+
+//empty recommendations
     if (recommendations.length === 0) {
       recommendationsList.innerHTML = "<li>No valid recommendations found.</li>";
       return;
     }
 
-// Display recommendations
+//display recommendations in UI
     recommendations.forEach(bookInfo => {
       const li = document.createElement("li");
       const link = document.createElement("a");
