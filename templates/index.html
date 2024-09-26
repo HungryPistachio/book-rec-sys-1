@@ -10,12 +10,12 @@
 <div class="container">
   <h1>Book Recommendation System</h1>
   <!-- Tab navigation -->
-  <div class="tabs">
-    <button class="tab" onclick="openTab('noXAI')">No XAI</button>
-    <button class="tab" onclick="openTab('lime')">LIME</button>
-    <button class="tab" onclick="openTab('shap')">SHAP</button>
-    <button class="tab" onclick="openTab('counterfactual')">Counterfactual</button>
-  </div>
+    <div class="tabs">
+      <button class="tab" data-tab="noXAI">No XAI</button>
+      <button class="tab" data-tab="lime">LIME</button>
+      <button class="tab" data-tab="shap">SHAP</button>
+      <button class="tab" data-tab="counterfactual">Counterfactual</button>
+    </div>
   <!-- Container for dynamically generated tab content -->
   <div id="tabContentContainer"></div>
 </div>
