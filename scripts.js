@@ -1,3 +1,5 @@
+console.log("Script loaded successfully!");
+
 // Tab data configuration for dynamic generation
 const tabData = [
   {
