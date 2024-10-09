@@ -92,40 +92,10 @@
     </div>
   </div>
 
-<script>
-    const tabs = document.querySelectorAll(".tab");
-    tabs.forEach(tab => {
-      tab.addEventListener("click", event => {
-        const tabName = event.target.getAttribute("data-tab");
-        openTab(tabName, event);
-      });
-    });
-
-    // Function to handle tab switching
-    function openTab(tabName, evt) {
-      const tabContents = document.getElementsByClassName("tab-content");
-
-      // Hide all tab contents
-      for (let i = 0; i < tabContents.length; i++) {
-        tabContents[i].style.display = "none";
-      }
-
-      // Show the current tab content
-      document.getElementById(tabName).style.display = "block";
-
-      // Remove "active" class from all tabs
-      const tabs = document.getElementsByClassName("tab");
-      for (let i = 0; i < tabs.length; i++) {
-        tabs[i].classList.remove("active");
-      }
-
-      // Add "active" class to the clicked tab
-      evt.currentTarget.classList.add("active");
-    }
-
+script>
     // Filter book descriptions by removing stop words
     function filterDescription(description) {
-      const stopwords = ["the", "a", "an", "in", "on", "and", "or", "of", "to", "is", "for", "by"]; // Add more stopwords as needed
+      const stopwords = ["the", "a", "an", "in", "on", "and", "or", "of", "to", "is", "for", "by"];
       return description
           .toLowerCase()
           .replace(/[^a-z\s]/g, '') // Remove non-alphabet characters
@@ -138,7 +108,6 @@
     function vectorizeDescription(description, allDescriptions) {
       const documents = allDescriptions.map(doc => doc.split(' '));
       const tfidfVectors = computeTFIDF(documents);
-
       const descriptionArray = description.split(' ');
       const vector = {};
 
@@ -148,14 +117,10 @@
         }
       }
 
-      // Handle case where the description results in an empty or single-word vector
       if (descriptionArray.length === 0) {
         console.error("Empty or invalid description vector");
         return new Array(Object.keys(vector).length).fill(0);  // Return a zero-filled vector of the same length
       }
-
-      // Logging the extracted keywords for insight
-      console.log(`Extracted keywords from user's input book: ${descriptionArray.join(', ')}`);
 
       return descriptionArray.map(word => vector[word] || 0);
     }
@@ -218,19 +183,15 @@
     function extractTopKeywords(description, allDescriptions, numKeywords = 20) {
         const documents = allDescriptions.map(doc => doc.split(' '));
         const tfidfVectors = computeTFIDF(documents); // Compute TF-IDF for all documents
-
         const descriptionArray = description.split(' '); // Split input description into words
         const tfidf = computeTFIDF([descriptionArray])[0]; // Get TF-IDF vector for the input description
 
-        // Sort words by their TF-IDF scores and take the top numKeywords
-        const sortedKeywords = Object.keys(tfidf).sort((a, b) => tfidf[b] - tfidf[a]);
-        const topKeywords = sortedKeywords.slice(0, numKeywords);
-
-        console.log(`Top ${numKeywords} keywords extracted: ${topKeywords.join(', ')}`);
+        const sortedKeywords = Object.keys(tfidf).sort((a, b) => tfidf[b] - tfidf[a]); // Sort words by TF-IDF scores
+        const topKeywords = sortedKeywords.slice(0, numKeywords); // Take the top numKeywords
         return topKeywords.join(' ');
     }
 
-    // Fetches recommendations from the Google Books API using top keywords
+    // Fetches recommendations from the Google Books API and refines them using similarity and reruns if necessary
     async function getRecommendations(model) {
       const inputId = `bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
       const bookTitle = document.getElementById(inputId).value.toLowerCase();
@@ -241,7 +202,7 @@
       const includeSameAuthor = document.getElementById(`includeSameAuthor${model.charAt(0).toUpperCase() + model.slice(1)}`).checked;
 
       // Fetch book data from Google Books API (first API call)
-      const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs';
+      const googleApiKey = 'YOUR_API_KEY';
       const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
 
       let books;
@@ -293,24 +254,61 @@
         link: book.volumeInfo.infoLink || "#"
       }));
 
-      // If recommendations are fewer than 5, use cosine similarity to further filter
-      if (recommendations.length < 5) {
-        const inputBookVector = vectorizeDescription(filterDescription(selectedBook.description), allDescriptions);
+      // Set to track seen titles
+      const seenTitles = new Set();
+      const finalRecommendations = [];
+      let similarityScore = 0.2;  // Set an initial similarity threshold
+
+      // Function to add recommendations based on similarity
+      function addRecommendations() {
+        let initialLength = finalRecommendations.length;
+
         recommendations.forEach((book) => {
           const bookVector = vectorizeDescription(filterDescription(book.description), allDescriptions);
+          const inputBookVector = vectorizeDescription(filterDescription(selectedBook.description), allDescriptions);
           const similarity = cosineSimilarity(inputBookVector, bookVector);
-          console.log(`Similarity with "${book.title}": ${similarity}`);
+
+          const normalizedTitle = book.title.toLowerCase();
+          const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
+
+          if (similarity > similarityScore && normalizedTitle !== bookTitle && !normalizedTitle.includes(bookTitle)) {
+            if (!seenTitles.has(normalizedTitle)) {
+              if (includeSameAuthor || !isSameAuthor) {
+                seenTitles.add(normalizedTitle);
+                finalRecommendations.push(book);
+              }
+            }
+          }
         });
+        return finalRecommendations.length > initialLength;
+      }
+
+      // Add initial recommendations
+      addRecommendations();
+
+      // If recommendations are fewer than 5, rerun the logic with lower similarity threshold
+      let attempts = 0;
+      while (finalRecommendations.length < 5 && attempts < 8) {
+        if (!addRecommendations()) {
+          break;
+        }
+        similarityScore -= 0.02; // Decrease similarity threshold for more lenient matches
+        attempts++;
+      }
+
+      // Trim recommendations to exactly 5 if needed
+      if (finalRecommendations.length > 5) {
+        finalRecommendations.splice(5);
       }
 
       // Handle empty recommendations
-      if (recommendations.length === 0) {
+      if (finalRecommendations.length === 0) {
         recommendationsList.innerHTML = "<li>No valid recommendations found.</li>";
         return;
       }
 
-      // Display recommendations
-      recommendations.forEach(bookInfo => {
+      // Display final recommendations
+      finalRecommendations.forEach(bookInfo => {
         const li = document.createElement("li");
         const link = document.createElement("a");
         link.href = bookInfo.link;
