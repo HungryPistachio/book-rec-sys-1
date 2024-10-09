@@ -92,7 +92,7 @@
     </div>
   </div>
 
- <script>
+<script>
     const tabs = document.querySelectorAll(".tab");
     tabs.forEach(tab => {
       tab.addEventListener("click", event => {
@@ -101,30 +101,62 @@
       });
     });
 
-    // Function to handle tab switching
     function openTab(tabName, evt) {
       const tabContents = document.getElementsByClassName("tab-content");
-
-      // Hide all tab contents
       for (let i = 0; i < tabContents.length; i++) {
         tabContents[i].style.display = "none";
       }
-
-      // Show the current tab content
       document.getElementById(tabName).style.display = "block";
-
-      // Remove "active" class from all tabs
       const tabs = document.getElementsByClassName("tab");
       for (let i = 0; i < tabs.length; i++) {
         tabs[i].classList.remove("active");
       }
-
-      // Add "active" class to the clicked tab
       evt.currentTarget.classList.add("active");
     }
 
-    // Filter book descriptions by removing stop words
-    function filterDescription(description) {
+    // Function to handle showing autocomplete suggestions
+    async function showAutocomplete(model) {
+      const inputId = `bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
+      const autocompleteId = `autocomplete${model.charAt(0).toUpperCase() + model.slice(1)}`;
+      const input = document.getElementById(inputId);
+      const autocompleteContainer = document.getElementById(autocompleteId);
+      const query = input.value.trim();
+
+      if (query.length < 3) {
+        autocompleteContainer.innerHTML = ""; // Clear autocomplete if query is too short
+        return;
+      }
+
+      const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs';
+      const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&key=${googleApiKey}`;
+
+      try {
+        const apiResponse = await fetch(googleApiUrl);
+        const apiData = await apiResponse.json();
+        const books = apiData.items || [];
+
+        autocompleteContainer.innerHTML = ""; // Clear previous results
+
+        books.forEach(book => {
+          const title = book.volumeInfo.title || "Unknown Title";
+          const authors = (book.volumeInfo.authors || []).join(', ');
+          const item = document.createElement("div");
+
+          item.classList.add("autocomplete-item");
+          item.textContent = `${title} by ${authors}`;
+          item.addEventListener("click", () => {
+            input.value = title; // Set input value to the selected book title
+            autocompleteContainer.innerHTML = ""; // Clear suggestions
+          });
+
+          autocompleteContainer.appendChild(item);
+        });
+      } catch (error) {
+        console.error("Error fetching books for autocomplete:", error);
+      }
+    }
+
+  function filterDescription(description) {
       const stopwords = ["the", "a", "an", "in", "on", "and", "or", "of", "to", "is", "for", "by"]; // Add more stopwords as needed
       return description
           .toLowerCase()
@@ -134,7 +166,6 @@
           .join(' ');
     }
 
-    // Vectorizes descriptions for cosine similarity
     function vectorizeDescription(description, allDescriptions) {
       const documents = allDescriptions.map(doc => doc.split(' '));
       const tfidfVectors = computeTFIDF(documents);
@@ -148,19 +179,14 @@
         }
       }
 
-      // Handle case where the description results in an empty or single-word vector
       if (descriptionArray.length === 0) {
         console.error("Empty or invalid description vector");
         return new Array(Object.keys(vector).length).fill(0);  // Return a zero-filled vector of the same length
       }
 
-      // Logging the extracted keywords for insight
-      console.log(`Extracted keywords from user's input book: ${descriptionArray.join(', ')}`);
-
       return descriptionArray.map(word => vector[word] || 0);
     }
 
-    // Computes term frequency (TF) for each word in a document
     function computeTF(words) {
       const tf = {};
       const totalWords = words.length;
@@ -173,7 +199,6 @@
       return tf;
     }
 
-    // Computes inverse document frequency (IDF)
     function computeIDF(documents) {
       const idf = {};
       const totalDocs = documents.length;
@@ -192,7 +217,6 @@
       return idf;
     }
 
-    // Computes TF-IDF vectors for a set of documents
     function computeTFIDF(documents) {
       const idf = computeIDF(documents);
       return documents.map(doc => {
@@ -205,7 +229,6 @@
       });
     }
 
-    // Computes cosine similarity between two vectors
     function cosineSimilarity(vecA, vecB) {
       const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
       const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
@@ -214,7 +237,7 @@
       return dotProduct / (magnitudeA * magnitudeB);
     }
 
-    // Fetches recommendations from the Google Books API and processes based on description similarity
+    // Fetches recommendations from the Google Books API and processes XAI explanations
     async function getRecommendations(model) {
       const inputId = `bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
       const bookTitle = document.getElementById(inputId).value.toLowerCase();
@@ -224,7 +247,6 @@
 
       const includeSameAuthor = document.getElementById(`includeSameAuthor${model.charAt(0).toUpperCase() + model.slice(1)}`).checked;
 
-      // Fetch book data from Google Books API
       const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs';
       const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
 
@@ -245,7 +267,6 @@
         link: book.volumeInfo.infoLink || "#"
       }));
 
-      // Find the selected book (first book that matches user input)
       const selectedBook = processedBooks.find(book => book.title.toLowerCase() === bookTitle);
 
       if (!selectedBook) {
@@ -256,14 +277,12 @@
       const allDescriptions = processedBooks.map(book => filterDescription(book.description));
       const inputBookVector = vectorizeDescription(filterDescription(selectedBook.description), allDescriptions);
 
-      // Set to track seen titles
       const seenTitles = new Set();
       const recommendations = [];
       let similarityScore = 0.2;
 
-      // Function to add recommendations based on description similarity
       function addRecommendations(similarityScore) {
-        let initialLength = recommendations.length; // Track length before adding
+        let initialLength = recommendations.length;
 
         processedBooks.forEach((book) => {
           const bookVector = vectorizeDescription(filterDescription(book.description), allDescriptions);
@@ -272,43 +291,38 @@
           const normalizedTitle = book.title.toLowerCase();
           const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
 
-          if (similarity > similarityScore && normalizedTitle !== bookTitle && !normalizedTitle.includes(bookTitle)) { // Exclude similar/same titles
+          if (similarity > similarityScore && normalizedTitle !== bookTitle && !normalizedTitle.includes(bookTitle)) {
             if (!seenTitles.has(normalizedTitle)) {
-              if (includeSameAuthor || !isSameAuthor) { // Respect the same author toggle
+              if (includeSameAuthor || !isSameAuthor) {
                 seenTitles.add(normalizedTitle);
                 recommendations.push(book);
               }
             }
           }
         });
-        return recommendations.length > initialLength; // Return true if new recommendations were added
+        return recommendations.length > initialLength;
       }
 
-      // Add initial recommendations
       addRecommendations(similarityScore);
 
-      // If recommendations are fewer than 5, rerun the logic only if new books were added
       let attempts = 0;
       while (recommendations.length < 5 && attempts < 8) {
         if (!addRecommendations(similarityScore)) {
-          break; // Exit if no new recommendations were added in this round
+          break;
         }
         similarityScore -= 0.02;
-        attempts++; // Prevent an infinite loop by limiting attempts
+        attempts++;
       }
 
-      // Trim recommendations to exactly 5
       if (recommendations.length > 5) {
         recommendations.splice(5);
       }
 
-      // Handle empty recommendations
       if (recommendations.length === 0) {
         recommendationsList.innerHTML = "<li>No valid recommendations found.</li>";
         return;
       }
 
-      // Display recommendations
       recommendations.forEach(bookInfo => {
         const li = document.createElement("li");
         const link = document.createElement("a");
