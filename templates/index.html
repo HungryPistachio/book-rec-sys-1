@@ -214,7 +214,23 @@
       return dotProduct / (magnitudeA * magnitudeB);
     }
 
-    // Fetches recommendations from the Google Books API and processes based on description similarity
+    // Extracts the top 20 keywords from the description using TF-IDF
+    function extractTopKeywords(description, allDescriptions, numKeywords = 20) {
+        const documents = allDescriptions.map(doc => doc.split(' '));
+        const tfidfVectors = computeTFIDF(documents); // Compute TF-IDF for all documents
+
+        const descriptionArray = description.split(' '); // Split input description into words
+        const tfidf = computeTFIDF([descriptionArray])[0]; // Get TF-IDF vector for the input description
+
+        // Sort words by their TF-IDF scores and take the top numKeywords
+        const sortedKeywords = Object.keys(tfidf).sort((a, b) => tfidf[b] - tfidf[a]);
+        const topKeywords = sortedKeywords.slice(0, numKeywords);
+
+        console.log(`Top ${numKeywords} keywords extracted: ${topKeywords.join(', ')}`);
+        return topKeywords.join(' ');
+    }
+
+    // Fetches recommendations from the Google Books API using top keywords
     async function getRecommendations(model) {
       const inputId = `bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
       const bookTitle = document.getElementById(inputId).value.toLowerCase();
@@ -224,8 +240,8 @@
 
       const includeSameAuthor = document.getElementById(`includeSameAuthor${model.charAt(0).toUpperCase() + model.slice(1)}`).checked;
 
-      // Fetch book data from Google Books API
-      const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs';
+      // Fetch book data from Google Books API (first API call)
+      const googleApiKey = 'YOUR_API_KEY';
       const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
 
       let books;
@@ -245,7 +261,6 @@
         link: book.volumeInfo.infoLink || "#"
       }));
 
-      // Find the selected book (first book that matches user input)
       const selectedBook = processedBooks.find(book => book.title.toLowerCase() === bookTitle);
 
       if (!selectedBook) {
@@ -254,52 +269,38 @@
       }
 
       const allDescriptions = processedBooks.map(book => filterDescription(book.description));
-      const inputBookVector = vectorizeDescription(filterDescription(selectedBook.description), allDescriptions);
 
-      // Set to track seen titles
-      const seenTitles = new Set();
-      const recommendations = [];
-      let similarityScore = 0.2;
+      // Extract the top 20 keywords from the description of the input book
+      const topKeywords = extractTopKeywords(filterDescription(selectedBook.description), allDescriptions, 20);
 
-      // Function to add recommendations based on description similarity
-      function addRecommendations(similarityScore) {
-        let initialLength = recommendations.length; // Track length before adding
+      // Second API call using the extracted top 20 keywords
+      const secondApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(topKeywords)}&maxResults=40&key=${googleApiKey}`;
 
-        processedBooks.forEach((book) => {
+      let recommendationBooks;
+      try {
+        const secondApiResponse = await fetch(secondApiUrl);
+        const secondApiData = await secondApiResponse.json();
+        recommendationBooks = secondApiData.items || [];
+      } catch (error) {
+        console.error("Error fetching books from Google API with keywords", error);
+        return;
+      }
+
+      const recommendations = recommendationBooks.map(book => ({
+        title: book.volumeInfo.title || "Unknown Title",
+        authors: book.volumeInfo.authors || [],
+        description: book.volumeInfo.description || "No description available",
+        link: book.volumeInfo.infoLink || "#"
+      }));
+
+      // If recommendations are fewer than 5, use cosine similarity to further filter
+      if (recommendations.length < 5) {
+        const inputBookVector = vectorizeDescription(filterDescription(selectedBook.description), allDescriptions);
+        recommendations.forEach((book) => {
           const bookVector = vectorizeDescription(filterDescription(book.description), allDescriptions);
           const similarity = cosineSimilarity(inputBookVector, bookVector);
-
-          const normalizedTitle = book.title.toLowerCase();
-          const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
-
-          if (similarity > similarityScore && normalizedTitle !== bookTitle && !normalizedTitle.includes(bookTitle)) { // Exclude similar/same titles
-            if (!seenTitles.has(normalizedTitle)) {
-              if (includeSameAuthor || !isSameAuthor) { // Respect the same author toggle
-                seenTitles.add(normalizedTitle);
-                recommendations.push(book);
-              }
-            }
-          }
+          console.log(`Similarity with "${book.title}": ${similarity}`);
         });
-        return recommendations.length > initialLength; // Return true if new recommendations were added
-      }
-
-      // Add initial recommendations
-      addRecommendations(similarityScore);
-
-      // If recommendations are fewer than 5, rerun the logic only if new books were added
-      let attempts = 0;
-      while (recommendations.length < 5 && attempts < 8) {
-        if (!addRecommendations(similarityScore)) {
-          break; // Exit if no new recommendations were added in this round
-        }
-        similarityScore -= 0.02;
-        attempts++; // Prevent an infinite loop by limiting attempts
-      }
-
-      // Trim recommendations to exactly 5
-      if (recommendations.length > 5) {
-        recommendations.splice(5);
       }
 
       // Handle empty recommendations
