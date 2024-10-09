@@ -143,7 +143,7 @@
         .join(' '); // Rejoin the words
   }
 
-  // Vectorizes keywords for cosine similarity
+  // Vectorises keywords for cosine similarity
   function vectorizeKeywords(keywords, allDocuments) {
     const documents = allDocuments.map(doc => doc.split(' '));
     const tfidfVectors = computeTFIDF(documents);
@@ -269,35 +269,56 @@
     const allDescriptions = processedBooks.map(book => filterDescription(book.description));
     const keywordVector = vectorizeKeywords(selectedBook.description, allDescriptions);
 
-    // Find recommendations based on cosine similarity
+    // Set to track seen titles
     const seenTitles = new Set();
     const recommendations = [];
 
-// Ensure we're not recommending the same book
-    processedBooks.forEach((book, idx) => {
-      const bookVector = vectorizeKeywords(filterDescription(book.description), allDescriptions);
-      const similarity = cosineSimilarity(keywordVector, bookVector);
+    // Function to add recommendations
+    function addRecommendations() {
+      let initialLength = recommendations.length; // Track length before adding
+      processedBooks.forEach((book) => {
+        const bookVector = vectorizeKeywords(filterDescription(book.description), allDescriptions);
+        const similarity = cosineSimilarity(keywordVector, bookVector);
 
-      const normalizedTitle = book.title.toLowerCase();
-      const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
+        const normalizedTitle = book.title.toLowerCase();
+        const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
 
-      if (similarity > 0.2 && normalizedTitle !== bookTitle) { // Ensure it's not the same book
-        if (!seenTitles.has(normalizedTitle)) {
-          if (includeSameAuthor || !isSameAuthor) { // Respect the same author toggle
-            seenTitles.add(normalizedTitle);
-            recommendations.push(book);
+        if (similarity > 0.2 && normalizedTitle !== bookTitle) { // Ensure it's not the same book
+          if (!seenTitles.has(normalizedTitle)) {
+            if (includeSameAuthor || !isSameAuthor) { // Respect the same author toggle
+              seenTitles.add(normalizedTitle);
+              recommendations.push(book);
+            }
           }
         }
-      }
-    });
+      });
+      return recommendations.length > initialLength; // Return true if new recommendations were added
+    }
 
-// Handle empty recommendations
+    // Add initial recommendations
+    addRecommendations();
+
+    // If recommendations are fewer than 5, rerun the logic only if new books were added
+    let attempts = 0;
+    while (recommendations.length < 5 && attempts < 2) {
+      if (!addRecommendations()) {
+        break; // Exit if no new recommendations were added in this round
+      }
+      attempts++; // Prevent an infinite loop by limiting attempts
+    }
+
+    // Trim recommendations to exactly 5
+    if (recommendations.length > 5) {
+      recommendations.splice(5);
+    }
+
+    // Handle empty recommendations
     if (recommendations.length === 0) {
       recommendationsList.innerHTML = "<li>No valid recommendations found.</li>";
       return;
     }
 
-// Display recommendations
+    // Display recommendations
     recommendations.forEach(bookInfo => {
       const li = document.createElement("li");
       const link = document.createElement("a");
@@ -307,10 +328,10 @@
       li.appendChild(link);
       recommendationsList.appendChild(li);
     });
-
   }
 
 
-</script>
-</body>
+
+      </script>
+    </div></body>
 </html>
