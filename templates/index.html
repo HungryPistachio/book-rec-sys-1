@@ -92,7 +92,7 @@
     </div>
   </div>
 
-  <script>
+ <script>
     const tabs = document.querySelectorAll(".tab");
     tabs.forEach(tab => {
       tab.addEventListener("click", event => {
@@ -134,12 +134,12 @@
           .join(' ');
     }
 
-    // Vectorizes keywords for cosine similarity
-    function vectorizeKeywords(keywords, allDocuments) {
-      const documents = allDocuments.map(doc => doc.split(' '));
+    // Vectorizes descriptions for cosine similarity
+    function vectorizeDescription(description, allDescriptions) {
+      const documents = allDescriptions.map(doc => doc.split(' '));
       const tfidfVectors = computeTFIDF(documents);
 
-      const keywordsArray = keywords.split(' ');
+      const descriptionArray = description.split(' ');
       const vector = {};
 
       for (let i = 0; i < tfidfVectors.length; i++) {
@@ -148,17 +148,16 @@
         }
       }
 
-      // Handle case where the keywords result in an empty or single-word vector
-      if (keywordsArray.length === 0) {
-        console.error("Empty or invalid keyword vector");
+      // Handle case where the description results in an empty or single-word vector
+      if (descriptionArray.length === 0) {
+        console.error("Empty or invalid description vector");
         return new Array(Object.keys(vector).length).fill(0);  // Return a zero-filled vector of the same length
       }
 
-      // Logging statements outside the loop
-      console.log(`Vectorizing keywords: ${keywords}`);
-      console.log(`All descriptions length: ${allDocuments.length}`);
+      // Logging the extracted keywords for insight
+      console.log(`Extracted keywords from user's input book: ${descriptionArray.join(', ')}`);
 
-      return keywordsArray.map(word => vector[word] || 0);
+      return descriptionArray.map(word => vector[word] || 0);
     }
 
     // Computes term frequency (TF) for each word in a document
@@ -212,13 +211,10 @@
       const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
       const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
 
-      // Logging before return
-      console.log(`Cosine similarity calculation for vectors: ${vecA} and ${vecB}`);
-
       return dotProduct / (magnitudeA * magnitudeB);
     }
 
-    // Fetches recommendations from the Google Books API and processes XAI explanations
+    // Fetches recommendations from the Google Books API and processes based on description similarity
     async function getRecommendations(model) {
       const inputId = `bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
       const bookTitle = document.getElementById(inputId).value.toLowerCase();
@@ -229,7 +225,7 @@
       const includeSameAuthor = document.getElementById(`includeSameAuthor${model.charAt(0).toUpperCase() + model.slice(1)}`).checked;
 
       // Fetch book data from Google Books API
-      const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs';
+      const googleApiKey = 'YOUR_API_KEY';
       const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
 
       let books;
@@ -258,19 +254,20 @@
       }
 
       const allDescriptions = processedBooks.map(book => filterDescription(book.description));
-      const keywordVector = vectorizeKeywords(selectedBook.description, allDescriptions);
+      const inputBookVector = vectorizeDescription(filterDescription(selectedBook.description), allDescriptions);
 
       // Set to track seen titles
       const seenTitles = new Set();
       const recommendations = [];
-      let similarityScore = 0.2
-      // Function to add recommendations
+      let similarityScore = 0.2;
+
+      // Function to add recommendations based on description similarity
       function addRecommendations(similarityScore) {
         let initialLength = recommendations.length; // Track length before adding
 
         processedBooks.forEach((book) => {
-          const bookVector = vectorizeKeywords(filterDescription(book.description), allDescriptions);
-          const similarity = cosineSimilarity(keywordVector, bookVector);
+          const bookVector = vectorizeDescription(filterDescription(book.description), allDescriptions);
+          const similarity = cosineSimilarity(inputBookVector, bookVector);
 
           const normalizedTitle = book.title.toLowerCase();
           const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
@@ -288,7 +285,7 @@
       }
 
       // Add initial recommendations
-      addRecommendations();
+      addRecommendations(similarityScore);
 
       // If recommendations are fewer than 5, rerun the logic only if new books were added
       let attempts = 0;
