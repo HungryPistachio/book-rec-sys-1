@@ -318,37 +318,48 @@
         recommendationsList.appendChild(li);
       });
     }
-  // Attach click event handlers to the tab buttons
-  function initTabs() {
-    const tabButtons = document.querySelectorAll('.tab');
-    tabButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        handleTabClick(button.dataset.tab);
-      });
+// Attach click event handlers to the tab buttons
+function initTabs() {
+  const tabButtons = document.querySelectorAll('.tab');
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      handleTabClick(button.dataset.tab);
     });
+  });
 
-    // Show the initial tab content
-    showTabContent('noXAI');
-  }
+  // Show the initial tab content
+  showTabContent('noXAI');
+  // Add the 'active' class to the initial tab button
+  document.querySelector('.tab[data-tab="noXAI"]').classList.add('active');
+}
 
-  // Handle tab click event
-  function handleTabClick(tabId) {
-    showTabContent(tabId);
-  }
+// Handle tab click event
+function handleTabClick(tabId) {
+  // Remove the 'active' class from all tab buttons
+  const tabButtons = document.querySelectorAll('.tab');
+  tabButtons.forEach(button => {
+    button.classList.remove('active');
+  });
 
-  // Show the tab content
-  function showTabContent(tabId) {
-    const tabContents = document.querySelectorAll('.tab-content');
-    tabContents.forEach(content => {
-      content.style.display = 'none';
-    });
+  // Add the 'active' class to the clicked tab button
+  document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
 
-    const selectedTabContent = document.getElementById(tabId);
-    selectedTabContent.style.display = 'block';
-  }
+  showTabContent(tabId);
+}
 
-  // Call the initialization function when the page loads
-  window.addEventListener('DOMContentLoaded', initTabs);
+// Show the tab content
+function showTabContent(tabId) {
+  const tabContents = document.querySelectorAll('.tab-content');
+  tabContents.forEach(content => {
+    content.style.display = 'none';
+  });
+
+  const selectedTabContent = document.getElementById(tabId);
+  selectedTabContent.style.display = 'block';
+}
+
+// Call the initialization function when the page loads
+window.addEventListener('DOMContentLoaded', initTabs);
   </script>
 
 </body>
