@@ -318,6 +318,37 @@
         recommendationsList.appendChild(li);
       });
     }
+  // Attach click event handlers to the tab buttons
+  function initTabs() {
+    const tabButtons = document.querySelectorAll('.tab');
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        handleTabClick(button.dataset.tab);
+      });
+    });
+
+    // Show the initial tab content
+    showTabContent('noXAI');
+  }
+
+  // Handle tab click event
+  function handleTabClick(tabId) {
+    showTabContent(tabId);
+  }
+
+  // Show the tab content
+  function showTabContent(tabId) {
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabContents.forEach(content => {
+      content.style.display = 'none';
+    });
+
+    const selectedTabContent = document.getElementById(tabId);
+    selectedTabContent.style.display = 'block';
+  }
+
+  // Call the initialization function when the page loads
+  window.addEventListener('DOMContentLoaded', initTabs);
   </script>
 
 </body>
