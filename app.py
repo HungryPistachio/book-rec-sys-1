@@ -31,3 +31,6 @@ async def explain_xai(request: Request):
         return {"explanation": explanation['explanation']}
     else:
         return {"error": "Failed to generate explanation"}
+
+
+if __name__ == "__main__": uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
