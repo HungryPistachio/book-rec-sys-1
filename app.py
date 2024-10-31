@@ -1,5 +1,6 @@
 import uvicorn
-from fastapi import FastAPI, Request, jsonify
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from xai.lime_explanation import get_lime_explanation
 from xai.shap_explanation import get_shap_explanation
 from xai.counterfactual_explanation import get_counterfactual_explanation
@@ -23,12 +24,10 @@ async def explain_xai(request: Request):
         elif model == 'counterfactual':
             explanation = get_counterfactual_explanation(book_title, book_description, [book['description'] for book in all_books])
         else:
-            return jsonify({"error": "Invalid model specified"}), 400
+            return {"error": "Invalid model specified"}
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+        return {"error": str(e)}
     if explanation:
-        return jsonify({"explanation": explanation['explanation']})
+        return {"explanation": explanation['explanation']}
     else:
-        return jsonify({"error": "Failed to generate explanation"}), 500
-
+        return {"error": "Failed to generate explanation"}
