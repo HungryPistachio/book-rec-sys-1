@@ -3,88 +3,82 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" type="text/css" href="/static/styles.css">
+  <link rel="stylesheet" type="text/css" href="static/styles.css">
   <title>Book Recommendation</title>
 </head>
 <body>
-
 <div class="container">
   <h1>Book Recommendation System</h1>
-
   <div class="tabs">
     <button class="tab" data-tab="noXAI">No XAI</button>
     <button class="tab" data-tab="lime">LIME</button>
     <button class="tab" data-tab="shap">SHAP</button>
     <button class="tab" data-tab="counterfactual">Counterfactual</button>
   </div>
-
   <div id="tabContentContainer">
-   <!-- No XAI Tab -->
-<div id="noXAI" class="tab-content" style="display:none;">
-  <h2>No XAI Explanation</h2>
-  <input type="text" id="bookTitleNoXAI" placeholder="Enter a book title">
-  <div class="toggle-label">
-    <input type="checkbox" id="includeSameAuthorNoXAI" checked>
-    <label for="includeSameAuthorNoXAI">Include recommendations by the same author</label>
-  </div>
-  <button onclick="getRecommendations('noXAI')">Get Recommendations</button>
-  <ul id="recommendationsNoXAI"></ul>
-  <div id="noXAIExplanation" class="noXAI-explanation" style="display:none;">
-    <h2>No XAI Explanation for <span id="explainedTitleNoXAI"></span></h2>
-    <ul id="noXAIExplanationList"></ul>
+    <!-- No XAI Tab -->
+    <div id="noXAI" class="tab-content" style="display:none;">
+      <h2>No XAI Explanation</h2>
+      <input type="text" id="bookTitleNoXAI" placeholder="Enter a book title">
+      <div class="toggle-label">
+        <input type="checkbox" id="includeSameAuthorNoXAI" checked>
+        <label for="includeSameAuthorNoXAI">Include recommendations by the same author</label>
+      </div>
+      <button onclick="getRecommendations('noXAI')">Get Recommendations</button>
+      <ul id="recommendationsNoXAI"></ul>
+      <div id="noXAIExplanation" class="noXAI-explanation" style="display:none;">
+        <h2>No XAI Explanation for <span id="explainedTitleNoXAI"></span></h2>
+        <ul id="noXAIExplanationList"></ul>
+      </div>
+    </div>
+    <!-- LIME Tab -->
+    <div id="lime" class="tab-content" style="display:none;">
+      <h2>LIME Explanation</h2>
+      <input type="text" id="bookTitleLime" placeholder="Enter a book title">
+      <div class="toggle-label">
+        <input type="checkbox" id="includeSameAuthorLime" checked>
+        <label for="includeSameAuthorLime">Include recommendations by the same author</label>
+      </div>
+      <button onclick="getRecommendations('lime')">Get Recommendations</button>
+      <ul id="recommendationsLime"></ul>
+      <div id="limeExplanation" class="lime-explanation" style="display:none;">
+        <h2>LIME Explanation for <span id="explainedTitleLime"></span></h2>
+        <ul id="limeExplanationList"></ul>
+      </div>
+    </div>
+    <!-- SHAP Tab -->
+    <div id="shap" class="tab-content" style="display:none;">
+      <h2>SHAP Explanation</h2>
+      <input type="text" id="bookTitleShap" placeholder="Enter a book title">
+      <div class="toggle-label">
+        <input type="checkbox" id="includeSameAuthorShap" checked>
+        <label for="includeSameAuthorShap">Include recommendations by the same author</label>
+      </div>
+      <button onclick="getRecommendations('shap')">Get Recommendations</button>
+      <ul id="recommendationsShap"></ul>
+      <div id="shapExplanation" class="shap-explanation" style="display:none;">
+        <h2>SHAP Explanation for <span id="explainedTitleShap"></span></h2>
+        <ul id="shapExplanationList"></ul>
+      </div>
+    </div>
+    <!-- Counterfactual Tab -->
+    <div id="counterfactual" class="tab-content" style="display:none;">
+      <h2>Counterfactual Explanation</h2>
+      <input type="text" id="bookTitleCounterfactual" placeholder="Enter a book title">
+      <div class="toggle-label">
+        <input type="checkbox" id="includeSameAuthorCounterfactual" checked>
+        <label for="includeSameAuthorCounterfactual">Include recommendations by the same author</label>
+      </div>
+      <button onclick="getRecommendations('counterfactual')">Get Recommendations</button>
+      <ul id="recommendationsCounterfactual"></ul>
+      <div id="counterfactualExplanation" class="counterfactual-explanation" style="display:none;">
+        <h2>Counterfactual Explanation for <span id="explainedTitleCounterfactual"></span></h2>
+        <ul id="counterfactualExplanationList"></ul>
+      </div>
+    </div>
   </div>
 </div>
-
-<!-- LIME Tab -->
-<div id="lime" class="tab-content" style="display:none;">
-  <h2>LIME Explanation</h2>
-  <input type="text" id="bookTitleLime" placeholder="Enter a book title">
-  <div class="toggle-label">
-    <input type="checkbox" id="includeSameAuthorLime" checked>
-    <label for="includeSameAuthorLime">Include recommendations by the same author</label>
-  </div>
-  <button onclick="getRecommendations('lime')">Get Recommendations</button>
-  <ul id="recommendationsLime"></ul>
-  <div id="limeExplanation" class="lime-explanation" style="display:none;">
-    <h2>LIME Explanation for <span id="explainedTitleLime"></span></h2>
-    <ul id="limeExplanationList"></ul>
-  </div>
-</div>
-
-<!-- SHAP Tab -->
-<div id="shap" class="tab-content" style="display:none;">
-  <h2>SHAP Explanation</h2>
-  <input type="text" id="bookTitleShap" placeholder="Enter a book title">
-  <div class="toggle-label">
-    <input type="checkbox" id="includeSameAuthorShap" checked>
-    <label for="includeSameAuthorShap">Include recommendations by the same author</label>
-  </div>
-  <button onclick="getRecommendations('shap')">Get Recommendations</button>
-  <ul id="recommendationsShap"></ul>
-  <div id="shapExplanation" class="shap-explanation" style="display:none;">
-    <h2>SHAP Explanation for <span id="explainedTitleShap"></span></h2>
-    <ul id="shapExplanationList"></ul>
-  </div>
-</div>
-
-<!-- Counterfactual Tab -->
-<div id="counterfactual" class="tab-content" style="display:none;">
-  <h2>Counterfactual Explanation</h2>
-  <input type="text" id="bookTitleCounterfactual" placeholder="Enter a book title">
-  <div class="toggle-label">
-    <input type="checkbox" id="includeSameAuthorCounterfactual" checked>
-    <label for="includeSameAuthorCounterfactual">Include recommendations by the same author</label>
-  </div>
-  <button onclick="getRecommendations('counterfactual')">Get Recommendations</button>
-  <ul id="recommendationsCounterfactual"></ul>
-  <div id="counterfactualExplanation" class="counterfactual-explanation" style="display:none;">
-    <h2>Counterfactual Explanation for <span id="explainedTitleCounterfactual"></span></h2>
-    <ul id="counterfactualExplanationList"></ul>
-  </div>
-</div>
-  </div>
-
-<script>
+  <script>
     // Filter book descriptions by removing stop words
     function filterDescription(description) {
       const stopwords = ["the", "a", "an", "in", "on", "and", "or", "of", "to", "is", "for", "by"];
@@ -173,14 +167,14 @@
 
     // Extracts the top 20 keywords from the description using TF-IDF
     function extractTopKeywords(description, allDescriptions, numKeywords = 20) {
-        const documents = allDescriptions.map(doc => doc.split(' '));
-        const tfidfVectors = computeTFIDF(documents); // Compute TF-IDF for all documents
-        const descriptionArray = description.split(' '); // Split input description into words
-        const tfidf = computeTFIDF([descriptionArray])[0]; // Get TF-IDF vector for the input description
+      const documents = allDescriptions.map(doc => doc.split(' '));
+      const tfidfVectors = computeTFIDF(documents); // Compute TF-IDF for all documents
+      const descriptionArray = description.split(' '); // Split input description into words
+      const tfidf = computeTFIDF([descriptionArray])[0]; // Get TF-IDF vector for the input description
 
-        const sortedKeywords = Object.keys(tfidf).sort((a, b) => tfidf[b] - tfidf[a]); // Sort words by TF-IDF scores
-        const topKeywords = sortedKeywords.slice(0, numKeywords); // Take the top numKeywords
-        return topKeywords.join(' ');
+      const sortedKeywords = Object.keys(tfidf).sort((a, b) => tfidf[b] - tfidf[a]); // Sort words by TF-IDF scores
+      const topKeywords = sortedKeywords.slice(0, numKeywords); // Take the top numKeywords
+      return topKeywords.join(' ');
     }
 
     // Fetches recommendations from the Google Books API and refines them using similarity and reruns if necessary
@@ -310,194 +304,138 @@
         recommendationsList.appendChild(li);
       });
     }
-// Attach click event handlers to the tab buttons
-function initTabs() {
-  const tabButtons = document.querySelectorAll('.tab');
-  tabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      handleTabClick(button.dataset.tab);
-    });
-  });
+    // Attach click event handlers to the tab buttons
+    function initTabs() {
+      const tabButtons = document.querySelectorAll('.tab');
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          handleTabClick(button.dataset.tab);
+        });
+      });
 
-  // Show the initial tab content
-  showTabContent('noXAI');
-  // Add the 'active' class to the initial tab button
-  document.querySelector('.tab[data-tab="noXAI"]').classList.add('active');
-}
-
-// Handle tab click event
-function handleTabClick(tabId) {
-  // Remove the 'active' class from all tab buttons
-  const tabButtons = document.querySelectorAll('.tab');
-  tabButtons.forEach(button => {
-    button.classList.remove('active');
-  });
-
-  // Add the 'active' class to the clicked tab button
-  document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
-
-  showTabContent(tabId);
-}
-
-// Show the tab content
-function showTabContent(tabId) {
-  const tabContents = document.querySelectorAll('.tab-content');
-  tabContents.forEach(content => {
-    content.style.display = 'none';
-  });
-
-  const selectedTabContent = document.getElementById(tabId);
-  selectedTabContent.style.display = 'block';
-}
-
-// Call the initialization function when the page loads
-window.addEventListener('DOMContentLoaded', initTabs);
-
-// LIME Explanation
-async function getLIMEExplanation(model) {
-  const bookTitle = document.getElementById(`bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`).value;
-  try {
-    const explanation = await fetchLIMEExplanation(bookTitle);
-    updateLIMEExplanationUI(explanation);
-  } catch (error) {
-    console.error('Error getting LIME explanation:', error);
-  }
-}
-
-// SHAP Explanation
-async function getSHAPExplanation(model) {
-  const bookTitle = document.getElementById(`bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`).value;
-  try {
-    const explanation = await fetchSHAPExplanation(bookTitle);
-    updateSHAPExplanationUI(explanation);
-  } catch (error) {
-    console.error('Error getting SHAP explanation:', error);
-  }
-}
-
-// Counterfactual Explanation
-async function getCounterfactualExplanation(model) {
-  const bookTitle = document.getElementById(`bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`).value;
-  const targetValue = 123.45; // Replace with the desired target value
-  try {
-    const explanation = await fetchCounterfactualExplanation(bookTitle, targetValue);
-    updateCounterfactualExplanationUI(explanation);
-  } catch (error) {
-    console.error('Error getting Counterfactual explanation:', error);
-  }
-}
-  
-  // Fetch LIME Explanation
-async function fetchLIMEExplanation(bookTitle) {
-  try {
-    const response = await fetch('/lime-explanation', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ bookTitle: bookTitle })
-    });
-
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+      // Show the initial tab content
+      showTabContent('noXAI');
+      // Add the 'active' class to the initial tab button
+      document.querySelector('.tab[data-tab="noXAI"]').classList.add('active');
     }
 
-    const explanation = await response.json();
-    return explanation;
-  } catch (error) {
-    console.error('Error fetching LIME explanation:', error);
-    throw error;
-  }
-}
+    // Handle tab click event
+    function handleTabClick(tabId) {
+      // Remove the 'active' class from all tab buttons
+      const tabButtons = document.querySelectorAll('.tab');
+      tabButtons.forEach(button => {
+        button.classList.remove('active');
+      });
 
-// Update LIME Explanation UI
-function updateLIMEExplanationUI(explanation) {
-  const limeExplanationList = document.getElementById('limeExplanationList');
-  limeExplanationList.innerHTML = '';
+      // Add the 'active' class to the clicked tab button
+      document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
 
-  explanation.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = `${item[0]}: ${item[1]}`;
-    limeExplanationList.appendChild(li);
-  });
-
-  document.getElementById('limeExplanation').style.display = 'block';
-}
-
-// Fetch SHAP Explanation
-async function fetchSHAPExplanation(bookTitle) {
-  try {
-    const response = await fetch('/shap-explanation', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ bookTitle: bookTitle })
-    });
-
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+      showTabContent(tabId);
     }
 
-    const explanation = await response.json();
-    return explanation;
-  } catch (error) {
-    console.error('Error fetching SHAP explanation:', error);
-    throw error;
-  }
-}
+    // Show the tab content
+    function showTabContent(tabId) {
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(content => {
+        content.style.display = 'none';
+      });
 
-// Update SHAP Explanation UI
-function updateSHAPExplanationUI(explanation) {
-  const shapExplanationList = document.getElementById('shapExplanationList');
-  shapExplanationList.innerHTML = '';
-
-  explanation.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = `${item[0]}: ${item[1]}`;
-    shapExplanationList.appendChild(li);
-  });
-
-  document.getElementById('shapExplanation').style.display = 'block';
-}
-
-// Fetch Counterfactual Explanation
-async function fetchCounterfactualExplanation(bookTitle, targetValue) {
-  try {
-    const response = await fetch('/counterfactual-explanation', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ bookTitle: bookTitle, targetValue: targetValue })
-    });
-
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
+      const selectedTabContent = document.getElementById(tabId);
+      selectedTabContent.style.display = 'block';
     }
 
-    const explanation = await response.json();
-    return explanation;
-  } catch (error) {
-    console.error('Error fetching Counterfactual explanation:', error);
-    throw error;
-  }
-}
+    // Call the initialization function when the page loads
+    window.addEventListener('DOMContentLoaded', initTabs);
 
-// Update Counterfactual Explanation UI
-function updateCounterfactualExplanationUI(explanation) {
-  const counterfactualExplanationList = document.getElementById('counterfactualExplanationList');
-  counterfactualExplanationList.innerHTML = '';
+    async function getExplanation(model, index) {
+      const book = finalRecommendations[index];  // The selected book
+      const bookTitle = book.title;
+      const bookDescription = book.description;
+      const allDescriptions = finalRecommendations.map(book => book.description);  // Extract only descriptions
 
-  explanation.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = `${item[0]}: ${item[1]}`;
-    counterfactualExplanationList.appendChild(li);
-  });
+      try {
+        let explanation;
+        if (model === 'lime') {
+          explanation = await fetchLIMEExplanation(bookTitle, bookDescription, allDescriptions);
+          updateLIMEExplanationUI(explanation);
+        } else if (model === 'shap') {
+          explanation = await fetchSHAPExplanation(bookTitle, bookDescription, allDescriptions);
+          updateSHAPExplanationUI(explanation);
+        } else if (model === 'counterfactual') {
+          explanation = await fetchCounterfactualExplanation(bookTitle, bookDescription, allDescriptions);
+          updateCounterfactualExplanationUI(explanation);
+        }
+      } catch (error) {
+        console.error(`Error getting ${model} explanation:`, error);
+      }
+    }
 
-  document.getElementById('counterfactualExplanation').style.display = 'block';
-}
+
+    // Fetch LIME Explanation
+    async function fetchLIMEExplanation(bookTitle, bookDescription, allDescriptions) {
+      try {
+        const response = await fetch('/lime-explanation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+                                 book_title: bookTitle,
+                                 book_description: bookDescription,
+                                 all_books: allDescriptions  // Pass all descriptions
+                               })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching LIME explanation:', error);
+        throw error;
+      }
+    }
+
+
+    // Fetch SHAP Explanation
+    async function fetchSHAPExplanation(bookTitle, bookDescription, allDescriptions) {
+      try {
+        const response = await fetch('/shap-explanation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+                                 book_title: bookTitle,
+                                 book_description: bookDescription,
+                                 all_books: allDescriptions  // Pass all descriptions
+                               })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching SHAP explanation:', error);
+        throw error;
+      }
+    }
+
+
+    // Fetch CF Explanation
+    async function fetchCounterfactualExplanation(bookTitle, bookDescription, allDescriptions) {
+      try {
+        const response = await fetch('//counterfactual-explanation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+                                 book_title: bookTitle,
+                                 book_description: bookDescription,
+                                 all_books: allDescriptions  // Pass all descriptions
+                               })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+      } catch (error) {
+        console.error('Error fetching CF explanation:', error);
+        throw error;
+      }
+    }
+    
   </script>
-
 </body>
 </html>
