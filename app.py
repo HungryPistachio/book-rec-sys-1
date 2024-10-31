@@ -10,11 +10,11 @@ from xai.counterfactual_explanation import get_counterfactual_explanation
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="path/to/static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    with open("templates//index.html") as file:
+    with open("templates/index.html") as file:
         return file.read()
 
 # @app.post("/explain_xai")
