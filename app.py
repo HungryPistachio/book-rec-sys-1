@@ -32,5 +32,3 @@ async def explain_xai(request: Request):
     else:
         return jsonify({"error": "Failed to generate explanation"}), 500
 
-    if __name__ == "__main__":
-        uvicorn.run(app, host="0.0.0.0", port=8000)
