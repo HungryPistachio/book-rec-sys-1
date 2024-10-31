@@ -1,23 +1,14 @@
-from flask import Flask, render_template, request, jsonify
-from xai.lime_explanation import get_lime_explanation  # Import explanation functions
+import uvicorn
+from fastapi import FastAPI, Request, jsonify
+from xai.lime_explanation import get_lime_explanation
 from xai.shap_explanation import get_shap_explanation
 from xai.counterfactual_explanation import get_counterfactual_explanation
 
-app = Flask(__name__)
+app = FastAPI()
 
-# Route to serve the index.html frontend
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-# Route to handle XAI explanations
-@app.route('/explain_xai', methods=['POST'])
-def explain_xai():
-    app.logger.info("Received POST request for explanation")  # Log the request arrival
-    data = request.json
-    
-    app.logger.info(f"Data received: {data}")  # Log the data received
-
+@app.post("/explain_xai")
+async def explain_xai(request: Request):
+    data = await request.json()
     model = data.get('model')
     book_title = data.get('book_title')
     book_description = data.get('book_description')
@@ -34,7 +25,6 @@ def explain_xai():
         else:
             return jsonify({"error": "Invalid model specified"}), 400
     except Exception as e:
-        app.logger.error(f"Error generating explanation: {str(e)}")  # Log the error
         return jsonify({"error": str(e)}), 500
 
     if explanation:
@@ -42,6 +32,5 @@ def explain_xai():
     else:
         return jsonify({"error": "Failed to generate explanation"}), 500
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
+    if __name__ == "__main__":
+        uvicorn.run(app, host="0.0.0.0", port=8000)
