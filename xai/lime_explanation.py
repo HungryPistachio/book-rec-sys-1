@@ -4,7 +4,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 import numpy as np
 
-def get_lime_explanation(book_title, description_vector, tfidf_matrix, feature_names):
+def get_lime_explanation(book_title, book_description, all_books, tfidf_matrix, feature_names):
     # Train a simple logistic regression model for explanations
     model = LogisticRegression()
     labels = np.random.randint(0, 2, size=(tfidf_matrix.shape[0],))  # Random binary labels as example
