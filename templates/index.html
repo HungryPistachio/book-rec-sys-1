@@ -76,7 +76,7 @@
     recommendationsList.innerHTML = '';
 
     const includeSameAuthor = document.getElementById(`includeSameAuthor${capitalize(tab)}`).checked;
-    const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs'; // Replace with your actual API key
+    const googleApiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your actual API key
     const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
 
     let books;
@@ -188,6 +188,32 @@
       explanationListElement.appendChild(listItem);
     });
     document.getElementById(`${type}Explanation`).style.display = 'block';
+  }
+
+  function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
+    const finalRecommendations = [];
+    const similarityScoreThreshold = 0.2;
+
+    processedBooks.forEach((book, index) => {
+      const bookVector = tfidf_matrix[index];
+      const similarity = cosineSimilarity(description_vector, bookVector);
+
+      if (similarity > similarityScoreThreshold) {
+        const isSameAuthor = includeSameAuthor || !book.authors.some(author => processedBooks[0].authors.includes(author));
+        if (isSameAuthor) {
+          finalRecommendations.push(book);
+        }
+      }
+    });
+
+    return finalRecommendations.slice(0, 5); // Limit to top 5 recommendations
+  }
+
+  function cosineSimilarity(vecA, vecB) {
+    const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+    const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+    const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+    return dotProduct / (magnitudeA * magnitudeB);
   }
 </script>
 </body>
