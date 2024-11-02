@@ -138,15 +138,26 @@
       recommendationsList.appendChild(li);
     });
 
+    if (!selectedBook) {
+      console.error("Selected book not found in API response");
+      return;
+    }
+
+    // Use selectedBook.description as bookDescription
+    const bookDescription = selectedBook.description;
+
+    // Create an array of descriptions for all books as allDescriptions
+    const allDescriptions = processedBooks.map(book => book.description);
+
     try {
       if (tab === "lime") {
-        const limeExplanation = await fetchExplanation('lime', bookTitle, description_vector, tfidf_matrix, feature_names);
+        const limeExplanation = await fetchExplanation('lime', selectedBook.title, bookDescription, allDescriptions);
         displayExplanation(limeExplanation, 'lime');
       } else if (tab === "shap") {
-        const shapExplanation = await fetchExplanation('shap', bookTitle, description_vector, tfidf_matrix, feature_names);
+        const shapExplanation = await fetchExplanation('shap', selectedBook.title, bookDescription, allDescriptions);
         displayExplanation(shapExplanation, 'shap');
       } else if (tab === "counterfactual") {
-        const counterfactualExplanation = await fetchExplanation('counterfactual', bookTitle, description_vector, tfidf_matrix, feature_names);
+        const counterfactualExplanation = await fetchExplanation('counterfactual', selectedBook.title, bookDescription, allDescriptions);
         displayExplanation(counterfactualExplanation, 'counterfactual');
       }
     } catch (error) {
