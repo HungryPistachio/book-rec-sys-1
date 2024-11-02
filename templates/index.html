@@ -76,7 +76,7 @@
     recommendationsList.innerHTML = '';
 
     const includeSameAuthor = document.getElementById(`includeSameAuthor${capitalize(tab)}`).checked;
-    const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs'; // Replace with your actual API key
+    const googleApiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your actual API key
     const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
 
     let books;
@@ -174,21 +174,36 @@
   }
 
   function displayExplanation(data, type) {
-    document.getElementById(`explainedTitle${capitalize(type)}`).textContent = data.title;
+    // Update the explanation title with the book title
+    document.getElementById(`explainedTitle${capitalize(type)}`).textContent = data.title || "Unknown Title";
+
     const explanationListElement = document.getElementById(`${type}ExplanationList`);
     explanationListElement.innerHTML = ''; // Clear previous explanations
 
+    // Add general explanation
     const generalExplanationItem = document.createElement('li');
-    generalExplanationItem.textContent = data.general_explanation;
+    generalExplanationItem.textContent = data.general_explanation || "No general explanation provided.";
     explanationListElement.appendChild(generalExplanationItem);
 
-    data[`${type}_output`].forEach(item => {
-      const listItem = document.createElement('li');
-      listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`;
-      explanationListElement.appendChild(listItem);
-    });
+    // Extract and display the specific explanation output array
+    const explanationOutput = data[`${type}_output`];
+    if (Array.isArray(explanationOutput)) {
+      explanationOutput.forEach(item => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`; // Word and weight
+        explanationListElement.appendChild(listItem);
+      });
+    } else {
+      // Handle cases where explanation output is missing or undefined
+      const errorItem = document.createElement('li');
+      errorItem.textContent = "Explanation output not available.";
+      explanationListElement.appendChild(errorItem);
+    }
+
+    // Show the explanation section
     document.getElementById(`${type}Explanation`).style.display = 'block';
   }
+
 
   function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
     const finalRecommendations = [];
