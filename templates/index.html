@@ -80,6 +80,48 @@
 </div>
   <script>
     // Filter book descriptions by removing stop words
+    // Initialize tabs and display the "No XAI" tab by default
+    window.addEventListener("DOMContentLoaded", initTabs);
+
+    function initTabs() {
+      const tabButtons = document.querySelectorAll(".tab");
+
+      // Show the initial "No XAI" tab content
+      showTabContent("noXAI");
+
+      // Set "No XAI" tab as active
+      document.querySelector('.tab[data-tab="noXAI"]').classList.add("active");
+
+      // Add event listeners to each tab button
+      tabButtons.forEach(button => {
+        button.addEventListener("click", () => {
+          handleTabClick(button.dataset.tab);
+        });
+      });
+    }
+
+    // Handle tab click event
+    function handleTabClick(tabId) {
+      // Remove "active" class from all tab buttons
+      document.querySelectorAll(".tab").forEach(button => {
+        button.classList.remove("active");
+      });
+
+      // Add "active" class to the clicked tab button
+      document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add("active");
+
+      // Show the corresponding tab content
+      showTabContent(tabId);
+    }
+
+    // Show the content of the selected tab and hide others
+    function showTabContent(tabId) {
+      document.querySelectorAll(".tab-content").forEach(content => {
+        content.style.display = content.id === tabId ? "block" : "none";
+      });
+    }
+
+
     function filterDescription(description) {
       const stopwords = ["the", "a", "an", "in", "on", "and", "or", "of", "to", "is", "for", "by"];
       return description
