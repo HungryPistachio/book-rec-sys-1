@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from sklearn.feature_extraction.text import TfidfVectorizer  # Import TfidfVectorizer
 from xai.counterfactual_explanation import get_counterfactual_explanation
 from xai.lime_explanation import get_lime_explanation
 from xai.shap_explanation import get_shap_explanation
@@ -17,6 +18,25 @@ async def root():
     with open("templates/index.html") as file:
         return file.read()
 
+@app.post("/vectorize-descriptions")
+async def vectorize_descriptions(request: Request):
+    data = await request.json()
+    descriptions = data.get("descriptions", [])
+
+    if not descriptions:
+        return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
+
+    # Vectorize all descriptions at once
+    vectorizer = TfidfVectorizer()
+    tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
+    feature_names = vectorizer.get_feature_names_out()
+    description_vector = tfidf_matrix[0].tolist()  # Assuming the first description is the target
+
+    return JSONResponse(content={
+        "tfidf_matrix": tfidf_matrix.tolist(),
+        "feature_names": feature_names.tolist(),
+        "description_vector": description_vector
+    })
 # LIME explanation endpoint
 @app.post("/lime-explanation")
 async def lime_explanation(request: Request):
