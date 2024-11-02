@@ -184,6 +184,12 @@
     // Create an array of descriptions for all books as allDescriptions
     const allDescriptions = processedBooks.map(book => book.description);
 
+    // Assuming `finalRecommendations` contains the selected books
+    const recommendedIndices = finalRecommendations.map(book => processedBooks.indexOf(book));
+
+// Filter the TF-IDF matrix to only include rows for recommended books
+    const filteredTfidfMatrix = recommendedIndices.map(index => tfidf_matrix[index]);
+
     try {
       if (tab === "lime") {
         const limeExplanation = await fetchExplanation('lime', bookTitle, description_vector, filteredTfidfMatrix, feature_names);
