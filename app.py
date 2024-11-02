@@ -31,7 +31,10 @@ async def vectorize_descriptions(request: Request):
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
     feature_names = vectorizer.get_feature_names_out()
     description_vector = tfidf_matrix[0].tolist()  # Assuming the first description is the target
-
+    
+    # Log matrix shape for debugging
+    print("TF-IDF Matrix Shape:", tfidf_matrix.shape)
+    
     return JSONResponse(content={
         "tfidf_matrix": tfidf_matrix.tolist(),
         "feature_names": feature_names.tolist(),
