@@ -3,10 +3,10 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 
-def get_shap_explanation(book_title, description_vector, tfidf_matrix, feature_names):
+def get_shap_explanation(book_title, description_vector, tfidf_matrix, feature_names, all_books):
     # Train a simple logistic regression model for explanations
     model = LogisticRegression()
-    labels = np.random.randint(0, 2, size=(tfidf_matrix.shape[0],))  # Random binary labels as example
+    labels = [1 if "mystery" in desc else 0 for desc in all_books]  # Example binary labels
     model.fit(tfidf_matrix, labels)
 
     # Initialize the SHAP explainer for linear models
