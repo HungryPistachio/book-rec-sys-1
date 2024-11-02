@@ -1,32 +1,31 @@
 import shap
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
 import numpy as np
+from sklearn.linear_model import LogisticRegression
+import pandas as pd
 
-def get_shap_explanation(book_title, book_description, all_descriptions):
-    # Vectorize the descriptions
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform(all_descriptions)
-
-    # Create a simple logistic regression model to explain (could use any model)
+def get_shap_explanation(book_title, description_vector, tfidf_matrix, feature_names):
+    # Train a simple logistic regression model for explanations
     model = LogisticRegression()
-    labels = np.random.randint(0, 2, size=(tfidf_matrix.shape[0],))
+    labels = np.random.randint(0, 2, size=(tfidf_matrix.shape[0],))  # Random binary labels as example
     model.fit(tfidf_matrix, labels)
 
-    # Generate SHAP values
-    explainer = shap.LinearExplainer(model, tfidf_matrix, feature_dependence="independent")
-    shap_values = explainer(vectorizer.transform([book_description]))
+    # Initialize the SHAP explainer for linear models
+    explainer = shap.LinearExplainer(model, tfidf_matrix, feature_perturbation="independent")
 
-    explanation_list = zip(vectorizer.get_feature_names_out(), shap_values.values[0])
+    # Get SHAP values for the description vector
+    shap_values = explainer.shap_values(np.array([description_vector]))
+
+    # Pair features with their corresponding SHAP values
+    explanation_list = list(zip(feature_names, shap_values[0]))
 
     # General explanation
     general_explanation = (
-        f"SHAP values explain the impact of each word on the model's recommendation. "
-        f"A higher SHAP value means the word increases the likelihood of recommending the book '{book_title}'."
+        f"SHAP values indicate the importance of each word in predicting recommendations. "
+        f"A higher SHAP value means a stronger influence on the recommendation for '{book_title}'."
     )
-    
+
     return {
         "title": book_title,
-        "general_explanation": general_explanation, # General explanation once
-        "shap_output": list(explanation_list)       # Raw SHAP output
+        "general_explanation": general_explanation,
+        "shap_output": explanation_list  # List of (feature, SHAP value) pairs
     }
