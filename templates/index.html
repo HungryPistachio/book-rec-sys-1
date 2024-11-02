@@ -178,17 +178,17 @@
     }
 
     // Fetches recommendations from the Google Books API and refines them using similarity and reruns if necessary
-    async function getRecommendations(model) {
-      const inputId = `bookTitle${model.charAt(0).toUpperCase() + model.slice(1)}`;
+    async function getRecommendations(tab) {
+      const inputId = `bookTitle${capitalize(tab)}`;
       const bookTitle = document.getElementById(inputId).value.toLowerCase();
-      const recommendationsId = `recommendations${model.charAt(0).toUpperCase() + model.slice(1)}`;
+      const recommendationsId = `recommendations${capitalize(tab)}`;
       const recommendationsList = document.getElementById(recommendationsId);
       recommendationsList.innerHTML = '';  // Clear previous recommendations
 
-      const includeSameAuthor = document.getElementById(`includeSameAuthor${model.charAt(0).toUpperCase() + model.slice(1)}`).checked;
+      const includeSameAuthor = document.getElementById(`includeSameAuthor${capitalize(tab)}`).checked;
 
       // Fetch book data from Google Books API (first API call)
-      const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs';
+      const googleApiKey = 'YOUR_GOOGLE_API_KEY'; // Replace with your actual API key
       const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
 
       let books;
@@ -240,202 +240,268 @@
         link: book.volumeInfo.infoLink || "#"
       }));
 
-      // Set to track seen titles
       const seenTitles = new Set();
       const finalRecommendations = [];
       let similarityScore = 0.2;  // Set an initial similarity threshold
 
       // Function to add recommendations based on similarity
-      function addRecommendations() {
-        let initialLength = finalRecommendations.length;
+      async function getRecommendations(tab) {
+        const bookTitle = document.getElementById(`bookTitle${capitalize(tab)}`).value;
+        const recommendationsList = document.getElementById(`recommendations${capitalize(tab)}`);
+        recommendationsList.innerHTML = '';  // Clear previous recommendations
 
-        recommendations.forEach((book) => {
-          const bookVector = vectorizeDescription(filterDescription(book.description), allDescriptions);
-          const inputBookVector = vectorizeDescription(filterDescription(selectedBook.description), allDescriptions);
-          const similarity = cosineSimilarity(inputBookVector, bookVector);
+        const includeSameAuthor = document.getElementById(`includeSameAuthor${capitalize(tab)}`).checked;
 
-          const normalizedTitle = book.title.toLowerCase();
-          const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
+        // Fetch initial book data from Google Books API
+        const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs'; // Replace with your actual API key
+        const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
 
-          if (similarity > similarityScore && normalizedTitle !== bookTitle && !normalizedTitle.includes(bookTitle)) {
-            if (!seenTitles.has(normalizedTitle)) {
+        let books;
+        try {
+          const apiResponse = await fetch(googleApiUrl);
+          const apiData = await apiResponse.json();
+          books = apiData.items || [];
+        } catch (error) {
+          console.error("Error fetching books from Google API", error);
+          return;
+        }
+
+        const processedBooks = books.map(book => ({
+          title: book.volumeInfo.title || "Unknown Title",
+          authors: book.volumeInfo.authors || [],
+          description: book.volumeInfo.description || "No description available",
+          link: book.volumeInfo.infoLink || "#"
+        }));
+
+        // Extract descriptions to send to the backend for TF-IDF processing
+        const descriptions = processedBooks.map(book => book.description);
+        const selectedBook = processedBooks.find(book => book.title.toLowerCase() === bookTitle.toLowerCase());
+
+        if (!selectedBook) {
+          console.error("Selected book not found");
+          return;
+        }
+
+        // Send descriptions to backend for TF-IDF processing
+        const response = await fetch("/vectorize-descriptions", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({descriptions})
+        });
+
+        const {tfidf_matrix, feature_names, description_vector} = await response.json();
+
+        // Filter recommendations based on similarity and `includeSameAuthor`
+        const allDescriptions = descriptions.map(desc => filterDescription(desc));
+        const finalRecommendations = filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor);
+
+        // Display final recommendations
+        finalRecommendations.forEach(bookInfo => {
+          const li = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = bookInfo.link;
+          link.target = "_blank";
+          link.textContent = `${bookInfo.title} by ${bookInfo.authors.join(', ')}`;
+          li.appendChild(link);
+          recommendationsList.appendChild(li);
+        });
+
+        // Fetch and display explanations only if tab is LIME, SHAP, or Counterfactual
+        if (tab === "lime") {
+          const limeExplanation = await fetchLIMEExplanation(bookTitle, description_vector, tfidf_matrix, feature_names);
+          displayLIMEExplanation(limeExplanation);
+        } else if (tab === "shap") {
+          const shapExplanation = await fetchSHAPExplanation(bookTitle, description_vector, tfidf_matrix, feature_names);
+          displaySHAPExplanation(shapExplanation);
+        } else if (tab === "counterfactual") {
+          const counterfactualExplanation = await fetchCounterfactualExplanation(bookTitle, description_vector, tfidf_matrix, feature_names);
+          displayCounterfactualExplanation(counterfactualExplanation);
+        }
+      }
+
+// Helper to capitalize the tab name (used for element ID lookup)
+      function capitalize(word) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }
+
+// Helper function to filter recommendations based on similarity and author inclusion
+      function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
+        const seenTitles = new Set();
+        const finalRecommendations = [];
+        let similarityScore = 0.2;
+
+        function addRecommendations() {
+          const initialLength = finalRecommendations.length;
+
+          processedBooks.forEach((book, index) => {
+            const bookVector = tfidf_matrix[index];
+            const similarity = cosineSimilarity(description_vector, bookVector);
+
+            const normalizedTitle = book.title.toLowerCase();
+            const isSameAuthor = book.authors.some(author => processedBooks[0].authors.includes(author));
+
+            if (similarity > similarityScore && !seenTitles.has(normalizedTitle)) {
               if (includeSameAuthor || !isSameAuthor) {
                 seenTitles.add(normalizedTitle);
                 finalRecommendations.push(book);
               }
             }
+          });
+          return finalRecommendations.length > initialLength;
+        }
+
+        addRecommendations();
+
+        // If recommendations are fewer than 5, adjust the threshold
+        let attempts = 0;
+        while (finalRecommendations.length < 5 && attempts < 8) {
+          if (!addRecommendations()) {
+            break;
           }
-        });
-        return finalRecommendations.length > initialLength;
-      }
-
-      // Add initial recommendations
-      addRecommendations();
-
-      // If recommendations are fewer than 5, rerun the logic with lower similarity threshold
-      let attempts = 0;
-      while (finalRecommendations.length < 5 && attempts < 8) {
-        if (!addRecommendations()) {
-          break;
+          similarityScore -= 0.02;
+          attempts++;
         }
-        similarityScore -= 0.02; // Decrease similarity threshold for more lenient matches
-        attempts++;
-      }
 
-      // Trim recommendations to exactly 5 if needed
-      if (finalRecommendations.length > 5) {
-        finalRecommendations.splice(5);
-      }
-
-      // Handle empty recommendations
-      if (finalRecommendations.length === 0) {
-        recommendationsList.innerHTML = "<li>No valid recommendations found.</li>";
-        return;
-      }
-
-      // Display final recommendations
-      finalRecommendations.forEach(bookInfo => {
-        const li = document.createElement("li");
-        const link = document.createElement("a");
-        link.href = bookInfo.link;
-        link.target = "_blank";
-        link.textContent = `${bookInfo.title} by ${bookInfo.authors.join(', ')}`;
-        li.appendChild(link);
-        recommendationsList.appendChild(li);
-      });
-    }
-    // Attach click event handlers to the tab buttons
-    function initTabs() {
-      const tabButtons = document.querySelectorAll('.tab');
-      tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-          handleTabClick(button.dataset.tab);
-        });
-      });
-
-      // Show the initial tab content
-      showTabContent('noXAI');
-      // Add the 'active' class to the initial tab button
-      document.querySelector('.tab[data-tab="noXAI"]').classList.add('active');
-    }
-
-    // Handle tab click event
-    function handleTabClick(tabId) {
-      // Remove the 'active' class from all tab buttons
-      const tabButtons = document.querySelectorAll('.tab');
-      tabButtons.forEach(button => {
-        button.classList.remove('active');
-      });
-
-      // Add the 'active' class to the clicked tab button
-      document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
-
-      showTabContent(tabId);
-    }
-
-    // Show the tab content
-    function showTabContent(tabId) {
-      const tabContents = document.querySelectorAll('.tab-content');
-      tabContents.forEach(content => {
-        content.style.display = 'none';
-      });
-
-      const selectedTabContent = document.getElementById(tabId);
-      selectedTabContent.style.display = 'block';
-    }
-
-    // Call the initialization function when the page loads
-    window.addEventListener('DOMContentLoaded', initTabs);
-
-    async function getExplanation(model, index) {
-      const book = finalRecommendations[index];  // The selected book
-      const bookTitle = book.title;
-      const bookDescription = book.description;
-      const allDescriptions = finalRecommendations.map(book => book.description);  // Extract only descriptions
-
-      try {
-        let explanation;
-        if (model === 'lime') {
-          explanation = await fetchLIMEExplanation(bookTitle, bookDescription, allDescriptions);
-          updateLIMEExplanationUI(explanation);
-        } else if (model === 'shap') {
-          explanation = await fetchSHAPExplanation(bookTitle, bookDescription, allDescriptions);
-          updateSHAPExplanationUI(explanation);
-        } else if (model === 'counterfactual') {
-          explanation = await fetchCounterfactualExplanation(bookTitle, bookDescription, allDescriptions);
-          updateCounterfactualExplanationUI(explanation);
+        if (finalRecommendations.length > 5) {
+          finalRecommendations.splice(5);
         }
-      } catch (error) {
-        console.error(`Error getting ${model} explanation:`, error);
+
+        return finalRecommendations;
       }
-    }
 
+      // Display LIME Explanation
+      function displayLIMEExplanation(data) {
+        document.getElementById('explainedTitleLime').textContent = data.title;
 
-    // Fetch LIME Explanation
-    async function fetchLIMEExplanation(bookTitle, bookDescription, allDescriptions) {
-      try {
-        const response = await fetch('/lime-explanation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-                                 book_title: bookTitle,
-                                 book_description: bookDescription,
-                                 all_books: allDescriptions  // Pass all descriptions
-                               })
+        const explanationListElement = document.getElementById('limeExplanationList');
+        explanationListElement.innerHTML = ''; // Clear previous explanations
+
+        // Add general explanation
+        const generalExplanationItem = document.createElement('li');
+        generalExplanationItem.textContent = data.general_explanation;
+        explanationListElement.appendChild(generalExplanationItem);
+
+        // Populate LIME explanation list
+        data.lime_output.forEach(item => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`; // Word and weight
+          explanationListElement.appendChild(listItem);
         });
 
-        if (!response.ok) throw new Error('Network response was not ok');
-        return await response.json();
-      } catch (error) {
-        console.error('Error fetching LIME explanation:', error);
-        throw error;
+        // Show the explanation section
+        document.getElementById('limeExplanation').style.display = 'block';
       }
-    }
 
+      // Display SHAP Explanation
+      function displaySHAPExplanation(data) {
+        document.getElementById('explainedTitleShap').textContent = data.title;
 
-    // Fetch SHAP Explanation
-    async function fetchSHAPExplanation(bookTitle, bookDescription, allDescriptions) {
-      try {
-        const response = await fetch('/shap-explanation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-                                 book_title: bookTitle,
-                                 book_description: bookDescription,
-                                 all_books: allDescriptions  // Pass all descriptions
-                               })
+        const explanationListElement = document.getElementById('shapExplanationList');
+        explanationListElement.innerHTML = ''; // Clear previous explanations
+
+        // Add general explanation
+        const generalExplanationItem = document.createElement('li');
+        generalExplanationItem.textContent = data.general_explanation;
+        explanationListElement.appendChild(generalExplanationItem);
+
+        // Populate SHAP explanation list
+        data.shap_output.forEach(item => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`; // Word and weight
+          explanationListElement.appendChild(listItem);
         });
 
-        if (!response.ok) throw new Error('Network response was not ok');
-        return await response.json();
-      } catch (error) {
-        console.error('Error fetching SHAP explanation:', error);
-        throw error;
+        // Show the explanation section
+        document.getElementById('shapExplanation').style.display = 'block';
       }
-    }
 
+      // Display Counterfactual Explanation
+      function displayCounterfactualExplanation(data) {
+        document.getElementById('explainedTitleCounterfactual').textContent = data.title;
 
-    // Fetch CF Explanation
-    async function fetchCounterfactualExplanation(bookTitle, bookDescription, allDescriptions) {
-      try {
-        const response = await fetch('//counterfactual-explanation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-                                 book_title: bookTitle,
-                                 book_description: bookDescription,
-                                 all_books: allDescriptions  // Pass all descriptions
-                               })
+        const explanationListElement = document.getElementById('counterfactualExplanationList');
+        explanationListElement.innerHTML = ''; // Clear previous explanations
+
+        // Add general explanation
+        const generalExplanationItem = document.createElement('li');
+        generalExplanationItem.textContent = data.general_explanation;
+        explanationListElement.appendChild(generalExplanationItem);
+
+        // Populate Counterfactual explanation list
+        data.counterfactual_output.forEach(item => {
+          const listItem = document.createElement('li');
+          listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`; // Feature and impact
+          explanationListElement.appendChild(listItem);
         });
 
-        if (!response.ok) throw new Error('Network response was not ok');
-        return await response.json();
-      } catch (error) {
-        console.error('Error fetching CF explanation:', error);
-        throw error;
+        // Show the explanation section
+        document.getElementById('counterfactualExplanation').style.display = 'block';
+      }
+
+      // Fetch LIME Explanation
+      async function fetchLIMEExplanation(bookTitle, bookDescription, allDescriptions) {
+        try {
+          const response = await fetch('/lime-explanation', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                                   book_title: bookTitle,
+                                   book_description: bookDescription,
+                                   all_books: allDescriptions  // Pass all descriptions
+                                 })
+          });
+
+          if (!response.ok) throw new Error('Network response was not ok');
+          return await response.json();
+        } catch (error) {
+          console.error('Error fetching LIME explanation:', error);
+          throw error;
+        }
+      }
+
+      // Fetch SHAP Explanation
+      async function fetchSHAPExplanation(bookTitle, bookDescription, allDescriptions) {
+        try {
+          const response = await fetch('/shap-explanation', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                                   book_title: bookTitle,
+                                   book_description: bookDescription,
+                                   all_books: allDescriptions  // Pass all descriptions
+                                 })
+          });
+
+          if (!response.ok) throw new Error('Network response was not ok');
+          return await response.json();
+        } catch (error) {
+          console.error('Error fetching SHAP explanation:', error);
+          throw error;
+        }
+      }
+
+      // Fetch CF Explanation
+      async function fetchCounterfactualExplanation(bookTitle, bookDescription, allDescriptions) {
+        try {
+          const response = await fetch('//counterfactual-explanation', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                                   book_title: bookTitle,
+                                   book_description: bookDescription,
+                                   all_books: allDescriptions  // Pass all descriptions
+                                 })
+          });
+
+          if (!response.ok) throw new Error('Network response was not ok');
+          return await response.json();
+        } catch (error) {
+          console.error('Error fetching CF explanation:', error);
+          throw error;
+        }
       }
     }
-    
+
   </script>
 </body>
 </html>
