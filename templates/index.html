@@ -24,7 +24,7 @@
         <input type="checkbox" id="includeSameAuthorNoXAI" checked>
         <label for="includeSameAuthorNoXAI">Include recommendations by the same author</label>
       </div>
-      <button onclick="getRecommendations('noXAI')">Get Recommendations</button>
+      <button class="get-recommendations-button" data-tab="noXAI">Get Recommendations</button>
       <ul id="recommendationsNoXAI"></ul>
     </div>
     <div id="lime" class="tab-content" style="display:none;">
@@ -34,20 +34,51 @@
         <input type="checkbox" id="includeSameAuthorLime" checked>
         <label for="includeSameAuthorLime">Include recommendations by the same author</label>
       </div>
-      <button onclick="getRecommendations('lime')">Get Recommendations</button>
+      <button class="get-recommendations-button" data-tab="lime">Get Recommendations</button>
       <ul id="recommendationsLime"></ul>
       <div id="limeExplanation" style="display:none;">
         <h2>LIME Explanation for <span id="explainedTitleLime"></span></h2>
         <ul id="limeExplanationList"></ul>
       </div>
     </div>
-    <!-- Repeat similar structure for SHAP and Counterfactual tabs -->
+    <div id="shap" class="tab-content" style="display:none;">
+      <h2>SHAP Explanation</h2>
+      <input type="text" id="bookTitleShap" placeholder="Enter a book title">
+      <div class="toggle-label">
+        <input type="checkbox" id="includeSameAuthorShap" checked>
+        <label for="includeSameAuthorShap">Include recommendations by the same author</label>
+      </div>
+      <button class="get-recommendations-button" data-tab="shap">Get Recommendations</button>
+      <ul id="recommendationsShap"></ul>
+      <div id="shapExplanation" style="display:none;">
+        <h2>SHAP Explanation for <span id="explainedTitleShap"></span></h2>
+        <ul id="shapExplanationList"></ul>
+      </div>
+    </div>
+    <div id="counterfactual" class="tab-content" style="display:none;">
+      <h2>Counterfactual Explanation</h2>
+      <input type="text" id="bookTitleCounterfactual" placeholder="Enter a book title">
+      <div class="toggle-label">
+        <input type="checkbox" id="includeSameAuthorCounterfactual" checked>
+        <label for="includeSameAuthorCounterfactual">Include recommendations by the same author</label>
+      </div>
+      <button class="get-recommendations-button" data-tab="counterfactual">Get Recommendations</button>
+      <ul id="recommendationsCounterfactual"></ul>
+      <div id="counterfactualExplanation" style="display:none;">
+        <h2>Counterfactual Explanation for <span id="explainedTitleCounterfactual"></span></h2>
+        <ul id="counterfactualExplanationList"></ul>
+      </div>
+    </div>
   </div>
 </div>
-
 <script>
   window.addEventListener("DOMContentLoaded", initTabs);
-
+  document.querySelectorAll('.get-recommendations-button').forEach(button => {
+    button.addEventListener('click', async () => {
+      const tab = button.dataset.tab;
+      await getRecommendations(tab);
+    });
+  });
   function initTabs() {
     const tabButtons = document.querySelectorAll(".tab");
     showTabContent("noXAI");
