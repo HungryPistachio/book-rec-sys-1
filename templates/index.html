@@ -137,6 +137,8 @@
     }
 
     let tfidfData;
+    let tfidfMatrix;
+    let featureNames;
     try {
       const response = await fetch("/vectorize-descriptions", {
         method: "POST",
@@ -144,6 +146,8 @@
         body: JSON.stringify({descriptions})
       });
       tfidfData = await response.json();
+      tfidfMatrix = tfidfData.tfidf_matrix;
+      featureNames = tfidfData.feature_names;
       console.log("TF-IDF vectorization data received from backend:", tfidfData);
     } catch (error) {
       console.error("Error during TF-IDF vectorization:", error);
@@ -182,13 +186,13 @@
 
     try {
       if (tab === "lime") {
-        const limeExplanation = await fetchExplanation('lime', selectedBook.title, bookDescription, allDescriptions);
+        const limeExplanation = await fetchExplanation('lime', bookTitle, description_vector, filteredTfidfMatrix, feature_names);
         displayExplanation(limeExplanation, 'lime');
       } else if (tab === "shap") {
-        const shapExplanation = await fetchExplanation('shap', selectedBook.title, bookDescription, allDescriptions);
+        const shapExplanation = await fetchExplanation('shap', selectedBook.title, bookDescription, allDescriptions, filteredTfidfMatrix, featureNames);
         displayExplanation(shapExplanation, 'shap');
       } else if (tab === "counterfactual") {
-        const counterfactualExplanation = await fetchExplanation('counterfactual', selectedBook.title, bookDescription, allDescriptions);
+        const counterfactualExplanation = await fetchExplanation('counterfactual', selectedBook.title, bookDescription, allDescriptions, filteredTfidfMatrix, featureNames);
         displayExplanation(counterfactualExplanation, 'counterfactual');
       }
     } catch (error) {
