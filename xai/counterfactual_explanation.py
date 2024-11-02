@@ -3,10 +3,10 @@ from dice_ml import Dice
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 
-def get_counterfactual_explanation(book_title, description_vector, tfidf_matrix, feature_names):
+def get_counterfactual_explanation(book_title, description_vector, tfidf_matrix, feature_names, all_books):
     # Create a simple logistic regression model
     model = LogisticRegression()
-    labels = [1 if "mystery" in desc else 0 for desc in tfidf_matrix]  # Example binary labels
+    labels = [1 if "mystery" in desc else 0 for desc in all_books]  # Example binary labels
     model.fit(tfidf_matrix, labels)
 
     # Prepare DiCE data and model objects
