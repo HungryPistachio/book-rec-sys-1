@@ -2,8 +2,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import logging
-from lime_explanation import get_lime_explanation
-from shap_explanation import get_shap_explanation
+from xai.lime_explanation import get_lime_explanation
+from xai.shap_explanation import get_shap_explanation
 from sklearn.feature_extraction.text import TfidfVectorizer
 import uvicorn
 from pathlib import Path
