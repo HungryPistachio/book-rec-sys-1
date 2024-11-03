@@ -23,7 +23,7 @@ async def root():
     if not index_path.exists():
         logging.error("index.html not found!")
         return JSONResponse(content={"error": "index.html not found"}, status_code=404)
-    
+
     with open(index_path, "r") as file:
         html_content = file.read()
     return HTMLResponse(content=html_content)
@@ -85,4 +85,5 @@ async def shap_explanation(request: Request):
         logging.info("SHAP explanation generated successfully.")
         return JSONResponse(content=explanation)
     except Exception as e:
-        logging.error(f"
+        logging.error(f"Error in SHAP explanation: {e}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
