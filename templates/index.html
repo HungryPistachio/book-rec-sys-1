@@ -191,19 +191,21 @@
     const filteredTfidfMatrix = recommendedIndices.map(index => tfidf_matrix[index]);
 
     try {
+      let explanationData;
       if (tab === "lime") {
-        const limeExplanation = await fetchExplanation('lime', bookTitle, description_vector, filteredTfidfMatrix, feature_names);
-        displayExplanation(limeExplanation, 'lime');
+        explanationData = await fetchExplanation('lime', bookTitle, description_vector, filteredTfidfMatrix, feature_names);
       } else if (tab === "shap") {
-        const shapExplanation = await fetchExplanation('shap', selectedBook.title, bookDescription, allDescriptions, filteredTfidfMatrix, featureNames);
-        displayExplanation(shapExplanation, 'shap');
+        explanationData = await fetchExplanation('shap', bookTitle, description_vector, filteredTfidfMatrix, feature_names);
       } else if (tab === "counterfactual") {
-        const counterfactualExplanation = await fetchExplanation('counterfactual', selectedBook.title, bookDescription, allDescriptions, filteredTfidfMatrix, featureNames);
-        displayExplanation(counterfactualExplanation, 'counterfactual');
+        explanationData = await fetchExplanation('counterfactual', bookTitle, description_vector, filteredTfidfMatrix, feature_names);
       }
+
+      // Display explanation for the active tab
+      displayExplanation(explanationData, tab);
     } catch (error) {
       console.error(`Error fetching explanation for ${tab} tab:`, error);
     }
+  }
 
     function capitalize(word) {
       return word.charAt(0).toUpperCase() + word.slice(1);
@@ -226,35 +228,36 @@
     }
 
     function displayExplanation(data, type) {
-      // Update the explanation title with the book title
+      // Set up explanation title based on the type
       document.getElementById(`explainedTitle${capitalize(type)}`).textContent = data.title || "Unknown Title";
 
       const explanationListElement = document.getElementById(`${type}ExplanationList`);
-      explanationListElement.innerHTML = ''; // Clear previous explanations
+      explanationListElement.innerHTML = ''; // Clear any previous explanation list items
 
-      // Add general explanation
+      // Add a general explanation item, if available
       const generalExplanationItem = document.createElement('li');
       generalExplanationItem.textContent = data.general_explanation || "No general explanation provided.";
       explanationListElement.appendChild(generalExplanationItem);
 
-      // Extract and display the specific explanation output array
+      // Display explanation-specific details if available
       const explanationOutput = data[`${type}_output`];
       if (Array.isArray(explanationOutput)) {
         explanationOutput.forEach(item => {
           const listItem = document.createElement('li');
-          listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`; // Word and weight
+          listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`; // Displays word and its importance score
           explanationListElement.appendChild(listItem);
         });
       } else {
-        // Handle cases where explanation output is missing or undefined
+        // Handle missing explanation output
         const errorItem = document.createElement('li');
         errorItem.textContent = "Explanation output not available.";
         explanationListElement.appendChild(errorItem);
       }
 
-      // Show the explanation section
+      // Make the explanation container for the type visible
       document.getElementById(`${type}Explanation`).style.display = 'block';
     }
+
 
     function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
       const finalRecommendations = [];
