@@ -4,11 +4,11 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 import numpy as np
 
-def get_lime_explanation(book_title, book_description, all_books, tfidf_matrix, feature_names):
+def get_lime_explanation(book_title, book_description, all_books, filtered_tfidf_matrix, feature_names):
     # Train a simple logistic regression model for explanations
     model = LogisticRegression()
     labels = np.random.randint(0, 2, size=(tfidf_matrix.shape[0],))  # Random binary labels as example
-    model.fit(tfidf_matrix, labels)
+    model.fit(filtered_tfidf_matrix, labels)
 
     # Define the LIME explainer using feature names
     explainer = lime.lime_text.LimeTextExplainer(class_names=["Recommendation"])
@@ -16,7 +16,7 @@ def get_lime_explanation(book_title, book_description, all_books, tfidf_matrix, 
     # Function that predicts similarity between query instance and TF-IDF matrix
     def predict_fn(text_vector):
         text_tfidf = np.array(text_vector)
-        similarities = np.dot(tfidf_matrix, text_tfidf.T)
+        similarities = np.dot(filtered_tfidf_matrix, text_tfidf.T)
         return similarities.mean(axis=0).reshape(-1, 1)
 
     # Generate explanation using LIME
