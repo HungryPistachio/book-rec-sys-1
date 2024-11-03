@@ -13,14 +13,21 @@ def get_lime_explanation(description_vector, feature_names):
 
     # Define a classifier function that mimics model output based on description_vector
     def predict_fn(text_input):
-        # Convert feature names to indices to simulate matching description_vector
         predictions = []
         for text in text_input:
-            # This converts words into "importance scores" based on their indices in description_vector
-            vectorized_input = [description_vector[feature_names.index(word)] if word in feature_names else 0 for word in text.split()]
-            prediction = np.array([np.sum(vectorized_input)])
+            # Convert text to feature importance scores based on description_vector
+            vectorized_input = [
+                description_vector[feature_names.index(word)] if word in feature_names else 0
+                for word in text.split()
+            ]
+            # Sum the vector to simulate a single prediction value for each input
+            prediction = np.array([sum(vectorized_input)])
             predictions.append(prediction)
+
         prediction_array = np.array(predictions)
+        # Reshape to ensure it matches expected dimensions (num_samples, 1)
+        if prediction_array.ndim == 1:
+            prediction_array = prediction_array.reshape(-1, 1)
         logging.debug(f"Generated predictions: {prediction_array}")
         return prediction_array
 
@@ -33,7 +40,7 @@ def get_lime_explanation(description_vector, feature_names):
         explanation = explainer.explain_instance(
             text_instance=text_input,
             classifier_fn=predict_fn,
-            num_features=len(feature_names)
+            num_features=min(len(feature_names), 10)  # Limit to 10 features for faster processing
         )
         
         explanation_output = explanation.as_list()
