@@ -216,8 +216,10 @@
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
                                book_title: bookTitle,
-                               book_description: bookDescription,
-                               all_books: allDescriptions
+                               description_vector: description_vector,
+                               all_books: allDescriptions,
+                               filtered_tfidf_matrix: filteredTfidfMatrix,
+                               feature_names: featureNames
                              })
       });
       return response.json();
