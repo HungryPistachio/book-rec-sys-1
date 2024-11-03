@@ -211,21 +211,28 @@
       return word.charAt(0).toUpperCase() + word.slice(1);
     }
 
-    async function fetchExplanation(type, description_vector, featureNames) {
-      const url = `/${type}-explanation`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-                               //book_title: bookTitle,
-                               description_vector: description_vector,
-                               //all_books: allDescriptions,
-                               //filtered_tfidf_matrix: filteredTfidfMatrix,
-                               feature_names: featureNames
-                             })
-      });
-      return response.json();
+  async function fetchExplanation(type, descriptionVector, featureNames) {
+    const url = `/${type}-explanation`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+                             //book_title: bookTitle,                 // Ensure this is available and passed
+                             description_vector: descriptionVector, // Ensure this is available and passed
+                             feature_names: featureNames            // Ensure this is available and passed
+                           })
+    });
+
+    // Check for response status
+    if (!response.ok) {
+      console.error(`Error: ${response.status} - ${response.statusText}`);
+      return {error: `Failed to fetch explanation for ${type}`};
     }
+
+    return await response.json();
+  }
+
 
     function displayExplanation(data, type) {
       // Set up explanation title based on the type
@@ -284,7 +291,7 @@
       const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
       return dotProduct / (magnitudeA * magnitudeB);
     }
-  
+
 </script>
 </body>
 </html>
