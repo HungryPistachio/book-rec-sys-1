@@ -40,7 +40,7 @@ def get_lime_explanation(description_vector, feature_names):
         explanation = explainer.explain_instance(
             text_instance=text_input,
             classifier_fn=predict_fn,
-            num_features=min(len(feature_names), 10)  # Limit to 10 features for faster processing
+            num_features=10  # Limit to 10 features for faster processing
         )
         
         explanation_output = explanation.as_list()
