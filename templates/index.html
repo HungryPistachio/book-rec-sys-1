@@ -223,7 +223,7 @@
     console.log("Sending description vector length:", limitedDescriptionVector.length);
     console.log("Sending feature names length:", limitedFeatureNames.length);
 
-    const response = await fetchExplanation(url, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
