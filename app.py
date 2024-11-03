@@ -77,8 +77,6 @@ async def shap_explanation(request: Request):
     feature_names = data.get("feature_names")
     #all_books = data.get("all_books", [])
 
-    logging.info(f"Starting SHAP explanation for '{book_title}'")
-
     try:
         explanation = get_shap_explanation(description_vector, feature_names)
         logging.info("SHAP explanation generated successfully.")
