@@ -1,20 +1,25 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sklearn.feature_extraction.text import TfidfVectorizer
-import json
 import logging
 from xai.lime_explanation import get_lime_explanation
 from xai.shap_explanation import get_shap_explanation
 
+# Initialize logging
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
-# Vectorize descriptions endpoint
+@app.get("/")
+async def root():
+    return {"message": "Book Recommendation System is running."}
+
+# TF-IDF Vectorization Endpoint
 @app.post("/vectorize-descriptions")
 async def vectorize_descriptions(request: Request):
     data = await request.json()
     descriptions = data.get("descriptions", [])
+    logging.info("Received descriptions for TF-IDF vectorization.")
 
     if not descriptions:
         logging.error("No descriptions provided.")
@@ -24,42 +29,50 @@ async def vectorize_descriptions(request: Request):
     vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
     feature_names = vectorizer.get_feature_names_out()
-    description_vector = tfidf_matrix[0].tolist()  # Assuming the first description is the target
+    description_vector = tfidf_matrix[0].tolist()  # Assume first description is target
 
-    logging.info("TF-IDF vectorization completed.")
-    logging.debug(f"TF-IDF Matrix Shape: {tfidf_matrix.shape}")
-    logging.debug(f"Feature Names: {feature_names}")
-
+    logging.info("TF-IDF vectorization complete.")
     return JSONResponse(content={
         "tfidf_matrix": tfidf_matrix.tolist(),
         "feature_names": feature_names.tolist(),
         "description_vector": description_vector
     })
 
-# LIME explanation endpoint
+# LIME Explanation Endpoint
 @app.post("/lime-explanation")
 async def lime_explanation(request: Request):
     data = await request.json()
-    description_vector = data.get('description_vector')
-    feature_names = data.get('feature_names')
+    book_title = data.get("book_title")
+    book_description = data.get("book_description")
+    all_books = data.get("all_books", [])
 
-    if not description_vector or not feature_names:
-        logging.error("Missing required fields for LIME explanation.")
-        return JSONResponse({"error": "Missing required fields"}, status_code=400)
+    logging.info(f"Starting LIME explanation for '{book_title}'")
 
-    explanation = get_lime_explanation(description_vector, feature_names)
-    return JSONResponse(content=json.loads(explanation))
+    try:
+        explanation = get_lime_explanation(book_title, book_description, all_books)
+        logging.info("LIME explanation generated successfully.")
+        return JSONResponse(content=explanation)
+    except Exception as e:
+        logging.error(f"Error in LIME explanation: {e}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# SHAP explanation endpoint
+# SHAP Explanation Endpoint
 @app.post("/shap-explanation")
 async def shap_explanation(request: Request):
     data = await request.json()
-    description_vector = data.get('description_vector')
-    feature_names = data.get('feature_names')
+    book_title = data.get("book_title")
+    book_description = data.get("book_description")
+    all_books = data.get("all_books", [])
 
-    if not description_vector or not feature_names:
-        logging.error("Missing required fields for SHAP explanation.")
-        return JSONResponse({"error": "Missing required fields"}, status_code=400)
+    logging.info(f"Starting SHAP explanation for '{book_title}'")
 
-    explanation = get_shap_explanation(description_vector, feature_names)
-    return JSONResponse(content=json.loads(explanation))
+    try:
+        explanation = get_shap_explanation(book_title, book_description, all_books)
+        logging.info("SHAP explanation generated successfully.")
+        return JSONResponse(content=explanation)
+    except Exception as e:
+        logging.error(f"Error in SHAP explanation: {e}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+# Run Uvicorn server
+
