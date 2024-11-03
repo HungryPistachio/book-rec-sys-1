@@ -237,12 +237,15 @@
       return { error: `Failed to fetch explanation for ${type}` };
     }
 
-    return response.json();
+    const jsonResponse = await response.json();
+    console.log("Explanation data received:", jsonResponse);
+    return jsonResponse;
   }
 
 
 
   function displayExplanation(data, type) {
+      console.log("Data passed to displayExplanation:", data);
       // Set up explanation title based on the type
       document.getElementById(`explainedTitle${capitalize(type)}`).textContent = data.title || "Unknown Title";
 
