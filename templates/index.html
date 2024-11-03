@@ -215,8 +215,9 @@
     const url = `/${type}-explanation`;
 
     // Limit data size for transmission
-    const limitedDescriptionVector = description_vector.slice(0, 100); // Adjust as needed
-    const limitedFeatureNames = featureNames.slice(0, 100);           // Adjust as needed
+    // Ensure description_vector and featureNames are arrays
+    const limitedDescriptionVector = Array.isArray(description_vector) ? description_vector.slice(0, 100) : [];
+    const limitedFeatureNames = Array.isArray(featureNames) ? featureNames.slice(0, 100) : [];
 
     // Log data length to troubleshoot
     console.log("Sending description vector length:", limitedDescriptionVector.length);
