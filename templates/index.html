@@ -211,27 +211,34 @@
       return word.charAt(0).toUpperCase() + word.slice(1);
     }
 
-  async function fetchExplanation(type, descriptionVector, featureNames) {
+async function fetchExplanation(type, descriptionVector, featureNames) {
     const url = `/${type}-explanation`;
+
+    // Limit data size for transmission
+    const limitedDescriptionVector = descriptionVector.slice(0, 100); // Adjust as needed
+    const limitedFeatureNames = featureNames.slice(0, 100);           // Adjust as needed
+
+    // Log data length to troubleshoot
+    console.log("Sending description vector length:", limitedDescriptionVector.length);
+    console.log("Sending feature names length:", limitedFeatureNames.length);
 
     const response = await fetchExplanation(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-                             //book_title: bookTitle,                 // Ensure this is available and passed
-                             description_vector: descriptionVector, // Ensure this is available and passed
-                             feature_names: featureNames            // Ensure this is available and passed
+                             description_vector: limitedDescriptionVector,
+                             feature_names: limitedFeatureNames
                            })
     });
 
-    // Check for response status
     if (!response.ok) {
       console.error(`Error: ${response.status} - ${response.statusText}`);
-      return {error: `Failed to fetch explanation for ${type}`};
+      return { error: `Failed to fetch explanation for ${type}` };
     }
 
-    return await response.json();
-  }
+    return response.json();
+}
+
 
 
     function displayExplanation(data, type) {
