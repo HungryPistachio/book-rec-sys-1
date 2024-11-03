@@ -214,7 +214,7 @@
   async function fetchExplanation(type, descriptionVector, featureNames) {
     const url = `/${type}-explanation`;
 
-    const response = await fetch(url, {
+    const response = await fetchExplanation(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
