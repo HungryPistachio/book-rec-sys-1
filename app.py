@@ -58,12 +58,12 @@ async def lime_explanation(request: Request):
     data = await request.json()
     book_title = data.get("book_title")
     book_description = data.get("book_description")
-    all_books = data.get("all_books", [])
+    #all_books = data.get("all_books", [])
 
     logging.info(f"Starting LIME explanation for '{book_title}'")
 
     try:
-        explanation = get_lime_explanation(book_title, book_description, all_books)
+        explanation = get_lime_explanation(book_title, book_description)
         logging.info("LIME explanation generated successfully.")
         return JSONResponse(content=explanation)
     except Exception as e:
@@ -76,12 +76,12 @@ async def shap_explanation(request: Request):
     data = await request.json()
     book_title = data.get("book_title")
     book_description = data.get("book_description")
-    all_books = data.get("all_books", [])
+    #all_books = data.get("all_books", [])
 
     logging.info(f"Starting SHAP explanation for '{book_title}'")
 
     try:
-        explanation = get_shap_explanation(book_title, book_description, all_books)
+        explanation = get_shap_explanation(book_title, book_description)
         logging.info("SHAP explanation generated successfully.")
         return JSONResponse(content=explanation)
     except Exception as e:
