@@ -1,42 +1,31 @@
+import json
+import logging
 import lime
-import lime.lime_text
-import pandas as pd
-from sklearn.linear_model import LogisticRegression
+from lime.lime_text import LimeTextExplainer
 import numpy as np
 
-def get_lime_explanation(book_title, description_vector, all_books, filtered_tfidf_matrix, feature_names):
-    # Train a simple logistic regression model for explanations
-    model = LogisticRegression()
-    labels = np.random.randint(0, 2, size=(filtered_tfidf_matrix.shape[0],))  # Random binary labels as example
-    model.fit(filtered_tfidf_matrix, labels)
+logging.basicConfig(level=logging.INFO)
 
-    # Define the LIME explainer using feature names
-    explainer = lime.lime_text.LimeTextExplainer(class_names=["Recommendation"])
+def get_lime_explanation(description_vector, feature_names):
+    logging.info("Starting LIME explanation.")
+    explainer = LimeTextExplainer(class_names=['Book'])
 
-    # Function that predicts similarity between query instance and TF-IDF matrix
-    def predict_fn(text_vector):
-        text_tfidf = np.array(text_vector)
-        similarities = np.dot(filtered_tfidf_matrix, text_tfidf.T)
-        return similarities.mean(axis=0).reshape(-1, 1)
+    # Convert description_vector and feature_names to interpretable format for LIME
+    logging.debug(f"Description Vector: {description_vector}")
+    logging.debug(f"Feature Names: {feature_names}")
 
-    # Generate explanation using LIME
-    exp = explainer.explain_instance(
-        pd.Series(description_vector, index=feature_names),
-        predict_fn,
-        num_features=6
+    explanation = explainer.explain_instance(
+        ''.join(feature_names),  # Using feature names as text input
+        lambda x: np.array([description_vector]),  # Using vector as direct output
+        num_features=len(feature_names)
     )
 
-    # Extract explanation list
-    explanation_list = exp.as_list()
+    explanation_output = explanation.as_list()
+    logging.info("LIME explanation generated.")
+    print("LIME explanations identify the feature contributions to the recommendation.")
 
-    # General explanation
-    general_explanation = (
-        f"LIME identifies words that contribute to the similarity score, explaining why the book '{book_title}' "
-        f"might be recommended based on the input."
-    )
-
-    return {
-        "title": book_title,
-        "general_explanation": general_explanation,
-        "lime_output": explanation_list  # List of words and importance weights
+    response = {
+        "general_explanation": "LIME explanation for the book recommendation.",
+        "explanation_output": explanation_output
     }
+    return json.dumps(response)
