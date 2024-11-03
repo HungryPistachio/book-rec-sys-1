@@ -211,11 +211,11 @@
       return word.charAt(0).toUpperCase() + word.slice(1);
     }
 
-async function fetchExplanation(type, descriptionVector, featureNames) {
+  async function fetchExplanation(type, description_vector, featureNames) {
     const url = `/${type}-explanation`;
 
     // Limit data size for transmission
-    const limitedDescriptionVector = descriptionVector.slice(0, 100); // Adjust as needed
+    const limitedDescriptionVector = description_vector.slice(0, 100); // Adjust as needed
     const limitedFeatureNames = featureNames.slice(0, 100);           // Adjust as needed
 
     // Log data length to troubleshoot
@@ -237,11 +237,11 @@ async function fetchExplanation(type, descriptionVector, featureNames) {
     }
 
     return response.json();
-}
+  }
 
 
 
-    function displayExplanation(data, type) {
+  function displayExplanation(data, type) {
       // Set up explanation title based on the type
       document.getElementById(`explainedTitle${capitalize(type)}`).textContent = data.title || "Unknown Title";
 
