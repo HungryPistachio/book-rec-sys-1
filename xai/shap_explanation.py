@@ -3,14 +3,14 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 
-def get_shap_explanation(book_title, description_vector, tfidf_matrix, feature_names, all_books):
+def get_shap_explanation(book_title, description_vector, filtered_tfidf_matrix, feature_names, all_books):
     # Train a simple logistic regression model for explanations
     model = LogisticRegression()
     labels = [1 if "mystery" in desc else 0 for desc in all_books]  # Example binary labels
-    model.fit(tfidf_matrix, labels)
+    model.fit(filtered_tfidf_matrix, labels)
 
     # Initialize the SHAP explainer for linear models
-    explainer = shap.LinearExplainer(model, tfidf_matrix, feature_perturbation="independent")
+    explainer = shap.LinearExplainer(model, filtered_tfidf_matrix, feature_perturbation="independent")
 
     # Get SHAP values for the description vector
     shap_values = explainer.shap_values(np.array([description_vector]))
