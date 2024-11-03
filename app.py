@@ -1,18 +1,32 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from sklearn.feature_extraction.text import TfidfVectorizer
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 import logging
-from xai.lime_explanation import get_lime_explanation
-from xai.shap_explanation import get_shap_explanation
+from lime_explanation import get_lime_explanation
+from shap_explanation import get_shap_explanation
+from sklearn.feature_extraction.text import TfidfVectorizer
+import uvicorn
+from pathlib import Path
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
-@app.get("/")
+# Mount static files for serving CSS and JS if they exist
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Serve index.html at the root
+@app.get("/", response_class=HTMLResponse)
 async def root():
-    return {"message": "Book Recommendation System is running."}
+    index_path = Path("templates/index.html")  # Adjust path if necessary
+    if not index_path.exists():
+        logging.error("index.html not found!")
+        return JSONResponse(content={"error": "index.html not found"}, status_code=404)
+    
+    with open(index_path, "r") as file:
+        html_content = file.read()
+    return HTMLResponse(content=html_content)
 
 # TF-IDF Vectorization Endpoint
 @app.post("/vectorize-descriptions")
@@ -71,8 +85,4 @@ async def shap_explanation(request: Request):
         logging.info("SHAP explanation generated successfully.")
         return JSONResponse(content=explanation)
     except Exception as e:
-        logging.error(f"Error in SHAP explanation: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
-# Run Uvicorn server
-
+        logging.error(f"
