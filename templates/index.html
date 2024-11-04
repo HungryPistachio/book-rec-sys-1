@@ -162,11 +162,16 @@
       return;
     }
 
-    const { tfidf_matrix, feature_names } = tfidfData;
-    const description_vector = tfidf_matrix[0]; // Assuming we use the vector for the first book
+    const { tfidf_matrix, feature_names, description_vector } = tfidfData;
 
-    // Filter out zero-weight features for each recommendation
-    const filteredFeatures = filterNonZeroFeatures(description_vector, feature_names);
+    // Generate final recommendations
+    const finalRecommendations = filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor);
+    console.log("Final filtered recommendations:", finalRecommendations);
+
+    if (finalRecommendations.length === 0) {
+      recommendationsList.innerHTML = "<li>No valid recommendations found.</li>";
+      return;
+    }
 
     finalRecommendations.forEach((bookInfo, index) => {
       const bookVector = tfidf_matrix[index];
@@ -207,6 +212,7 @@
       console.error(`Error fetching explanation for ${tab} tab:`, error);
     }
   }
+
 
 
     function capitalize(word) {
