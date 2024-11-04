@@ -5,36 +5,41 @@ import shap
 
 logging.basicConfig(level=logging.INFO)
 
-def get_shap_explanation(description_vector, feature_names):
-    logging.info("Starting SHAP explanation.")
+def get_shap_explanation(recommendations):
+    logging.info("Starting SHAP explanation generation.")
+    explanation_outputs = []
 
-    # Convert description_vector to a single sample array
-    sample = np.array(description_vector).reshape(1, -1)
-    
-    try:
-        # Initialize a SHAP explainer for text data using a masker
-        masker = shap.maskers.Text()
-        
-        # Set up the explainer with a sample prediction function
-        explainer = shap.Explainer(lambda x: np.array([sample[0]]), masker=masker)
+    # Ensure SHAP can run without a full ML model by creating a mock explainer
+    for rec in recommendations:
+        try:
+            description_vector = rec['description_vector']
+            feature_names = rec['feature_names']
 
-        # Generate the explanation for the single instance
-        explanation = explainer(sample)
+            # Verify the input structure
+            if not description_vector or not feature_names:
+                raise ValueError("Recommendation is missing required fields.")
 
-        # Simplify explanation output
-        shap_values = explanation.values[0].tolist()  # Convert explanation values to a list for JSON serialization
-        feature_impact = list(zip(feature_names, shap_values))
+            explainer = shap.Explainer(lambda x: x)  # Use identity function for demonstration
 
-        # Log the explanation details
-        logging.info("SHAP explanation generated successfully.")
+            # Run explanation
+            shap_values = explainer(np.array([description_vector]))  # Single instance
+            explanation_data = shap_values.values[0].tolist()
 
-        # Create a response in JSON format
-        response = {
-            "general_explanation": "SHAP explanation for the book recommendation.",
-            "explanation_output": feature_impact
-        }
-        return json.dumps(response)
-    except Exception as e:
-        logging.error(f"Error in SHAP explanation: {e}")
-        return json.dumps({"error": "Failed to generate SHAP explanation"})
+            # Pair feature names with SHAP values
+            explanation_output = list(zip(feature_names, explanation_data))
+            explanation_outputs.append({
+                "title": rec["title"],
+                "general_explanation": "SHAP explanation for the book recommendation.",
+                "explanation_output": explanation_output
+            })
+            logging.info(f"SHAP explanation generated for '{rec['title']}'.")
 
+        except Exception as e:
+            logging.error(f"Error generating SHAP explanation for '{rec['title']}': {e}")
+            explanation_outputs.append({
+                "title": rec.get("title", "Unknown Title"),
+                "general_explanation": "Error generating SHAP explanation.",
+                "explanation_output": []
+            })
+
+    return json.dumps(explanation_outputs)
