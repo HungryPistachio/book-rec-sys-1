@@ -225,7 +225,6 @@
     return recommendations.every(rec =>
                                      rec &&
                                      typeof rec.title === 'string' &&
-                                     typeof rec.description === 'string' &&
                                      Array.isArray(rec.description_vector) &&
                                      Array.isArray(rec.feature_names) &&
                                      rec.description_vector.length === rec.feature_names.length
