@@ -201,11 +201,11 @@
     try {
       let explanationData;
       if (tab === "lime") {
-        explanationData = await fetchExplanation('lime', description_vector, feature_names);
+        explanationData = await fetchExplanation('lime', recommendations);
       } else if (tab === "shap") {
-        explanationData = await fetchExplanation('shap', description_vector, feature_names);
+        explanationData = await fetchExplanation('shap', recommendations);
       } else if (tab === "counterfactual") {
-        explanationData = await fetchExplanation('counterfactual', description_vector, feature_names);
+        explanationData = await fetchExplanation('counterfactual', recommendations);
       }
 
       // Display explanation for the active tab
