@@ -100,6 +100,7 @@
 
   async function getRecommendations(tab) {
     console.log(`Fetching recommendations for tab: ${tab}`);
+    const recommendations = [];
     const inputId = `bookTitle${capitalize(tab)}`;
     const bookTitle = document.getElementById(inputId).value.toLowerCase();
     const recommendationsId = `recommendations${capitalize(tab)}`;
@@ -163,7 +164,14 @@
       return;
     }
 
-    finalRecommendations.forEach(bookInfo => {
+    finalRecommendations.forEach((bookInfo, index) => {
+      recommendations.push({
+                             title: bookInfo.title,
+                             description_vector: tfidf_matrix[index],
+                             feature_names: feature_names
+                           });
+
+      // Display each recommendation in the UI
       const li = document.createElement("li");
       const link = document.createElement("a");
       link.href = bookInfo.link;
@@ -211,25 +219,31 @@
       return word.charAt(0).toUpperCase() + word.slice(1);
     }
 
-  async function fetchExplanation(type, description_vector, featureNames) {
+
+
+  function validateRecommendations(recommendations) {
+    return recommendations.every(rec =>
+                                     rec &&
+                                     typeof rec.title === 'string' &&
+                                     typeof rec.description === 'string' &&
+                                     Array.isArray(rec.description_vector) &&
+                                     Array.isArray(rec.feature_names) &&
+                                     rec.description_vector.length === rec.feature_names.length
+    );
+  }
+  async function fetchExplanation(type, recommendations) {
+    // Validate recommendations before proceeding
+    if (!validateRecommendations(recommendations)) {
+      console.error("Invalid recommendations structure.");
+      return { error: "Invalid recommendations structure" };
+    }
+
     const url = `/${type}-explanation`;
-
-    // Limit data size for transmission
-    // Ensure description_vector and featureNames are arrays
-    const limitedDescriptionVector = Array.isArray(description_vector) ? description_vector.slice(0, 100) : [];
-    const limitedFeatureNames = Array.isArray(featureNames) ? featureNames.slice(0, 100) : [];
-
-    // Log data length to troubleshoot
-    console.log("Sending description vector length:", limitedDescriptionVector.length);
-    console.log("Sending feature names length:", limitedFeatureNames.length);
 
     const response = await fetch(url, {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-                             description_vector: limitedDescriptionVector,
-                             feature_names: limitedFeatureNames
-                           })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recommendations }) // Send recommendations as the body
     });
 
     if (!response.ok) {
@@ -237,44 +251,51 @@
       return { error: `Failed to fetch explanation for ${type}` };
     }
 
-    const jsonResponse = await response.json();
-    console.log("Explanation data received:", jsonResponse);
-    return jsonResponse;
+    return response.json();
   }
 
 
 
+
+
+
   function displayExplanation(data, type) {
-      console.log("Data passed to displayExplanation:", data);
-      // Set up explanation title based on the type
-      document.getElementById(`explainedTitle${capitalize(type)}`).textContent = data.title || "Unknown Title";
+    const explanationContainer = document.getElementById(`${type}ExplanationList`);
+    explanationContainer.innerHTML = ''; // Clear previous explanations
 
-      const explanationListElement = document.getElementById(`${type}ExplanationList`);
-      explanationListElement.innerHTML = ''; // Clear any previous explanation list items
+    data.forEach((explanationData, idx) => {
+      const recommendationTitle = explanationData.title || `Recommendation ${idx + 1}`;
 
-      // Add a general explanation item, if available
-      const generalExplanationItem = document.createElement('li');
-      generalExplanationItem.textContent = data.general_explanation || "No general explanation provided.";
-      explanationListElement.appendChild(generalExplanationItem);
+      // Create a section for each recommendation's explanation
+      const titleElement = document.createElement('h3');
+      titleElement.textContent = recommendationTitle;
 
-      // Display explanation-specific details if available
-      const explanationOutput = data[`${type}_output`];
-      if (Array.isArray(explanationOutput)) {
+      const generalExplanation = document.createElement('p');
+      generalExplanation.textContent = explanationData.general_explanation || "No general explanation provided.";
+
+      const explanationList = document.createElement('ul');
+
+      // Filtered explanations with weight > 0.0
+      const explanationOutput = explanationData.explanation_output;
+      if (Array.isArray(explanationOutput) && explanationOutput.length > 0) {
         explanationOutput.forEach(item => {
           const listItem = document.createElement('li');
-          listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`; // Displays word and its importance score
-          explanationListElement.appendChild(listItem);
+          listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`;
+          explanationList.appendChild(listItem);
         });
       } else {
-        // Handle missing explanation output
-        const errorItem = document.createElement('li');
-        errorItem.textContent = "Explanation output not available.";
-        explanationListElement.appendChild(errorItem);
+        const noExplanationItem = document.createElement('li');
+        noExplanationItem.textContent = "No significant features found in the explanation.";
+        explanationList.appendChild(noExplanationItem);
       }
 
-      // Make the explanation container for the type visible
-      document.getElementById(`${type}Explanation`).style.display = 'block';
-    }
+      // Append to container
+      explanationContainer.appendChild(titleElement);
+      explanationContainer.appendChild(generalExplanation);
+      explanationContainer.appendChild(explanationList);
+    });
+  }
+
 
 
     function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
