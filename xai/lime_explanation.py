@@ -5,35 +5,42 @@ from lime.lime_text import LimeTextExplainer
 
 logging.basicConfig(level=logging.INFO)
 
-def get_lime_explanation(description_vector, feature_names):
-    logging.info("Starting LIME explanation generation.")
+def get_lime_explanation(recommendations):
+    logging.info("Starting LIME explanation generation for multiple recommendations.")
 
-    # Ensure description_vector and feature_names are properly structured
-    if not isinstance(description_vector, list) or not isinstance(feature_names, list):
-        logging.error("Invalid input format for LIME explanation.")
-        return json.dumps({"error": "Invalid input format"})
+    # Initialize LIME explainer
+    explainer = LimeTextExplainer(class_names=['Book'])
+    explanations = []
 
-    try:
-        explainer = LimeTextExplainer(class_names=['Book'])
+    # Loop through each recommendation
+    for idx, rec in enumerate(recommendations):
+        try:
+            description_vector = rec.get("description_vector", [])
+            feature_names = rec.get("feature_names", [])
+            input_text = ' '.join(feature_names[:500])  # Limit input text for LIME
 
-        # Create input text and define explanation function
-        input_text = ' '.join(feature_names)  # Mock input text for LIME
-        explanation = explainer.explain_instance(
-            input_text,
-            lambda x: np.array([description_vector] * len(x)),  # Broadcast description vector
-            num_features=len(feature_names)
-        )
-        
-        explanation_output = explanation.as_list()
-        logging.info("LIME explanation generated successfully.")
-        print("LIME explanations identify the feature contributions to the recommendation.")
+            # Generate explanation using LIME
+            explanation = explainer.explain_instance(
+                input_text,
+                lambda x: np.array([description_vector] * len(x)),
+                num_features=min(len(feature_names), 100)
+            )
 
-        response = {
-            "general_explanation": "LIME explanation for the book recommendation.",
-            "explanation_output": explanation_output
-        }
-        return json.dumps(response)
+            # Filter for significant features only
+            explanation_output = [(word, weight) for word, weight in explanation.as_list() if weight > 0.0]
+            explanations.append({
+                "title": rec.get("title", f"Recommendation {idx + 1}"),
+                "general_explanation": "LIME explanation for the book recommendation.",
+                "explanation_output": explanation_output
+            })
 
-    except Exception as e:
-        logging.error(f"Error generating LIME explanation: {e}")
-        return json.dumps({"error": "LIME explanation generation failed"})
+        except Exception as e:
+            logging.error(f"Error generating LIME explanation for recommendation {idx + 1}: {e}")
+            explanations.append({
+                "title": rec.get("title", f"Recommendation {idx + 1}"),
+                "general_explanation": "Failed to generate explanation.",
+                "explanation_output": []
+            })
+
+    logging.info("LIME explanations generated successfully for all recommendations.")
+    return json.dumps(explanations)
