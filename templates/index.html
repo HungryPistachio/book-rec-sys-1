@@ -202,8 +202,10 @@
       let explanationData;
       if (tab === "lime") {
         explanationData = await fetchExplanation('lime', recommendations);
+        document.getElementById("limeExplanation").style.display = "block";
       } else if (tab === "shap") {
         explanationData = await fetchExplanation('shap', recommendations);
+        document.getElementById("ShapExplanation").style.display = "block";
       } else if (tab === "counterfactual") {
         explanationData = await fetchExplanation('counterfactual', recommendations);
       }
@@ -249,8 +251,9 @@
       console.error(`Error: ${response.status} - ${response.statusText}`);
       return { error: `Failed to fetch explanation for ${type}` };
     }
-
-    return response.json();
+    const explanationData = await response.json();
+    console.log("Explanation data received:", explanationData); // Log explanation data
+    return explanationData;
   }
 
 
@@ -259,13 +262,20 @@
 
 
   function displayExplanation(data, type) {
+    console.log("Data passed to displayExplanation:", data); // Log explanation data
+
     const explanationContainer = document.getElementById(`${type}ExplanationList`);
     explanationContainer.innerHTML = ''; // Clear previous explanations
+
+    if (!Array.isArray(data)) {
+      console.error("Invalid data format for explanation display");
+      explanationContainer.innerHTML = "<li>No explanation data available.</li>";
+      return;
+    }
 
     data.forEach((explanationData, idx) => {
       const recommendationTitle = explanationData.title || `Recommendation ${idx + 1}`;
 
-      // Create a section for each recommendation's explanation
       const titleElement = document.createElement('h3');
       titleElement.textContent = recommendationTitle;
 
@@ -274,8 +284,7 @@
 
       const explanationList = document.createElement('ul');
 
-      // Filtered explanations with weight > 0.0
-      const explanationOutput = explanationData.explanation_output;
+      const explanationOutput = explanationData.explanation_output.filter(item => item[1] > 0.0); // Only items with weight > 0.0
       if (Array.isArray(explanationOutput) && explanationOutput.length > 0) {
         explanationOutput.forEach(item => {
           const listItem = document.createElement('li');
@@ -288,12 +297,12 @@
         explanationList.appendChild(noExplanationItem);
       }
 
-      // Append to container
       explanationContainer.appendChild(titleElement);
       explanationContainer.appendChild(generalExplanation);
       explanationContainer.appendChild(explanationList);
     });
   }
+
 
 
 
