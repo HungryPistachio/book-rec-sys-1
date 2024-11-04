@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import logging
+import json
 from xai.lime_explanation import get_lime_explanation
 from xai.shap_explanation import get_shap_explanation
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -56,31 +57,32 @@ async def vectorize_descriptions(request: Request):
 @app.post("/lime-explanation")
 async def lime_explanation(request: Request):
     data = await request.json()
-    description_vector = data.get("description_vector")
-    feature_names = data.get("feature_names")
-    #all_books = data.get("all_books", [])
+    recommendations = data.get("recommendations", [])  # List of recommendation details
 
+    logging.info("Received request for LIME explanation.")
 
     try:
-        explanation = get_lime_explanation(description_vector, feature_names)
-        logging.info("LIME explanation generated successfully.")
-        return JSONResponse(content=explanation)
+        explanation = get_lime_explanation(recommendations)
+        logging.info("LIME explanations generated successfully.")
+        return JSONResponse(content=json.loads(explanation))
     except Exception as e:
-        logging.error(f"Error in LIME explanation: {e}")
+        logging.error(f"Error in LIME explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
+
 # SHAP Explanation Endpoint
+
 @app.post("/shap-explanation")
 async def shap_explanation(request: Request):
     data = await request.json()
-    description_vector = data.get("description_vector")
-    feature_names = data.get("feature_names")
-    #all_books = data.get("all_books", [])
+    recommendations = data.get("recommendations", [])  # List of recommendation details
+
+    logging.info("Received request for SHAP explanation.")
 
     try:
-        explanation = get_shap_explanation(description_vector, feature_names)
-        logging.info("SHAP explanation generated successfully.")
-        return JSONResponse(content=explanation)
+        explanation = get_shap_explanation(recommendations)
+        logging.info("SHAP explanations generated successfully.")
+        return JSONResponse(content=json.loads(explanation))
     except Exception as e:
-        logging.error(f"Error in SHAP explanation: {e}")
+        logging.error(f"Error in SHAP explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
