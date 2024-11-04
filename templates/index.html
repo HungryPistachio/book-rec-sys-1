@@ -98,6 +98,17 @@
     });
   }
 
+  // Function to filter non-zero elements in description_vector
+  function filterNonZeroFeatures(descriptionVector, featureNames) {
+    return descriptionVector.reduce((filteredData, weight, index) => {
+      if (weight !== 0) {
+        filteredData.description_vector.push(weight);
+        filteredData.feature_names.push(featureNames[index]);
+      }
+      return filteredData;
+    }, { description_vector: [], feature_names: [] });
+  }
+
   async function getRecommendations(tab) {
     console.log(`Fetching recommendations for tab: ${tab}`);
     const recommendations = [];
@@ -138,37 +149,33 @@
     }
 
     let tfidfData;
-    let tfidfMatrix;
-    let featureNames;
     try {
       const response = await fetch("/vectorize-descriptions", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({descriptions})
+        body: JSON.stringify({ descriptions })
       });
       tfidfData = await response.json();
-      tfidfMatrix = tfidfData.tfidf_matrix;
-      featureNames = tfidfData.feature_names;
       console.log("TF-IDF vectorization data received from backend:", tfidfData);
     } catch (error) {
       console.error("Error during TF-IDF vectorization:", error);
       return;
     }
 
-    const {tfidf_matrix, feature_names, description_vector} = tfidfData;
-    const finalRecommendations = filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor);
-    console.log("Final filtered recommendations:", finalRecommendations);
+    const { tfidf_matrix, feature_names } = tfidfData;
+    const description_vector = tfidf_matrix[0]; // Assuming we use the vector for the first book
 
-    if (finalRecommendations.length === 0) {
-      recommendationsList.innerHTML = "<li>No valid recommendations found.</li>";
-      return;
-    }
+    // Filter out zero-weight features for each recommendation
+    const filteredFeatures = filterNonZeroFeatures(description_vector, feature_names);
 
     finalRecommendations.forEach((bookInfo, index) => {
+      const bookVector = tfidf_matrix[index];
+      const nonZeroFeatures = filterNonZeroFeatures(bookVector, feature_names);
+
       recommendations.push({
                              title: bookInfo.title,
-                             description_vector: tfidf_matrix[index],
-                             feature_names: feature_names
+                             description_vector: nonZeroFeatures.description_vector,
+                             feature_names: nonZeroFeatures.feature_names
                            });
 
       // Display each recommendation in the UI
@@ -181,23 +188,6 @@
       recommendationsList.appendChild(li);
     });
 
-    if (!selectedBook) {
-      console.error("Selected book not found in API response");
-      return;
-    }
-
-    // Use selectedBook.description as bookDescription
-    const bookDescription = selectedBook.description;
-
-    // Create an array of descriptions for all books as allDescriptions
-    const allDescriptions = processedBooks.map(book => book.description);
-
-    // Assuming `finalRecommendations` contains the selected books
-    const recommendedIndices = finalRecommendations.map(book => processedBooks.indexOf(book));
-
-// Filter the TF-IDF matrix to only include rows for recommended books
-    const filteredTfidfMatrix = recommendedIndices.map(index => tfidf_matrix[index]);
-
     try {
       let explanationData;
       if (tab === "lime") {
@@ -205,9 +195,10 @@
         document.getElementById("limeExplanation").style.display = "block";
       } else if (tab === "shap") {
         explanationData = await fetchExplanation('shap', recommendations);
-        document.getElementById("ShapExplanation").style.display = "block";
+        document.getElementById("shapExplanation").style.display = "block";
       } else if (tab === "counterfactual") {
         explanationData = await fetchExplanation('counterfactual', recommendations);
+        document.getElementById("counterfactualExplanation").style.display = "block";
       }
 
       // Display explanation for the active tab
@@ -216,6 +207,7 @@
       console.error(`Error fetching explanation for ${tab} tab:`, error);
     }
   }
+
 
     function capitalize(word) {
       return word.charAt(0).toUpperCase() + word.slice(1);
