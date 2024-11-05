@@ -310,7 +310,7 @@
 
     function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
       const finalRecommendations = [];
-      const similarityScoreThreshold = 0.2;
+      const similarityScoreThreshold = 0.4;
 
       processedBooks.forEach((book, index) => {
         const bookVector = tfidf_matrix[index];
