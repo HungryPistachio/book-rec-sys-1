@@ -307,31 +307,46 @@
 
 
 
+
+
   function normalizeAuthorName(name) {
-      return name.replace(/[^\w]/g, '').toLowerCase(); // Remove punctuation and spaces, convert to lowercase
+    return name.replace(/[^\w]/g, '').toLowerCase().trim(); // Remove punctuation and spaces, convert to lowercase
+  }
+  // Helper function to normalize titles by removing punctuation and converting to lowercase
+  function normalizeTitle(title) {
+    return title.replace(/[^\w]/, '').toLowerCase().trim(); // Remove punctuation, convert to lowercase, trim spaces
   }
 
 
   function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
-      const finalRecommendations = [];
-      const similarityScoreThreshold = 0.1;
+    const finalRecommendations = [];
+    const similarityScoreThreshold = 0.1;
 
-      processedBooks.forEach((book, index) => {
-        const bookVector = tfidf_matrix[index];
-        const similarity = cosineSimilarity(description_vector, bookVector);
+    // Get the normalized original title for comparison
+    const originalTitle = normalizeTitle(processedBooks[0].title);
 
-        if (similarity > similarityScoreThreshold) {
-          const isSameAuthor = includeSameAuthor || !book.authors.some(author => processedBooks[0].authors.some(mainAuthor => normalizeAuthorName(author) === normalizeAuthorName(mainAuthor)));
-          if (isSameAuthor) {
-            finalRecommendations.push(book);
-          }
+    processedBooks.forEach((book, index) => {
+      const bookVector = tfidf_matrix[index];
+      const similarity = cosineSimilarity(description_vector, bookVector);
+
+      if (similarity > similarityScoreThreshold) {
+        // Compare authors using normalized names
+        const isSameAuthor = includeSameAuthor || !book.authors.some(author => processedBooks[0].authors.some(mainAuthor => normalizeAuthorName(author) === normalizeAuthorName(mainAuthor)));
+
+        // Check if the book title does not contain the original title
+        const isDifferentTitle = !normalizeTitle(book.title).includes(originalTitle);
+
+        if (isSameAuthor && isDifferentTitle) {
+          finalRecommendations.push(book);
         }
-      });
+      }
+    });
 
-      return finalRecommendations.slice(0, 5); // Limit to top 5 recommendations
-    }
+    return finalRecommendations.slice(0, 5); // Limit to top 5 recommendations
+  }
 
-    function cosineSimilarity(vecA, vecB) {
+
+  function cosineSimilarity(vecA, vecB) {
       const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
       const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
       const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
