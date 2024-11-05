@@ -288,7 +288,7 @@
           const listItem = document.createElement('li');
 
           // Display each weight in scientific notation if very small
-          const weight = Math.abs(item[1]) < 1e-2 ? item[1].toExponential(2) : item[1].toFixed(2);
+          const weight = Math.abs(item[1]) < 1e-2 ? item[1].toExponential(3) : item[1].toFixed(3);
 
           listItem.textContent = `${item[0]}: ${weight}`;
           explanationList.appendChild(listItem);
