@@ -307,7 +307,9 @@
 
 
 
-
+  function normalizeAuthorName(name) {
+      return name.replace(/[^\w]/g, '').toLowerCase(); // Remove punctuation and spaces, convert to lowercase
+  }
 
 
   function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
