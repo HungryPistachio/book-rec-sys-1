@@ -283,7 +283,7 @@
       const explanationList = document.createElement('ul');
 
       // Set a threshold for displaying features
-      const threshold = 1e-32; // Adjust this threshold as necessary
+      const threshold = 1e-34; // Adjust this threshold as necessary
       const explanationOutput = explanationData.explanation_output.filter(item => Math.abs(item[1]) >= threshold); // Only items with significant weights
 
       if (Array.isArray(explanationOutput) && explanationOutput.length > 0) {
@@ -310,7 +310,7 @@
 
     function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
       const finalRecommendations = [];
-      const similarityScoreThreshold = 0.25;
+      const similarityScoreThreshold = 0.18;
 
       processedBooks.forEach((book, index) => {
         const bookVector = tfidf_matrix[index];
