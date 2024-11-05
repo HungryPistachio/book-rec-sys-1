@@ -18,13 +18,13 @@ def get_lime_explanation(recommendations):
         try:
             description_vector = rec.get("description_vector", [])
             feature_names = rec.get("feature_names", [])
-            input_text = ' '.join(feature_names[:5000])  # Limit input text for LIME
+            input_text = ' '.join(feature_names[:50000])  # Limit input text for LIME
 
             # Generate explanation using LIME
             explanation = explainer.explain_instance(
                 input_text,
                 lambda x: np.array([description_vector] * len(x)),
-                num_features=min(len(feature_names), 5000)
+                num_features=min(len(feature_names), 50000)
             )
 
             # Define stop words
