@@ -283,7 +283,7 @@
       const explanationList = document.createElement('ul');
 
       // Set a threshold for displaying features
-      const threshold = 1e-2; // Adjust this threshold as necessary
+      const threshold = 1e-32; // Adjust this threshold as necessary
       const explanationOutput = explanationData.explanation_output.filter(item => Math.abs(item[1]) >= threshold); // Only items with significant weights
 
       if (Array.isArray(explanationOutput) && explanationOutput.length > 0) {
