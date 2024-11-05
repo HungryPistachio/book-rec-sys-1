@@ -313,10 +313,10 @@
     return name.replace(/[^\w]/g, '').toLowerCase().trim(); // Remove punctuation and spaces, convert to lowercase
   }
   // Helper function to normalize titles by removing punctuation and converting to lowercase
+  // Helper function to normalize titles by removing punctuation, converting to lowercase, and trimming spaces
   function normalizeTitle(title) {
-    return title.replace(/[^\w]/, '').toLowerCase().trim(); // Remove punctuation, convert to lowercase, trim spaces
+    return title.replace(/[^\w\s]/g, '').toLowerCase().trim(); // Remove punctuation, convert to lowercase, trim spaces
   }
-
 
   function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
     const finalRecommendations = [];
@@ -324,6 +324,7 @@
 
     // Get the normalized original title for comparison
     const originalTitle = normalizeTitle(processedBooks[0].title);
+    const originalTitleTokens = originalTitle.split(" ");
 
     processedBooks.forEach((book, index) => {
       const bookVector = tfidf_matrix[index];
@@ -331,10 +332,17 @@
 
       if (similarity > similarityScoreThreshold) {
         // Compare authors using normalized names
-        const isSameAuthor = includeSameAuthor || !book.authors.some(author => processedBooks[0].authors.some(mainAuthor => normalizeAuthorName(author) === normalizeAuthorName(mainAuthor)));
+        const isSameAuthor = includeSameAuthor || !book.authors.some(author =>
+                                                                         processedBooks[0].authors.some(mainAuthor =>
+                                                                                                            normalizeAuthorName(author) === normalizeAuthorName(mainAuthor)
+                                                                         )
+        );
 
-        // Check if the book title does not contain the original title
-        const isDifferentTitle = !normalizeTitle(book.title).includes(originalTitle);
+        // Tokenize and normalize the current book's title
+        const currentTitleTokens = normalizeTitle(book.title).split(" ");
+
+        // Check if none of the original title's tokens are in the current title
+        const isDifferentTitle = !originalTitleTokens.some(token => currentTitleTokens.includes(token));
 
         if (isSameAuthor && isDifferentTitle) {
           finalRecommendations.push(book);
@@ -344,6 +352,7 @@
 
     return finalRecommendations.slice(0, 5); // Limit to top 5 recommendations
   }
+
 
 
   function cosineSimilarity(vecA, vecB) {
