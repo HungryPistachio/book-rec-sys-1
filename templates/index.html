@@ -38,7 +38,7 @@
       <ul id="recommendationsLime"></ul>
       <div id="limeExplanation" style="display:none;">
         <h2>LIME Explanation for <span id="explainedTitleLime"></span></h2>
-        <ul id="limeExplanationList" style="color: #ff5733; font-weight: bold;"></ul>
+        <ul id="limeExplanationList"></ul>
       </div>
     </div>
     <div id="shap" class="tab-content" style="display:none;">
@@ -282,14 +282,15 @@
 
       const explanationList = document.createElement('ul');
 
-      // Set a threshold for displaying features
-      const threshold = 1e-40; // Adjust this threshold as necessary
-      const explanationOutput = explanationData.explanation_output.filter(item => Math.abs(item[1]) >= threshold); // Only items with significant weights
-
+      const explanationOutput = explanationData.explanation_output.filter(item => Math.abs(item[1]) > 0.0); // Only items with non-zero weight
       if (Array.isArray(explanationOutput) && explanationOutput.length > 0) {
         explanationOutput.forEach(item => {
           const listItem = document.createElement('li');
-          listItem.textContent = `${item[0]}: ${item[1].toFixed(2)}`;
+
+          // Display each weight in scientific notation if very small
+          const weight = Math.abs(item[1]) < 1e-2 ? item[1].toExponential(2) : item[1].toFixed(2);
+
+          listItem.textContent = `${item[0]}: ${weight}`;
           explanationList.appendChild(listItem);
         });
       } else {
@@ -308,9 +309,10 @@
 
 
 
-    function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
+
+  function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
       const finalRecommendations = [];
-      const similarityScoreThreshold = 0.18;
+      const similarityScoreThreshold = 0.25;
 
       processedBooks.forEach((book, index) => {
         const bookVector = tfidf_matrix[index];
