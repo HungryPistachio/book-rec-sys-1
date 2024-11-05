@@ -282,7 +282,10 @@
 
       const explanationList = document.createElement('ul');
 
-      const explanationOutput = explanationData.explanation_output.filter(item => item[1] > 0.0); // Only items with weight > 0.0
+      // Set a threshold for displaying features
+      const threshold = 1e-2; // Adjust this threshold as necessary
+      const explanationOutput = explanationData.explanation_output.filter(item => Math.abs(item[1]) >= threshold); // Only items with significant weights
+
       if (Array.isArray(explanationOutput) && explanationOutput.length > 0) {
         explanationOutput.forEach(item => {
           const listItem = document.createElement('li');
@@ -300,6 +303,7 @@
       explanationContainer.appendChild(explanationList);
     });
   }
+
 
 
 
