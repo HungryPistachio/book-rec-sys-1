@@ -39,7 +39,3 @@ def get_lime_explanation(recommendations):
             })
     logging.info("LIME explanations generated successfully for all recommendations.")
     return json.dumps(explanations)
-
-    except Exception as e:
-        logging.error(f"Error generating LIME explanation: {e}")
-        return json.dumps({"error": "LIME explanation generation failed"})
