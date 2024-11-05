@@ -319,7 +319,7 @@
         const similarity = cosineSimilarity(description_vector, bookVector);
 
         if (similarity > similarityScoreThreshold) {
-          const isSameAuthor = includeSameAuthor || !book.authors.some(author => processedBooks[0].authors.includes(author));
+          const isSameAuthor = includeSameAuthor || !book.authors.some(author => processedBooks[0].authors.some(mainAuthor => normalizeAuthorName(author) === normalizeAuthorName(mainAuthor)));
           if (isSameAuthor) {
             finalRecommendations.push(book);
           }
