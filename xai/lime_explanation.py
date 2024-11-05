@@ -24,7 +24,12 @@ def get_lime_explanation(recommendations):
                 num_features=min(len(feature_names), 100)
             )
             # Filter for significant features only
-            explanation_output = [(word, weight) for word, weight in explanation.as_list() if weight > 0.0]
+            stop_words = ["this", "for", "have", "and", "a", "is", "are", "______________________________", "be", "without", "made", "when", "thing", "to", "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves", "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about", "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now"]
+
+            explanation_output = [
+                (word, weight) for word, weight in explanation.as_list()
+                if word.lower() not in stop_words  # Filter out stop words
+]
             explanations.append({
                 "title": rec.get("title", f"Recommendation {idx + 1}"),
                 "general_explanation": "LIME explanation for the book recommendation.",
