@@ -10,9 +10,14 @@ import uvicorn
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 import joblib
+import numpy as np
 
 # Load the trained model at the start
-model = joblib.load('model/trained_model.joblib')
+try:
+    model = joblib.load('model/trained_model.joblib')
+    print("Model loaded successfully.")
+except Exception as e:
+    print(f"Error loading model: {e}")
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
