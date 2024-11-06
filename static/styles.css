@@ -11,6 +11,10 @@ body {
     color: black; /* Change text color for better visibility */
 }
 
+p {
+    color: black;
+}
+
 .toggle-label {
     display: flex;
     align-items: center; /* Aligns items vertically */
