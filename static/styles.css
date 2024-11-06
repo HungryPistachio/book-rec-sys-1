@@ -72,7 +72,7 @@ p {
 
 /* Change background and knob position when checked */
 input:checked + .slider {
-    background-color: #007bff; /* Background color when on */
+    background-color: #65ad48; /* Background color when on */
 }
 
 input:checked + .slider:before {
@@ -109,7 +109,7 @@ h1 {
 .tab {
     padding: 10px;
     cursor: pointer;
-    background: #007bff;
+    background: #f7b9ce;
     color: white;
     border: none;
     border-radius: 5px;
@@ -117,11 +117,11 @@ h1 {
 }
 
 .tab:hover {
-    background: #0056b3;
+    background: #f581a8;
 }
 
 .tab.active {
-    background: #0056b3; /* Highlighted background for the active tab */
+    background: #d3225e; /* Highlighted background for the active tab */
     font-weight: bold; /* Optional: Make active tab bold */
 }
 
@@ -152,7 +152,7 @@ input {
 
 button {
     padding: 10px;
-    background: #28a745;
+    background: #81d1db;
     color: white;
     border: none;
     border-radius: 5px;
@@ -161,7 +161,7 @@ button {
 }
 
 button:hover {
-    background: #218838;
+    background: #169aa9;
 }
 
 ul {
