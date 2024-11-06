@@ -165,29 +165,5 @@ li {
     padding: 10px;
     border-radius: 5px;
 }
-    /* Styles for the autocomplete dropdown */
-    .autocomplete-items {
-      position: absolute;
-      border: 1px solid #d4d4d4;
-      border-bottom: none;
-      border-top: none;
-      z-index: 99;
-      /* Position the autocomplete items to be the same width as the input field */
-      top: 100%;
-      left: 0;
-      right: 0;
-      max-height: 200px;
-      overflow-y: auto;
-    }
 
-    .autocomplete-item {
-      padding: 10px;
-      cursor: pointer;
-      background-color: #fff;
-      border-bottom: 1px solid #d4d4d4;
-    }
-
-    .autocomplete-item:hover {
-      background-color: #e9e9e9;
-    }
 
