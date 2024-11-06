@@ -126,7 +126,8 @@
       authors: book.volumeInfo.authors || [],
       description: book.volumeInfo.description || "No description available",
       link: book.volumeInfo.infoLink || "#"
-    }));
+    }))
+    .filter(book => book.description && book.description.length > 50);
 
     const descriptions = processedBooks.map(book => book.description);
     const selectedBook = processedBooks.find(book => book.title.toLowerCase() === bookTitle.toLowerCase());
