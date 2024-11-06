@@ -310,6 +310,7 @@
         explanationContainer.innerHTML = "<li>No SHAP explanation data available.</li>";
         return;
       }
+      document.getElementById("limeExplanation").style.display = "block";
 
       data.explanations.forEach((explanationData) => {
         const titleElement = document.createElement('h3');
