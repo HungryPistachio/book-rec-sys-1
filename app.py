@@ -8,6 +8,12 @@ from xai.shap_explanation import get_shap_explanation
 from sklearn.feature_extraction.text import TfidfVectorizer
 import uvicorn
 from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+import pickle
+
+# Load the trained model at the start
+with open('model/trained_model.pkl', 'rb') as f:
+    model = pickle.load(f)
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +22,7 @@ app = FastAPI()
 
 # Mount static files for serving CSS and JS if they exist
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/images", StaticFiles(directory="images"), name="images")
 
 # Serve index.html at the root
 @app.get("/", response_class=HTMLResponse)
@@ -75,14 +82,14 @@ async def lime_explanation(request: Request):
 @app.post("/shap-explanation")
 async def shap_explanation(request: Request):
     data = await request.json()
-    recommendations = data.get("recommendations", [])  # List of recommendation details
-
+    recommendations = data.get("recommendations", [])
     logging.info("Received request for SHAP explanation.")
 
     try:
-        explanation = get_shap_explanation(recommendations)
+        explanation = get_shap_explanation(recommendations, model)
         logging.info("SHAP explanations generated successfully.")
-        return JSONResponse(content=json.loads(explanation))
+        return JSONResponse(content=explanation)
     except Exception as e:
         logging.error(f"Error in SHAP explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
