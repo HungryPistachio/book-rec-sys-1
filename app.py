@@ -9,11 +9,10 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import uvicorn
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
-import pickle
+import joblib
 
 # Load the trained model at the start
-with open('model/trained_model.pkl', 'rb') as f:
-    model = pickle.load(f)
+model = joblib.load('model/trained_model.joblib')
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
