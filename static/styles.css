@@ -8,7 +8,7 @@ body {
     background-repeat: no-repeat; /* Prevents the image from repeating */
     background-position: center; /* Center the image */
     height: 100vh; /* Full height of the viewport */
-    color: white; /* Change text color for better visibility */
+    color: black; /* Change text color for better visibility */
 }
 
 .toggle-label {
@@ -191,17 +191,3 @@ li {
       background-color: #e9e9e9;
     }
 
-#limeExplanationList {
-    color: black; /* Change to your desired color */
-}
-li {
-    color: black; /* Ensures list items have the same color */
-}
-
-h2 {
-    color: black; /* Change to your preferred color */
-}
-
-p {
-    color: black; /* Change to your preferred color */
-}
