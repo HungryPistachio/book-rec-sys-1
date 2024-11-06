@@ -128,7 +128,7 @@
       description: book.volumeInfo.description || "No description available",
       link: book.volumeInfo.infoLink || "#"
     }))
-    .filter(book => book.description && book.description.length > 50);
+        .filter(book => book.description && book.description.length > 50);
 
     const descriptions = processedBooks.map(book => book.description);
     const selectedBook = processedBooks.find(book => book.title.toLowerCase() === bookTitle.toLowerCase());
@@ -143,7 +143,7 @@
       const response = await fetch("/vectorize-descriptions", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ descriptions })
+        body: JSON.stringify({descriptions})
       });
       tfidfData = await response.json();
       console.log("TF-IDF vectorization data received from backend:", tfidfData);
@@ -152,7 +152,7 @@
       return;
     }
 
-    const { tfidf_matrix, feature_names, description_vector } = tfidfData;
+    const {tfidf_matrix, feature_names, description_vector} = tfidfData;
 
     // Generate final recommendations
     const finalRecommendations = filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor);
@@ -195,181 +195,193 @@
     } catch (error) {
       console.error("Error fetching explanation:", error);
     }
-  function capitalize(word) {
-    return word.charAt(0).toUpperCase() + word.slice(1);
-  }
 
-
-
-  function validateRecommendations(recommendations) {
-    return recommendations.every(rec =>
-                                     rec &&
-                                     typeof rec.title === 'string' &&
-                                     Array.isArray(rec.description_vector) &&
-                                     Array.isArray(rec.feature_names) &&
-                                     rec.description_vector.length === rec.feature_names.length
-    );
-  }
-  async function fetchExplanation(type, recommendations) {
-    // Validate recommendations before proceeding
-    if (!validateRecommendations(recommendations)) {
-      console.error("Invalid recommendations structure.");
-      return { error: "Invalid recommendations structure" };
+    function capitalize(word) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
     }
 
-    const url = `/${type}-explanation`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recommendations }) // Send recommendations as the body
-    });
-
-    if (!response.ok) {
-      console.error(`Error: ${response.status} - ${response.statusText}`);
-      return { error: `Failed to fetch explanation for ${type}` };
-    }
-    const explanationData = await response.json();
-    console.log("Explanation data received:", explanationData); // Log explanation data
-    return explanationData;
-  }
-
-
-
-
-
-
-  function displayLimeExplanation(data, type) {
-    console.log("Data passed to displayExplanation:", data); // Log explanation data
-
-    const explanationContainer = document.getElementById(`${type}ExplanationList`);
-    explanationContainer.innerHTML = ''; // Clear previous explanations
-
-    if (!Array.isArray(data)) {
-      console.error("Invalid data format for explanation display");
-      explanationContainer.innerHTML = "<li>No explanation data available.</li>";
-      return;
+    function validateRecommendations(recommendations) {
+      return recommendations.every(rec =>
+                                       rec &&
+                                       typeof rec.title === 'string' &&
+                                       Array.isArray(rec.description_vector) &&
+                                       Array.isArray(rec.feature_names) &&
+                                       rec.description_vector.length === rec.feature_names.length
+      );
     }
 
-    data.forEach((explanationData, idx) => {
-      const recommendationTitle = explanationData.title || `Recommendation ${idx + 1}`;
-
-      const titleElement = document.createElement('h3');
-      titleElement.textContent = recommendationTitle;
-
-      const generalExplanation = document.createElement('p');
-      generalExplanation.textContent = explanationData.general_explanation || "No general explanation provided.";
-
-      const explanationList = document.createElement('ul');
-
-      const explanationOutput = explanationData.explanation_output.filter(item => Math.abs(item[1]) > 0.0); // Only items with non-zero weight
-      if (Array.isArray(explanationOutput) && explanationOutput.length > 0) {
-        explanationOutput.forEach(item => {
-          const listItem = document.createElement('li');
-
-          // Display each weight in scientific notation if very small
-          const weight = Math.abs(item[1]) < 1e-2 ? item[1].toExponential(3) : item[1].toFixed(3);
-
-          listItem.textContent = `${item[0]}: ${weight}`;
-          explanationList.appendChild(listItem);
-        });
-      } else {
-        const noExplanationItem = document.createElement('li');
-        noExplanationItem.textContent = "No significant features found in the explanation.";
-        explanationList.appendChild(noExplanationItem);
+    async function fetchExplanation(type, recommendations) {
+      // Validate recommendations before proceeding
+      if (!validateRecommendations(recommendations)) {
+        console.error("Invalid recommendations structure.");
+        return {error: "Invalid recommendations structure"};
       }
 
-      explanationContainer.appendChild(titleElement);
-      explanationContainer.appendChild(generalExplanation);
-      explanationContainer.appendChild(explanationList);
-    });
-  }
-  function displayShapExplanation(data) {
-    const explanationContainer = document.getElementById("shapExplanationList");
-    explanationContainer.innerHTML = '';  // Clear previous SHAP explanations
+      const url = `/${type}-explanation`;
 
-    if (!Array.isArray(data.explanations)) {
-      console.error("Invalid SHAP data format");
-      explanationContainer.innerHTML = "<li>No SHAP explanation data available.</li>";
-      return;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({recommendations}) // Send recommendations as the body
+      });
+
+      if (!response.ok) {
+        console.error(`Error: ${response.status} - ${response.statusText}`);
+        return {error: `Failed to fetch explanation for ${type}`};
+      }
+      const explanationData = await response.json();
+      console.log("Explanation data received:", explanationData); // Log explanation data
+      return explanationData;
     }
 
-    data.explanations.forEach((explanationData) => {
-      const titleElement = document.createElement('h3');
-      titleElement.textContent = explanationData.title;
-      explanationContainer.appendChild(titleElement);
+    function displayLimeExplanation(data, type) {
+      console.log("Data passed to displayLimeExplanation:", data); // Log the initial data received
 
-      if (explanationData.image_url) {
-        const imgElement = document.createElement('img');
-        imgElement.src = explanationData.image_url;
-        imgElement.alt = `SHAP explanation for ${explanationData.title}`;
-        imgElement.style.maxWidth = "100%";
-        explanationContainer.appendChild(imgElement);
-      } else {
-        const noExplanation = document.createElement('p');
-        noExplanation.textContent = "No SHAP explanation available.";
-        explanationContainer.appendChild(noExplanation);
+      const explanationContainer = document.getElementById('limeExplanationList');
+
+      // Check if the explanationContainer element is found
+      if (!explanationContainer) {
+        console.error("limeExplanationList element not found in DOM");
+        return;
       }
-    });
-  }
 
+      console.log("limeExplanationList container found:", explanationContainer);
+      explanationContainer.innerHTML = ''; // Clear previous explanations
 
+      // Check if the data is in the expected format (array)
+      if (!Array.isArray(data)) {
+        console.error("Invalid data format for explanation display. Expected array, received:", typeof data);
+        explanationContainer.innerHTML = "<li>No explanation data available.</li>";
+        return;
+      }
 
+      // Log the length of the data array to ensure explanations are available
+      console.log(`Number of explanations to display: ${data.length}`);
 
+      // Loop through each explanation item in data
+      data.forEach((explanationData, idx) => {
+        console.log(`Processing explanation #${idx + 1}:`, explanationData);
 
+        const recommendationTitle = explanationData.title || `Recommendation ${idx + 1}`;
+        const titleElement = document.createElement('h3');
+        titleElement.textContent = recommendationTitle;
 
-  function normalizeAuthorName(name) {
-    return name.replace(/[^\w]/g, '').toLowerCase().trim(); // Remove punctuation and spaces, convert to lowercase
-  }
-  // Helper function to normalize titles by removing punctuation and converting to lowercase
-  // Helper function to normalize titles by removing punctuation, converting to lowercase, and trimming spaces
-  function normalizeTitle(title) {
-    return title.replace(/[^\w\s]/g, '').toLowerCase().trim(); // Remove punctuation, convert to lowercase, trim spaces
-  }
+        const generalExplanation = document.createElement('p');
+        generalExplanation.textContent = explanationData.general_explanation || "No general explanation provided.";
+        console.log("General explanation:", generalExplanation.textContent);
 
-  function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
-    const finalRecommendations = [];
-    const similarityScoreThreshold = 0.05;
+        const explanationList = document.createElement('ul');
 
-    // Get the normalized original title for comparison
-    const originalTitle = normalizeTitle(processedBooks[0].title);
-    const originalTitleTokens = originalTitle.split(" ");
+        // Log explanation_output to verify it has content and structure
+        const explanationOutput = explanationData.explanation_output.filter(item => Math.abs(item[1]) > 0.0);
+        console.log(`Explanation output for ${recommendationTitle}:`, explanationOutput);
 
-    processedBooks.forEach((book, index) => {
-      const bookVector = tfidf_matrix[index];
-      const similarity = cosineSimilarity(description_vector, bookVector);
+        if (Array.isArray(explanationOutput) && explanationOutput.length > 0) {
+          explanationOutput.forEach((item, itemIndex) => {
+            const listItem = document.createElement('li');
 
-      if (similarity > similarityScoreThreshold) {
-        // Compare authors using normalized names
-        const isSameAuthor = includeSameAuthor || !book.authors.some(author =>
-                                                                         processedBooks[0].authors.some(mainAuthor =>
-                                                                                                            normalizeAuthorName(author) === normalizeAuthorName(mainAuthor)
-                                                                         )
-        );
+            // Check the weight before formatting
+            const weight = Math.abs(item[1]) < 1e-2 ? item[1].toExponential(3) : item[1].toFixed(3);
+            listItem.textContent = `${item[0]}: ${weight}`;
 
-        // Tokenize and normalize the current book's title
-        const currentTitleTokens = normalizeTitle(book.title).split(" ");
-
-        // Check if none of the original title's tokens are in the current title
-        const isDifferentTitle = !originalTitleTokens.some(token => currentTitleTokens.includes(token));
-
-        if (isSameAuthor && isDifferentTitle) {
-          finalRecommendations.push(book);
+            console.log(`Feature #${itemIndex + 1} - Word: ${item[0]}, Weight: ${weight}`);
+            explanationList.appendChild(listItem);
+          });
+        } else {
+          console.warn(`No significant features found in explanation for ${recommendationTitle}`);
+          const noExplanationItem = document.createElement('li');
+          noExplanationItem.textContent = "No significant features found in the explanation.";
+          explanationList.appendChild(noExplanationItem);
         }
+
+        explanationContainer.appendChild(titleElement);
+        explanationContainer.appendChild(generalExplanation);
+        explanationContainer.appendChild(explanationList);
+      });
+    }
+
+
+    function displayShapExplanation(data) {
+      const explanationContainer = document.getElementById("shapExplanationList");
+      explanationContainer.innerHTML = '';  // Clear previous SHAP explanations
+
+      if (!Array.isArray(data.explanations)) {
+        console.error("Invalid SHAP data format");
+        explanationContainer.innerHTML = "<li>No SHAP explanation data available.</li>";
+        return;
       }
-    });
 
-    return finalRecommendations.slice(0, 5); // Limit to top 5 recommendations
-  }
+      data.explanations.forEach((explanationData) => {
+        const titleElement = document.createElement('h3');
+        titleElement.textContent = explanationData.title;
+        explanationContainer.appendChild(titleElement);
 
+        if (explanationData.image_url) {
+          const imgElement = document.createElement('img');
+          imgElement.src = explanationData.image_url;
+          imgElement.alt = `SHAP explanation for ${explanationData.title}`;
+          imgElement.style.maxWidth = "100%";
+          explanationContainer.appendChild(imgElement);
+        } else {
+          const noExplanation = document.createElement('p');
+          noExplanation.textContent = "No SHAP explanation available.";
+          explanationContainer.appendChild(noExplanation);
+        }
+      });
+    }
 
+    function normalizeAuthorName(name) {
+      return name.replace(/[^\w]/g, '').toLowerCase().trim(); // Remove punctuation and spaces, convert to lowercase
+    }
 
-  function cosineSimilarity(vecA, vecB) {
-    const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
-    const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-    const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-    return dotProduct / (magnitudeA * magnitudeB);
-  }
+    // Helper function to normalize titles by removing punctuation and converting to lowercase
+    // Helper function to normalize titles by removing punctuation, converting to lowercase, and trimming spaces
+    function normalizeTitle(title) {
+      return title.replace(/[^\w\s]/g, '').toLowerCase().trim(); // Remove punctuation, convert to lowercase, trim spaces
+    }
+
+    function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
+      const finalRecommendations = [];
+      const similarityScoreThreshold = 0.05;
+
+      // Get the normalized original title for comparison
+      const originalTitle = normalizeTitle(processedBooks[0].title);
+      const originalTitleTokens = originalTitle.split(" ");
+
+      processedBooks.forEach((book, index) => {
+        const bookVector = tfidf_matrix[index];
+        const similarity = cosineSimilarity(description_vector, bookVector);
+
+        if (similarity > similarityScoreThreshold) {
+          // Compare authors using normalized names
+          const isSameAuthor = includeSameAuthor || !book.authors.some(author =>
+                                                                           processedBooks[0].authors.some(mainAuthor =>
+                                                                                                              normalizeAuthorName(author)
+                                                                                                              === normalizeAuthorName(mainAuthor)
+                                                                           )
+          );
+
+          // Tokenize and normalize the current book's title
+          const currentTitleTokens = normalizeTitle(book.title).split(" ");
+
+          // Check if none of the original title's tokens are in the current title
+          const isDifferentTitle = !originalTitleTokens.some(token => currentTitleTokens.includes(token));
+
+          if (isSameAuthor && isDifferentTitle) {
+            finalRecommendations.push(book);
+          }
+        }
+      });
+
+      return finalRecommendations.slice(0, 5); // Limit to top 5 recommendations
+    }
+
+    function cosineSimilarity(vecA, vecB) {
+      const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+      const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+      const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+      return dotProduct / (magnitudeA * magnitudeB);
+    }
   }
 
 </script>
