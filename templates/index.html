@@ -187,10 +187,10 @@
       let explanationData;
       if (tab === "lime") {
         explanationData = await fetchExplanation('lime', recommendations);
-        document.getElementById("limeExplanation").style.display = "block";
+        displayLimeExplanation(explanationData, 'lime'); // Use existing display for LIME
       } else if (tab === "shap") {
         explanationData = await fetchExplanation('shap', recommendations);
-        document.getElementById("shapExplanation").style.display = "block";
+        displayShapExplanation(explanationData); // Use new function for SHAP
       }
 
       // Display explanation for the active tab
@@ -246,7 +246,7 @@
 
 
 
-  function displayExplanation(data, type) {
+  function displayLimeExplanation(data, type) {
     console.log("Data passed to displayExplanation:", data); // Log explanation data
 
     const explanationContainer = document.getElementById(`${type}ExplanationList`);
@@ -291,6 +291,35 @@
       explanationContainer.appendChild(explanationList);
     });
   }
+  function displayShapExplanation(data) {
+    const explanationContainer = document.getElementById("shapExplanationList");
+    explanationContainer.innerHTML = '';  // Clear previous SHAP explanations
+
+    if (!Array.isArray(data.explanations)) {
+      console.error("Invalid SHAP data format");
+      explanationContainer.innerHTML = "<li>No SHAP explanation data available.</li>";
+      return;
+    }
+
+    data.explanations.forEach((explanationData) => {
+      const titleElement = document.createElement('h3');
+      titleElement.textContent = explanationData.title;
+      explanationContainer.appendChild(titleElement);
+
+      if (explanationData.image_url) {
+        const imgElement = document.createElement('img');
+        imgElement.src = explanationData.image_url;
+        imgElement.alt = `SHAP explanation for ${explanationData.title}`;
+        imgElement.style.maxWidth = "100%";
+        explanationContainer.appendChild(imgElement);
+      } else {
+        const noExplanation = document.createElement('p');
+        noExplanation.textContent = "No SHAP explanation available.";
+        explanationContainer.appendChild(noExplanation);
+      }
+    });
+  }
+
 
 
 
