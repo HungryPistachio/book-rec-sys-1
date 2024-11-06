@@ -18,13 +18,19 @@ p {
 .toggle-label {
     display: flex;
     align-items: center; /* Aligns items vertically */
-    margin: 10px 0;
-    color: black; /* Default text color */
+}
+.toggle-label input[type="checkbox"] {
+    margin-right: 8px; /* Space between checkbox and label */
 }
 
-.toggle-label #toggleText {
-    margin-left: 10px; /* Space between toggle and text */
-    transition: color 0.3s; /* Smooth transition for color change */
+/* Default label styling */
+.toggle-label label {
+    font-weight: normal;
+}
+
+/* Change label styling when checkbox is checked */
+.toggle-label input[type="checkbox"]:checked + label {
+    font-weight: bold;
 }
 
 .switch {
@@ -169,5 +175,3 @@ li {
     padding: 10px;
     border-radius: 5px;
 }
-
-
