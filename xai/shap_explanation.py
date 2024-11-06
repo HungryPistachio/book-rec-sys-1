@@ -1,45 +1,32 @@
-import json
-import logging
-import numpy as np
 import shap
+import json
+import matplotlib.pyplot as plt
+import uuid
 
-logging.basicConfig(level=logging.INFO)
+model = f"/model/train_model.pkl"
+def get_shap_explanation(recommendations):  # Expect recommendations list directly
+    explanations = []
+    explainer = shap.Explainer(model)  # Assuming `model` is already loaded
 
-def get_shap_explanation(recommendations):
-    logging.info("Starting SHAP explanation generation.")
-    explanation_outputs = []
+    for recommendation in recommendations:
+        title = recommendation["title"]
+        description_vector = recommendation["description_vector"]
 
-    # Ensure SHAP can run without a full ML model by creating a mock explainer
-    for rec in recommendations:
-        try:
-            description_vector = rec['description_vector']
-            feature_names = rec['feature_names']
+        shap_values = explainer.shap_values(description_vector)
 
-            # Verify the input structure
-            if not description_vector or not feature_names:
-                raise ValueError("Recommendation is missing required fields.")
+        # Generate a unique filename
+        image_filename = f"shap_plot_{uuid.uuid4()}.png"
+        image_path = f"images/{image_filename}"
 
-            explainer = shap.Explainer(lambda x: x)  # Use identity function for demonstration
+        # Create and save the SHAP plot
+        shap.plots.waterfall(shap_values, show=False)
+        plt.savefig(image_path, bbox_inches='tight')
+        plt.close()
 
-            # Run explanation
-            shap_values = explainer(np.array([description_vector]))  # Single instance
-            explanation_data = shap_values.values[0].tolist()
+        # Append image path in response
+        explanations.append({
+            "title": title,
+            "image_url": f"/images/{image_filename}"
+        })
 
-            # Pair feature names with SHAP values
-            explanation_output = list(zip(feature_names, explanation_data))
-            explanation_outputs.append({
-                "title": rec["title"],
-                "general_explanation": "SHAP explanation for the book recommendation.",
-                "explanation_output": explanation_output
-            })
-            logging.info(f"SHAP explanation generated for '{rec['title']}'.")
-
-        except Exception as e:
-            logging.error(f"Error generating SHAP explanation for '{rec['title']}': {e}")
-            explanation_outputs.append({
-                "title": rec.get("title", "Unknown Title"),
-                "general_explanation": "Error generating SHAP explanation.",
-                "explanation_output": []
-            })
-
-    return json.dumps(explanation_outputs)
+    return json.dumps(explanations)
