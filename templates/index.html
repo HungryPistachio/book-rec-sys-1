@@ -305,7 +305,7 @@
 
   function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
     const finalRecommendations = [];
-    const similarityScoreThreshold = 0.1;
+    const similarityScoreThreshold = 0.05;
 
     // Get the normalized original title for comparison
     const originalTitle = normalizeTitle(processedBooks[0].title);
