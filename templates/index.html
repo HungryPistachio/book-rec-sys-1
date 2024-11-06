@@ -28,6 +28,7 @@
     </div>
     <div id="lime" class="tab-content" style="display:none;">
       <h2>LIME Explanation</h2>
+      <p> Please allow a few moments for the explanations to load.</p>
       <input type="text" id="bookTitleLime" placeholder="Enter a book title">
       <div class="toggle-label">
         <input type="checkbox" id="includeSameAuthorLime" checked>
@@ -36,7 +37,7 @@
       <button class="get-recommendations-button" data-tab="lime">Get Recommendations</button>
       <ul id="recommendationsLime"></ul>
       <div id="limeExplanation" style="display:none;">
-        <h2>LIME Explanation for <span id="explainedTitleLime"></span></h2>
+        <h2>LIME Explanations for Recommended Books:<span id="explainedTitleLime"></span></h2>
         <p id="limeExplanationGeneral">These recommendations are formed using the description of your original book and using this to search for similar books.
           The LIME explanation displays the relevant words within the description and the weight of these words.
           The higher the number the more the word helped to identify this book as a good recommendation.</p>
