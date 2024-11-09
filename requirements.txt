@@ -2,12 +2,11 @@ fastapi
 uvicorn
 requests
 lime
-shap
-numpy==1.21.6         # A known stable version for many packages
-scipy==1.7.3          # Compatible with numpy 1.21.6
+shap==0.41.0          # Version known to be more compatible with higher numpy versions
+numpy==1.22.0         # Satisfies the requirement for Numba
+scipy==1.8.0          # Compatible with numpy 1.22.x
 scikit-learn
 dice_ml
-pandas==1.3.4
+pandas==1.4.0         # Compatible with numpy 1.22
 python-multipart      # For handling file uploads if needed
 typing-extensions     # For FastAPI compatibility
-
