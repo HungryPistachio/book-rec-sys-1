@@ -4,16 +4,23 @@ import json
 import matplotlib.pyplot as plt
 import uuid
 import os
+import sklearn
 
- 
-# Load the generic model data
-model_data = joblib.load("model/generic_model_data.joblib")
-# Extract the model
-model = model_data["model"]
+
+# Load the model saved with scikit-learn 1.5.2
+model = joblib.load("model/trained_model.joblib")
+
+# Wrap in a dictionary
+model_data = {"model": model, "scikit_version": sklearn.__version__}
+
+# Save as a new file
+joblib.dump(model_data, "generic_model_data.joblib")
+
+model_new = f"(model/generic_model_data.joblib)"
 
 def get_shap_explanation(recommendations):  # Expect recommendations list directly
     explanations = []
-    explainer = shap.Explainer(model)  # Assuming `model` is already loaded
+    explainer = shap.Explainer(model_new)  # Assuming `model` is already loaded
 
     for recommendation in recommendations:
         title = recommendation["title"]
