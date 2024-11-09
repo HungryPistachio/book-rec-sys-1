@@ -3,10 +3,11 @@ uvicorn
 requests
 lime
 shap
-numpy>=1.21,<1.23
-scipy
+numpy==1.21.6         # A known stable version for many packages
+scipy==1.7.3          # Compatible with numpy 1.21.6
 scikit-learn
 dice_ml
 pandas==1.3.4
 python-multipart      # For handling file uploads if needed
 typing-extensions     # For FastAPI compatibility
+
