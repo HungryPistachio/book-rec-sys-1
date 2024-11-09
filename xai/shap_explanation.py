@@ -5,9 +5,11 @@ import matplotlib.pyplot as plt
 import uuid
 import os
 
-model_path = "model/trained_model.joblib"  # Adjust this path as needed
-model = joblib.load(model_path)  
-
+ 
+# Load the generic model data
+model_data = joblib.load("model/generic_model_data.joblib")
+# Extract the model
+model = model_data["model"]
 
 def get_shap_explanation(recommendations):  # Expect recommendations list directly
     explanations = []
