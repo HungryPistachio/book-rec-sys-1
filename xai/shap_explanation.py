@@ -3,8 +3,9 @@ import json
 import matplotlib.pyplot as plt
 import uuid
 
-model = f"/model/train_model.pkl"
+
 def get_shap_explanation(recommendations):  # Expect recommendations list directly
+    model = f"/model/train_model.joblib"
     explanations = []
     explainer = shap.Explainer(model)  # Assuming `model` is already loaded
 
