@@ -1,11 +1,15 @@
 import shap
+import joblib
 import json
 import matplotlib.pyplot as plt
 import uuid
+import os
+
+model_path = "model/trained_model.joblib"  # Adjust this path as needed
+model = joblib.load(model_path)  
 
 
 def get_shap_explanation(recommendations):  # Expect recommendations list directly
-    model = f"/model/train_model.joblib"
     explanations = []
     explainer = shap.Explainer(model)  # Assuming `model` is already loaded
 
