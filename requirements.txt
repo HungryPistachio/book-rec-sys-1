@@ -3,7 +3,7 @@ uvicorn
 requests
 lime
 shap
-numpy
+numpy>=1.21,<1.23
 scipy
 scikit-learn
 dice_ml
