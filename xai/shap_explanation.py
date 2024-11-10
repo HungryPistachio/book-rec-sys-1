@@ -18,10 +18,15 @@ def get_shap_explanation(recommendations):
         # Convert description vector to a 2D array format for SHAP
         description_vector = np.array(recommendation["description_vector"]).reshape(1, -1)
 
-        # Generate SHAP values using the explainer, getting a full explanation object
+        # Generate SHAP values using the explainer
         shap_values = explainer(description_vector)
 
-        # Select the SHAP values for the single output instance
+        # Check if the shap_values object has the expected attributes
+        if not (shap_values and hasattr(shap_values[0], 'base_values') and hasattr(shap_values[0], 'values') and hasattr(shap_values[0], 'feature_names')):
+            logging.error(f"Invalid SHAP data format for {title}.")
+            continue
+
+        # Extract data from the explanation object
         base_value = shap_values[0].base_values
         values = shap_values[0].values
         feature_names = shap_values[0].feature_names
@@ -48,7 +53,6 @@ def get_shap_explanation(recommendations):
                 "image_url": f"/images/{image_filename}"
             })
         except Exception as e:
-            # Log and continue if an individual plot fails
             logging.error(f"Failed to generate SHAP plot for {title}: {e}")
 
     return json.dumps(explanations)
