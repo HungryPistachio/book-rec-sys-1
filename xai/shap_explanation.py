@@ -6,12 +6,16 @@ import uuid
 import os
 import numpy as np
 import logging
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Load the saved model directly
 loaded_model = joblib.load("model/trained_model.joblib")
 
 # Ensure images directory exists for storing SHAP plots
 os.makedirs("images", exist_ok=True)
+
+# Create a new instance of the TF-IDF vectorizer
+vectorizer = TfidfVectorizer()
 
 def get_shap_explanation(recommendations):
     explanations = []
@@ -21,16 +25,14 @@ def get_shap_explanation(recommendations):
         title = recommendation["title"]
         description_vector = np.array(recommendation["description_vector"]).reshape(1, -1)
 
+        # Get the feature names (i.e., the words in the description) from the TF-IDF vectorizer
+        feature_names = vectorizer.get_feature_names_out()
+
         # Generate SHAP values using the explainer
         try:
-            shap_values = explainer(description_vector)
+            shap_values = explainer(description_vector, feature_names=feature_names)
             logging.info(f"Generated SHAP values for '{title}'")
 
-            # Validate if feature names are present
-            if shap_values[0].feature_names is None:
-                logging.error(f"'feature_names' is missing or None for '{title}'. Skipping this entry.")
-                continue
-            
             # Extract the base value, SHAP values, and feature names for plotting
             base_value = shap_values[0].base_values[0] if isinstance(shap_values[0].base_values, np.ndarray) else shap_values[0].base_values
             values = shap_values[0].values[0] if isinstance(shap_values[0].values, np.ndarray) else shap_values[0].values
