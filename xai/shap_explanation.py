@@ -4,24 +4,14 @@ import json
 import matplotlib.pyplot as plt
 import uuid
 import os
-import sklearn
 
-# Step 1: Load the original model (saved in 1.5.2) and save it as a dictionary
-original_model = joblib.load("model/trained_model.joblib")  # Load with a unique name
-model_data = {"model": original_model, "scikit_version": sklearn.__version__}
-
-# Save the wrapped model as a new file
-joblib.dump(model_data, "model/generic_model_data.joblib")
-
-# Step 2: Load the saved dictionary (saved in 1.0.5 environment) and extract the model for SHAP processing
-loaded_model_data = joblib.load("model/generic_model_data.joblib")
-loaded_model = loaded_model_data["model"]  # Access the model with a unique name
-print("Loaded model version:", loaded_model_data["scikit_version"])
+# Load the saved model directly (assumes scikit-learn version 1.0.2 is compatible)
+loaded_model = joblib.load("model/trained_model.joblib")
 
 # Define SHAP explanation function
 def get_shap_explanation(recommendations):
     explanations = []
-    explainer = shap.Explainer(loaded_model)  # Use `loaded_model` here
+    explainer = shap.Explainer(loaded_model)  # Use the directly loaded model
 
     for recommendation in recommendations:
         title = recommendation["title"]
@@ -46,3 +36,7 @@ def get_shap_explanation(recommendations):
         })
 
     return json.dumps(explanations)
+
+# Example call to the function
+# recommendations = [{"title": "Book Title", "description_vector": some_vector}]
+# print(get_shap_explanation(recommendations))
