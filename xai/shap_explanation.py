@@ -9,13 +9,15 @@ import numpy as np
 # Load the saved model directly (assumes scikit-learn version 1.0.2 is compatible)
 loaded_model = joblib.load("model/trained_model.joblib")
 
-def get_shap_explanation(recommendations, model=loaded_model):
+def get_shap_explanation(recommendations, model=None):
+    if model is None:  # Use loaded_model if no model is provided
+        model = loaded_model
     explanations = []
-    explainer = shap.Explainer(model)  # Use `model` here
+    explainer = shap.Explainer(model)
 
     for recommendation in recommendations:
         title = recommendation["title"]
-        description_vector = np.array(recommendation["description_vector"])  # Ensure it's a NumPy array
+        description_vector = np.array(recommendation["description_vector"])
 
         # Generate SHAP values
         shap_values = explainer.shap_values(description_vector)
