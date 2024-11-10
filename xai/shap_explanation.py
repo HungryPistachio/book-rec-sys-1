@@ -25,9 +25,9 @@ def get_shap_explanation(recommendations):
         image_filename = f"shap_plot_{uuid.uuid4()}.png"
         image_path = os.path.join("images", image_filename)
 
-        # Select the first output for base values and SHAP values, assuming single output
-        base_value = shap_values.base_values[0] if hasattr(shap_values, "base_values") else shap_values[0].base_values[0]
-        values = shap_values.values[0] if hasattr(shap_values, "values") else shap_values[0].values[0]
+        # Handle single-output SHAP values
+        base_value = shap_values[0].base_values if isinstance(shap_values[0].base_values, (float, int)) else shap_values[0].base_values[0]
+        values = shap_values[0].values if isinstance(shap_values[0].values, np.ndarray) else shap_values[0].values[0]
 
         # Create and save the SHAP waterfall plot
         shap.waterfall_plot(shap.Explanation(base_values=base_value, values=values, feature_names=shap_values.feature_names), show=False)
