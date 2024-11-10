@@ -6,14 +6,12 @@ import uuid
 import os
 import numpy as np
 
-# Load the saved model directly (assumes scikit-learn version 1.0.2 is compatible)
+# Load the saved model directly
 loaded_model = joblib.load("model/trained_model.joblib")
 
-def get_shap_explanation(recommendations, model=None):
-    if model is None:  # Use loaded_model if no model is provided
-        model = loaded_model
+def get_shap_explanation(recommendations):
     explanations = []
-    explainer = shap.Explainer(model)
+    explainer = shap.Explainer(loaded_model)  # Directly use loaded_model
 
     for recommendation in recommendations:
         title = recommendation["title"]
