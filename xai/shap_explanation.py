@@ -4,18 +4,18 @@ import json
 import matplotlib.pyplot as plt
 import uuid
 import os
+import numpy as np
 
 # Load the saved model directly (assumes scikit-learn version 1.0.2 is compatible)
 loaded_model = joblib.load("model/trained_model.joblib")
 
-# Define SHAP explanation function
-def get_shap_explanation(recommendations):
+def get_shap_explanation(recommendations, model):
     explanations = []
-    explainer = shap.Explainer(loaded_model)  # Use the directly loaded model
+    explainer = shap.Explainer(model)  # Use `model` here
 
     for recommendation in recommendations:
         title = recommendation["title"]
-        description_vector = recommendation["description_vector"]
+        description_vector = np.array(recommendation["description_vector"])  # Ensure it's a NumPy array
 
         # Generate SHAP values
         shap_values = explainer.shap_values(description_vector)
@@ -36,7 +36,3 @@ def get_shap_explanation(recommendations):
         })
 
     return json.dumps(explanations)
-
-# Example call to the function
-# recommendations = [{"title": "Book Title", "description_vector": some_vector}]
-# print(get_shap_explanation(recommendations))
