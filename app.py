@@ -89,15 +89,12 @@ async def shap_explanation(request: Request):
     logging.info("Received request for SHAP explanation.")
 
     try:
-        # Pass the model as an argument
-        explanation = get_shap_explanation(recommendations, loaded_model)  # Assuming `loaded_model` is already defined
+        # Call the get_shap_explanation function without passing the model
+        explanation = get_shap_explanation(recommendations)
         logging.info("SHAP explanations generated successfully.")
         return JSONResponse(content=explanation)
     except Exception as e:
         logging.error(f"Error in SHAP explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-    except Exception as e:
-        logging.error(f"Error in SHAP explanation generation: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
 
