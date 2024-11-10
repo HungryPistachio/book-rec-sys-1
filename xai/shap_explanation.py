@@ -14,16 +14,25 @@ loaded_model = joblib.load("model/trained_model.joblib")
 def get_shap_explanation(recommendations):
     explanations = []
     
-    # Extract book descriptions to dynamically fit the TF-IDF vectorizer
-    descriptions = [rec["description"] for rec in recommendations]
+    # Filter out recommendations without descriptions
+    descriptions = [rec["description"] for rec in recommendations if "description" in rec and rec["description"]]
+    
+    # If no valid descriptions are available, log and return an empty result
+    if not descriptions:
+        logging.error("No valid descriptions found in recommendations. Cannot proceed with SHAP explanation.")
+        return json.dumps({"explanations": explanations})
+    
+    # Fit the TF-IDF vectorizer dynamically based on available descriptions
     tfidf_vectorizer = TfidfVectorizer(stop_words="english")
-    tfidf_vectorizer.fit(descriptions)  # Fit to current descriptions
+    tfidf_vectorizer.fit(descriptions)
     description_vectors = tfidf_vectorizer.transform(descriptions)
     
     # Initialize SHAP explainer with the loaded model
     explainer = shap.Explainer(loaded_model)
     
-    for i, recommendation in enumerate(recommendations):
+    valid_recommendations = [rec for rec in recommendations if "description" in rec and rec["description"]]
+    
+    for i, recommendation in enumerate(valid_recommendations):
         title = recommendation["title"]
         description_vector = description_vectors[i].toarray()
 
@@ -34,11 +43,7 @@ def get_shap_explanation(recommendations):
         logging.info(f"Generated SHAP values for '{title}'")
 
         # Ensure 'feature_names' is set to vectorizer's feature names
-        if tfidf_vectorizer.get_feature_names_out() is not None:
-            feature_names = tfidf_vectorizer.get_feature_names_out()
-        else:
-            logging.error(f"'feature_names' is missing or None for '{title}'. Skipping this entry.")
-            continue
+        feature_names = tfidf_vectorizer.get_feature_names_out()
 
         # Get the top 10 features
         base_value = shap_values[0].base_values[0] if isinstance(shap_values[0].base_values, np.ndarray) else shap_values[0].base_values
