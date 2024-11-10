@@ -90,7 +90,7 @@ async def shap_explanation(request: Request):
     logging.info("Received request for SHAP explanation.")
 
     try:
-        explanation = get_shap_explanation(recommendations, model)
+        explanation = get_shap_explanation(recommendations)
         logging.info("SHAP explanations generated successfully.")
         return JSONResponse(content=explanation)
     except Exception as e:
