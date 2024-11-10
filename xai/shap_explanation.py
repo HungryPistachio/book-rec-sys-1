@@ -9,7 +9,7 @@ import numpy as np
 # Load the saved model directly (assumes scikit-learn version 1.0.2 is compatible)
 loaded_model = joblib.load("model/trained_model.joblib")
 
-def get_shap_explanation(recommendations, model):
+def get_shap_explanation(recommendations, model=loaded_model):
     explanations = []
     explainer = shap.Explainer(model)  # Use `model` here
 
