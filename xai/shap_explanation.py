@@ -21,32 +21,21 @@ def get_shap_explanation(recommendations):
         # Generate SHAP values using the explainer
         shap_values = explainer(description_vector)
 
-        # Debugging information for SHAP values
+        # Log generated SHAP values
         logging.info(f"Generated SHAP values for '{title}': {shap_values}")
 
-        # Check and log each component of the SHAP values
-        if not shap_values:
-            logging.error(f"No SHAP values returned for '{title}'.")
-            continue
-
-        if not hasattr(shap_values[0], 'base_values') or shap_values[0].base_values is None:
-            logging.error(f"'base_values' is missing or None for '{title}'.")
-            continue
-        if not hasattr(shap_values[0], 'values') or shap_values[0].values is None:
-            logging.error(f"'values' is missing or None for '{title}'.")
-            continue
-        if not hasattr(shap_values[0], 'feature_names') or shap_values[0].feature_names is None:
+        # Check for feature names
+        if shap_values[0].feature_names is None:
             logging.error(f"'feature_names' is missing or None for '{title}'.")
             continue
 
-        # Extract valid data from the SHAP explanation
-        base_value = shap_values[0].base_values
-        values = shap_values[0].values
+        # Get the top 10 features
+        base_value = shap_values[0].base_values[0] if isinstance(shap_values[0].base_values, np.ndarray) else shap_values[0].base_values
+        values = shap_values[0].values[0] if isinstance(shap_values[0].values, np.ndarray) else shap_values[0].values
         feature_names = shap_values[0].feature_names
 
-        # Select the top 10 features by absolute SHAP value
         top_indices = np.argsort(np.abs(values))[::-1][:10]
-        top_base_value = base_value if isinstance(base_value, (float, int)) else base_value[0]
+        top_base_value = base_value
         top_values = values[top_indices]
         top_feature_names = [feature_names[i] for i in top_indices]
 
@@ -68,4 +57,5 @@ def get_shap_explanation(recommendations):
         except Exception as e:
             logging.error(f"Failed to generate SHAP plot for '{title}': {e}")
 
-    return json.dumps(explanations)
+    # Wrap explanations in a dictionary to match expected format
+    return json.dumps({"explanations": explanations})
