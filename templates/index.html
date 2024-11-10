@@ -45,19 +45,24 @@
       </div>
     </div>
     <div id="shap" class="tab-content" style="display:none;">
-      <h2>SHAP Explanation</h2>
-      <input type="text" id="bookTitleShap" placeholder="Enter a book title">
-      <div class="toggle-label">
-        <input type="checkbox" id="includeSameAuthorShap" checked>
-        <label for="includeSameAuthorShap">Include recommendations by the same author</label>
-      </div>
-      <button class="get-recommendations-button" data-tab="shap">Get Recommendations</button>
-      <ul id="recommendationsShap"></ul>
-      <div id="shapExplanation" style="display:none;">
-        <h2>SHAP Explanation for <span id="explainedTitleShap"></span></h2>
-        <ul id="shapExplanationList"></ul>
-      </div>
-    </div>
+  <h2>SHAP Explanation</h2>
+  <input type="text" id="bookTitleShap" placeholder="Enter a book title">
+  <div class="toggle-label">
+    <input type="checkbox" id="includeSameAuthorShap" checked>
+    <label for="includeSameAuthorShap">Include recommendations by the same author</label>
+  </div>
+  <button class="get-recommendations-button" data-tab="shap">Get Recommendations</button>
+  <ul id="recommendationsShap"></ul>
+
+  <!-- SHAP Explanation Section -->
+  <div id="shapExplanation" style="display:none;">
+    <h2>SHAP Explanation for <span id="explainedTitleShap"></span></h2>
+    <ul id="shapExplanationList">
+      <!-- Explanations for each recommended book will be appended here by JavaScript -->
+    </ul>
+  </div>
+</div>
+
   </div>
 </div>
 <script>
