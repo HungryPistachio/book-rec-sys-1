@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import uuid
 import os
 import numpy as np
+import logging
 
 # Load the saved model directly
 loaded_model = joblib.load("model/trained_model.joblib")
@@ -15,18 +16,30 @@ def get_shap_explanation(recommendations):
 
     for recommendation in recommendations:
         title = recommendation["title"]
-        # Convert description vector to a 2D array format for SHAP
         description_vector = np.array(recommendation["description_vector"]).reshape(1, -1)
 
         # Generate SHAP values using the explainer
         shap_values = explainer(description_vector)
 
-        # Check if the shap_values object has the expected attributes
-        if not (shap_values and hasattr(shap_values[0], 'base_values') and hasattr(shap_values[0], 'values') and hasattr(shap_values[0], 'feature_names')):
-            logging.error(f"Invalid SHAP data format for {title}.")
+        # Debugging information for SHAP values
+        logging.info(f"Generated SHAP values for '{title}': {shap_values}")
+
+        # Check and log each component of the SHAP values
+        if not shap_values:
+            logging.error(f"No SHAP values returned for '{title}'.")
             continue
 
-        # Extract data from the explanation object
+        if not hasattr(shap_values[0], 'base_values') or shap_values[0].base_values is None:
+            logging.error(f"'base_values' is missing or None for '{title}'.")
+            continue
+        if not hasattr(shap_values[0], 'values') or shap_values[0].values is None:
+            logging.error(f"'values' is missing or None for '{title}'.")
+            continue
+        if not hasattr(shap_values[0], 'feature_names') or shap_values[0].feature_names is None:
+            logging.error(f"'feature_names' is missing or None for '{title}'.")
+            continue
+
+        # Extract valid data from the SHAP explanation
         base_value = shap_values[0].base_values
         values = shap_values[0].values
         feature_names = shap_values[0].feature_names
@@ -53,6 +66,6 @@ def get_shap_explanation(recommendations):
                 "image_url": f"/images/{image_filename}"
             })
         except Exception as e:
-            logging.error(f"Failed to generate SHAP plot for {title}: {e}")
+            logging.error(f"Failed to generate SHAP plot for '{title}': {e}")
 
     return json.dumps(explanations)
