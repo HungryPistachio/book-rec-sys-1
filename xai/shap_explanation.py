@@ -72,7 +72,7 @@ def get_shap_explanation(recommendations):
             )
 
             # Save the plot with a very low DPI
-            plt.savefig(image_path, bbox_inches='tight', dpi=20, format='png')
+            plt.savefig(image_path, bbox_inches='tight', dpi=8, format='png')
             plt.close()
             logging.info(f"Image saved at path: {image_path}")
             logging.info(f"Checking existence of image file: {os.path.exists(image_path)} at path: {image_path}")
