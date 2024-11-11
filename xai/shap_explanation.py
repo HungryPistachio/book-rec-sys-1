@@ -44,7 +44,7 @@ def get_shap_explanation(recommendations):
             values = np.array(shap_values[0].values).flatten()
 
             # Cap the SHAP values if they are excessively large
-            values = np.clip(values, -10, 10)
+            values = np.clip(values, -5, 5)
 
             # Retrieve feature names from vectorizer
             feature_names = tfidf_vectorizer.get_feature_names_out()
@@ -72,7 +72,7 @@ def get_shap_explanation(recommendations):
             )
             
             # Save the plot with a lower DPI
-            plt.savefig(image_path, bbox_inches='tight', dpi=30, format='png')
+            plt.savefig(image_path, bbox_inches='tight', dpi=25, format='png')
             plt.close()
 
             explanations.append({
