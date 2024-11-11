@@ -38,34 +38,38 @@ def get_shap_explanation(recommendations):
         # Generate SHAP values using the explainer
         shap_values = explainer(description_vector)
 
+        # Debug: Log the structure of shap_values
         logging.info(f"Generated SHAP values for '{title}'")
-
-        # Check and extract base_value and shap values
-        if hasattr(shap_values[0], 'base_values') and isinstance(shap_values[0].base_values, np.ndarray):
-            base_value = shap_values[0].base_values[0]
-        else:
-            logging.error(f"Base value not in expected format for '{title}'")
-            base_value = 0.0  # Set a default value if base_value is missing
-
-        if hasattr(shap_values[0], 'values') and isinstance(shap_values[0].values, np.ndarray):
-            values = shap_values[0].values[0]
-        else:
-            logging.error(f"SHAP values not in expected format for '{title}'")
-            values = np.zeros_like(tfidf_vectors[i].toarray())  # Default to zero values if shap_values is missing
-
-        # Get feature names from the vectorizer
-        feature_names = tfidf_vectorizer.get_feature_names_out()
-        
-        # Get the top 10 influential features
-        top_indices = np.argsort(np.abs(values))[::-1][:10]
-        top_values = values[top_indices]
-        top_feature_names = [feature_names[idx] for idx in top_indices]
-
-        # Generate a unique filename for each explanation image
-        image_filename = f"shap_plot_{uuid.uuid4()}.png"
-        image_path = os.path.join("images", image_filename)
+        logging.debug(f"shap_values: {shap_values}")
         
         try:
+            # Check the structure of base_values and values
+            base_value = shap_values[0].base_values
+            values = shap_values[0].values
+            logging.debug(f"base_value structure: {base_value}, type: {type(base_value)}")
+            logging.debug(f"values structure: {values}, type: {type(values)}")
+
+            # If base_value or values is a scalar, we may need to adjust accordingly
+            if not isinstance(base_value, np.ndarray):
+                base_value = np.array([base_value])  # Ensure it's an array
+            if not isinstance(values, np.ndarray):
+                values = np.array([values])  # Ensure it's an array
+
+            base_value = base_value[0] if base_value.size > 0 else 0.0
+            values = values[0] if values.size > 0 else np.zeros_like(description_vector[0])
+
+            # Get feature names from the vectorizer
+            feature_names = tfidf_vectorizer.get_feature_names_out()
+
+            # Get the top 10 influential features
+            top_indices = np.argsort(np.abs(values))[::-1][:10]
+            top_values = values[top_indices]
+            top_feature_names = [feature_names[idx] for idx in top_indices]
+
+            # Generate a unique filename for each explanation image
+            image_filename = f"shap_plot_{uuid.uuid4()}.png"
+            image_path = os.path.join("images", image_filename)
+            
             # Create and save the SHAP waterfall plot for the top 10 features
             shap.waterfall_plot(
                 shap.Explanation(
