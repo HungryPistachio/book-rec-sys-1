@@ -36,25 +36,23 @@ def get_shap_explanation(recommendations):
         # Generate SHAP values using the explainer
         shap_values = explainer(description_vector)
 
-        # Log and inspect the structure of SHAP values
-        logging.info(f"Generated SHAP values for '{title}'")
-        logging.debug(f"shap_values: {shap_values}")
-        
+        # Ensure shap_values[0].values and shap_values[0].base_values have the correct structure
         try:
-            # Extract base_values and values
+            # Reshape base_value if it's a scalar or single-element array
             base_value = shap_values[0].base_values
-            values = shap_values[0].values
-
-            # Check if base_value and values are arrays, if not, wrap them
             if np.isscalar(base_value):
-                logging.debug(f"Base value is scalar. Converting to array.")
                 base_value = np.array([base_value])
-            if np.isscalar(values):
-                logging.debug(f"Values is scalar. Converting to array.")
-                values = np.array([values])
+            if base_value.ndim == 0:
+                base_value = np.expand_dims(base_value, 0)
+            base_value = base_value[0]
 
-            base_value = base_value[0] if base_value.size > 0 else 0.0
-            values = values[0] if values.size > 0 else np.zeros_like(description_vector[0])
+            # Reshape values if needed
+            values = shap_values[0].values
+            if np.isscalar(values):
+                values = np.array([values])
+            if values.ndim == 1:
+                values = np.expand_dims(values, axis=0)
+            values = values[0]
 
             # Retrieve feature names from vectorizer
             feature_names = tfidf_vectorizer.get_feature_names_out()
@@ -67,7 +65,7 @@ def get_shap_explanation(recommendations):
             # Generate a unique filename for each explanation image
             image_filename = f"shap_plot_{uuid.uuid4()}.png"
             image_path = os.path.join("images", image_filename)
-            
+
             # Create and save the SHAP waterfall plot for the top 10 features
             shap.waterfall_plot(
                 shap.Explanation(
