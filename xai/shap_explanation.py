@@ -16,18 +16,27 @@ loaded_model = joblib.load("model/trained_model.joblib")
 
 def get_shap_explanation(recommendations):
     explanations = []
+
+    # Debugging: Log recommendations to ensure descriptions exist
+    logging.info(f"Received recommendations: {recommendations}")
+
+    # Extract book descriptions to dynamically fit the TF-IDF vectorizer
+    descriptions = [rec.get("description", "").strip() for rec in recommendations if rec.get("description")]
     
-    # Validate and prepare descriptions
-    descriptions = [rec.get("description", "") for rec in recommendations if "description" in rec]
+    # Check for empty descriptions after extraction
     if not descriptions:
         logging.error("No valid descriptions found in recommendations. Cannot proceed with SHAP explanation.")
         return json.dumps({"explanations": explanations})
 
     # Fit TF-IDF to descriptions
-    tfidf_vectorizer = TfidfVectorizer(stop_words="english")
-    description_vectors = tfidf_vectorizer.fit_transform(descriptions)
-    feature_names = tfidf_vectorizer.get_feature_names_out()
-    
+    try:
+        tfidf_vectorizer = TfidfVectorizer(stop_words="english")
+        description_vectors = tfidf_vectorizer.fit_transform(descriptions)
+        feature_names = tfidf_vectorizer.get_feature_names_out()
+    except Exception as e:
+        logging.error(f"Failed to fit TF-IDF vectorizer: {e}")
+        return json.dumps({"explanations": explanations})
+
     # Initialize SHAP explainer
     explainer = shap.Explainer(loaded_model)
 
@@ -64,11 +73,4 @@ def get_shap_explanation(recommendations):
 
             # Add explanation info to results
             explanations.append({
-                "title": title,
-                "image_url": f"/images/{image_filename}"
-            })
-
-        except Exception as e:
-            logging.error(f"Failed to generate SHAP plot for '{title}': {e}")
-
-    return json.dumps({"explanations": explanations})
+                "title": t
