@@ -35,32 +35,32 @@ def get_shap_explanation(recommendations):
 
         # Generate SHAP values
         shap_values = explainer(description_vector)
-
         logging.info(f"SHAP values for '{title}' generated.")
 
         try:
             # Use a static base_value as a safeguard
             base_value = 0.0
             values = np.array(shap_values[0].values).flatten()
+            values = np.round(values, 2)  # Round SHAP values to 2 decimal places for conciseness
+            values = np.clip(values, -3, 3)  # Cap SHAP values to -3 and 3 for better scaling
 
-            # Cap the SHAP values if they are excessively large
-            values = np.clip(values, -3, 3)  # Lower cap for values
-
-            # Retrieve feature names from vectorizer
+            # Retrieve feature names and limit feature length for brevity
             feature_names = tfidf_vectorizer.get_feature_names_out()
-
-            # Limit to the top 1 or 2 features for even smaller plots
-            top_indices = np.argsort(np.abs(values))[::-1][:2]
+            top_indices = np.argsort(np.abs(values))[::-1][:2]  # Get top 2 features
             top_values = values[top_indices]
-            top_feature_names = [feature_names[idx] for idx in top_indices]
+            top_feature_names = [
+                (name[:10] + "...") if len(name) > 10 else name for name in [feature_names[idx] for idx in top_indices]
+            ]
 
             # Generate a unique filename for each explanation image
             image_filename = f"shap_plot_{uuid.uuid4()}.png"
             image_path = os.path.join("images", image_filename)
 
-            # Set a smaller figure size and lower DPI for manageable plot dimensions
-            fig, ax = plt.subplots(figsize=(5, 3))  
-            # Create the SHAP waterfall plot for the top 2 features
+            # Set smaller figure size and adjust font for a compact image
+            fig, ax = plt.subplots(figsize=(3, 2))
+            plt.rcParams.update({'font.size': 8})
+
+            # Create SHAP waterfall plot
             shap.waterfall_plot(
                 shap.Explanation(
                     base_values=base_value,
@@ -70,11 +70,11 @@ def get_shap_explanation(recommendations):
                 show=False
             )
 
+            # Save plot with a low DPI to reduce dimensions
             plt.tight_layout()
             plt.savefig(image_path, bbox_inches='tight', dpi=10, format='png')
             plt.close()
             logging.info(f"Image saved at path: {image_path}")
-            logging.info(f"Checking existence of image file: {os.path.exists(image_path)} at path: {image_path}")
 
             explanations.append({
                 "title": title,
