@@ -36,30 +36,15 @@ def get_shap_explanation(recommendations):
         # Generate SHAP values
         shap_values = explainer(description_vector)
 
+        # Log the types and shapes of base_value and values
+        logging.info(f"SHAP values for '{title}': base_values type: {type(shap_values[0].base_values)}, "
+                     f"values type: {type(shap_values[0].values)}, "
+                     f"values shape: {np.shape(shap_values[0].values)}")
+
         try:
-            # Ensure base_value is within a reasonable range
-            base_value = shap_values[0].base_values
-            if np.isscalar(base_value):
-                base_value = np.array([base_value])
-            if base_value.ndim == 0:
-                base_value = np.expand_dims(base_value, 0)
-            base_value = base_value[0]
-
-            # Fallback to default if base_value is unrealistically large or small
-            if abs(base_value) > 1000:
-                logging.warning(f"Base value {base_value} is out of range; defaulting to 0.0")
-                base_value = 0.0
-
-            # Check and clip values within a reasonable range
-            values = shap_values[0].values
-            if np.isscalar(values):
-                values = np.array([values])
-            if values.ndim == 1:
-                values = np.expand_dims(values, axis=0)
-            values = values[0]
-
-            # Clip values to prevent excessively large magnitudes
-            values = np.clip(values, -1, 1)
+            # Ensure that base_value and values are arrays
+            base_value = np.array(shap_values[0].base_values).flatten()
+            values = np.array(shap_values[0].values).flatten()
 
             # Retrieve feature names from vectorizer
             feature_names = tfidf_vectorizer.get_feature_names_out()
@@ -76,13 +61,15 @@ def get_shap_explanation(recommendations):
             # Create and save the SHAP waterfall plot for the top 10 features
             shap.waterfall_plot(
                 shap.Explanation(
-                    base_values=base_value,
+                    base_values=base_value[0] if base_value.size > 0 else 0.0,
                     values=top_values,
                     feature_names=top_feature_names
                 ),
                 show=False
             )
-            plt.savefig(image_path, bbox_inches='tight')
+            
+            # Adjust save parameters
+            plt.savefig(image_path, bbox_inches='tight', dpi=300, format='png')
             plt.close()
 
             explanations.append({
