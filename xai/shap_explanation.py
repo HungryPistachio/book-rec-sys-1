@@ -59,8 +59,7 @@ def get_shap_explanation(recommendations):
             image_path = os.path.join("images", image_filename)
 
             # Set a smaller figure size and lower DPI for manageable plot dimensions
-            fig, ax = plt.subplots(figsize=(10, 7))  # Reduce size further
-
+            fig, ax = plt.subplots(figsize=(5, 3))  
             # Create the SHAP waterfall plot for the top 2 features
             shap.waterfall_plot(
                 shap.Explanation(
@@ -71,8 +70,8 @@ def get_shap_explanation(recommendations):
                 show=False
             )
 
-            # Save the plot with a very low DPI
-            plt.savefig(image_path, bbox_inches='tight', dpi=8, format='png')
+            plt.tight_layout()
+            plt.savefig(image_path, bbox_inches='tight', dpi=15, format='png')
             plt.close()
             logging.info(f"Image saved at path: {image_path}")
             logging.info(f"Checking existence of image file: {os.path.exists(image_path)} at path: {image_path}")
