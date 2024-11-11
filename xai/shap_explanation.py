@@ -63,7 +63,7 @@ def get_shap_explanation(recommendations):
             ax.barh(feature_names, values)
             ax.set_title(f"SHAP Explanation for '{title}'")
             plt.tight_layout()
-            plt.savefig(image_path, bbox_inches='tight', dpi=10, format='png')
+            plt.savefig(image_path, bbox_inches='tight', dpi=100, format='png')
             plt.close()
             
             explanations.append({
