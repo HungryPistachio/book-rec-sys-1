@@ -7,7 +7,6 @@ import os
 import numpy as np
 import logging
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.ensemble import RandomForestClassifier  # If needed for model redefinition
 
 logging.basicConfig(level=logging.INFO)
 
@@ -17,18 +16,18 @@ loaded_model = joblib.load("model/trained_model.joblib")
 def get_shap_explanation(recommendations):
     explanations = []
 
-    # Combine title, authors, and description for TF-IDF vectorization
+    # Combine title, authors, and description
     combined_texts = [
         f"{rec.get('title', '')} {', '.join(rec.get('authors', ['']))} {rec.get('description', '')}"
         for rec in recommendations
     ]
 
-    # Initialize a TF-IDF vectorizer and transform descriptions
-    tfidf_vectorizer = TfidfVectorizer(stop_words="english")
+    # Initialize a TF-IDF vectorizer with a fixed max_features to match model input size
+    tfidf_vectorizer = TfidfVectorizer(stop_words="english", max_features=1471)
     tfidf_vectors = tfidf_vectorizer.fit_transform(combined_texts).toarray()
     feature_names = tfidf_vectorizer.get_feature_names_out()
 
-    # Use Kernel SHAP to approximate SHAP values without needing exact feature match
+    # Use Kernel SHAP with a fixed-size feature vector
     explainer = shap.KernelExplainer(loaded_model.predict, tfidf_vectors)
 
     for i, recommendation in enumerate(recommendations):
