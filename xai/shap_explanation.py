@@ -59,7 +59,7 @@ def get_shap_explanation(recommendations):
             image_path = os.path.join("images", image_filename)
 
             # Set a smaller figure size and lower DPI for manageable plot dimensions
-            fig, ax = plt.subplots(figsize=(4, 3))  # Reduce size further
+            fig, ax = plt.subplots(figsize=(10, 7))  # Reduce size further
 
             # Create the SHAP waterfall plot for the top 2 features
             shap.waterfall_plot(
