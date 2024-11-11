@@ -346,6 +346,7 @@ function displayShapExplanation(data) {
     const imgElement = document.createElement('img');
     imgElement.src = explanationData.image_url;
     imgElement.alt = `SHAP explanation for ${explanationData.title}`;
+    imgElement.style.minWidth = "300px";
     imgElement.style.maxWidth = "100%";
     imgElement.style.height = "auto"; // Ensure height adjusts based on image dimensions
     imgElement.style.minHeight = "200px"; 
