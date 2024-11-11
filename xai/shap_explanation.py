@@ -10,27 +10,27 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 logging.basicConfig(level=logging.INFO)
 
-# Load the saved model directly (assuming it's compatible with these inputs)
+# Load the saved model directly
 loaded_model = joblib.load("model/trained_model.joblib")
 
 def get_shap_explanation(recommendations):
     explanations = []
 
-    # Combine titles, authors, and descriptions for vectorization
+    # Combine title, authors, and description with default values if missing
     combined_texts = [
-        f"{rec['title']} {', '.join(rec['authors'])} {rec['description']}"
+        f"{rec.get('title', '')} {', '.join(rec.get('authors', ['']))} {rec.get('description', '')}"
         for rec in recommendations
     ]
 
-    # Initialize a single TF-IDF vectorizer for all text
+    # Initialize a TF-IDF vectorizer for the combined text
     tfidf_vectorizer = TfidfVectorizer(stop_words="english")
-    tfidf_vectors = tfidf_vectorizer.fit_transform(combined_texts)  # Fit and transform in one step
+    tfidf_vectors = tfidf_vectorizer.fit_transform(combined_texts)
 
-    # Initialize SHAP explainer
+    # Initialize SHAP explainer with the loaded model
     explainer = shap.Explainer(loaded_model)
 
     for i, recommendation in enumerate(recommendations):
-        title = recommendation["title"]
+        title = recommendation.get("title", f"Recommendation {i + 1}")
 
         # Get the vectorized form of the combined text
         description_vector = tfidf_vectors[i].toarray()
@@ -40,21 +40,22 @@ def get_shap_explanation(recommendations):
 
         logging.info(f"Generated SHAP values for '{title}'")
 
-        # Get feature names from vectorizer
+        # Get feature names from the vectorizer
         feature_names = tfidf_vectorizer.get_feature_names_out()
         base_value = shap_values[0].base_values[0] if isinstance(shap_values[0].base_values, np.ndarray) else shap_values[0].base_values
         values = shap_values[0].values[0] if isinstance(shap_values[0].values, np.ndarray) else shap_values[0].values
 
-        # Get top 10 influential features
+        # Get the top 10 influential features
         top_indices = np.argsort(np.abs(values))[::-1][:10]
         top_values = values[top_indices]
         top_feature_names = [feature_names[i] for i in top_indices]
 
-        # Create and save SHAP plot for the top 10 features
+        # Generate a unique filename for each explanation image
         image_filename = f"shap_plot_{uuid.uuid4()}.png"
         image_path = os.path.join("images", image_filename)
         
         try:
+            # Create and save the SHAP waterfall plot for the top 10 features
             shap.waterfall_plot(
                 shap.Explanation(
                     base_values=base_value,
