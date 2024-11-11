@@ -22,7 +22,7 @@ def get_shap_explanation(recommendations):
 
     # Extract book descriptions to dynamically fit the TF-IDF vectorizer
     descriptions = [rec.get("description", "").strip() for rec in recommendations if rec.get("description")]
-    
+
     # Check for empty descriptions after extraction
     if not descriptions:
         logging.error("No valid descriptions found in recommendations. Cannot proceed with SHAP explanation.")
@@ -73,4 +73,11 @@ def get_shap_explanation(recommendations):
 
             # Add explanation info to results
             explanations.append({
-                "title": t
+                "title": title,
+                "image_url": f"/images/{image_filename}"
+            })
+
+        except Exception as e:
+            logging.error(f"Failed to generate SHAP plot for '{title}': {e}")
+
+    return json.dumps({"explanations": explanations})
