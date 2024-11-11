@@ -72,7 +72,7 @@ def get_shap_explanation(recommendations):
             )
 
             # Save the plot with a very low DPI
-            plt.savefig(image_path, bbox_inches='tight', dpi=10, format='png')
+            plt.savefig(image_path, bbox_inches='tight', dpi=9, format='png')
             plt.close()
 
             explanations.append({
