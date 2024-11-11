@@ -43,16 +43,14 @@ def get_shap_explanation(recommendations):
             base_value = 0.0
             values = np.array(shap_values[0].values).flatten()
 
-            # Sanity check: ensure values are within a reasonable range
-            if np.max(np.abs(values)) > 10:  # Adjust threshold as needed
-                logging.warning(f"SHAP values for '{title}' are abnormally large; scaling down.")
-                values = np.clip(values, -10, 10)
+            # Cap the SHAP values if they are excessively large
+            values = np.clip(values, -10, 10)
 
             # Retrieve feature names from vectorizer
             feature_names = tfidf_vectorizer.get_feature_names_out()
 
-            # Get the top 10 influential features
-            top_indices = np.argsort(np.abs(values))[::-1][:10]
+            # Limit to the top 5 features for more compact plots
+            top_indices = np.argsort(np.abs(values))[::-1][:5]
             top_values = values[top_indices]
             top_feature_names = [feature_names[idx] for idx in top_indices]
 
@@ -60,14 +58,10 @@ def get_shap_explanation(recommendations):
             image_filename = f"shap_plot_{uuid.uuid4()}.png"
             image_path = os.path.join("images", image_filename)
 
-            # Create the figure with explicit size
-            fig, ax = plt.subplots(figsize=(8, 6))
+            # Set a smaller figure size and DPI for manageable plot dimensions
+            fig, ax = plt.subplots(figsize=(6, 4))
 
-            # Add annotation text with transform
-            ax.text(0.5, 1.05, f"SHAP Explanation for '{title}'", transform=ax.transAxes, 
-                    ha='center', fontsize=12, fontweight='bold')
-
-            # Create the SHAP waterfall plot for the top 10 features
+            # Create the SHAP waterfall plot for the top 5 features
             shap.waterfall_plot(
                 shap.Explanation(
                     base_values=base_value,
@@ -77,8 +71,8 @@ def get_shap_explanation(recommendations):
                 show=False
             )
             
-            # Save the plot with specified dpi and close the plot to free memory
-            plt.savefig(image_path, bbox_inches='tight', dpi=300, format='png')
+            # Save the plot with a lower DPI
+            plt.savefig(image_path, bbox_inches='tight', dpi=100, format='png')
             plt.close()
 
             explanations.append({
