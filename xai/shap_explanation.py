@@ -55,7 +55,7 @@ def get_shap_explanation(recommendations):
             top_feature_names = [feature_names[idx] for idx in top_indices]
 
             # Generate a unique filename for each explanation image
-            image_filename = f"shap_plot_{uuid.uuid4()}.jpeg"
+            image_filename = f"shap_plot_{uuid.uuid4()}.jpg"
             image_path = os.path.join("images", image_filename)
 
             # Set a smaller figure size and lower DPI for manageable plot dimensions
