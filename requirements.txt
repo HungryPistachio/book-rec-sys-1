@@ -11,6 +11,6 @@ dice_ml
 pandas==1.3.4
 python-multipart
 typing-extensions
-torch
+torch==2.0.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
 transformers
 sentence-transformers
