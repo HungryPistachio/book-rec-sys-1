@@ -22,14 +22,15 @@ def get_shap_explanation(recommendations):
         for rec in recommendations
     ]
     
-    # Initialize TF-IDF vectorizer with a fixed max of 1471 features
+    # Step 1: Fit the TF-IDF vectorizer on all combined texts to create a fixed vocabulary of 1471 features
     tfidf_vectorizer = TfidfVectorizer(stop_words="english", max_features=1471)
+    tfidf_vectorizer.fit(combined_texts)  # Define the vocabulary based on all recommendations
     
-    # Generate TF-IDF vectors for each book description
-    tfidf_vectors = tfidf_vectorizer.fit_transform(combined_texts).toarray()
+    # Step 2: Transform each individual description using this fixed vocabulary
+    tfidf_vectors = tfidf_vectorizer.transform(combined_texts).toarray()  # Ensures 1471 features for each entry
 
     # Initialize SHAP explainer with the model’s predict function
-    explainer = shap.Explainer(loaded_model.predict, np.array(tfidf_vectors))
+    explainer = shap.Explainer(loaded_model.predict, tfidf_vectors)
 
     for i, recommendation in enumerate(recommendations):
         title = recommendation.get("title", f"Recommendation {i + 1}")
