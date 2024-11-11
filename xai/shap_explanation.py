@@ -44,13 +44,13 @@ def get_shap_explanation(recommendations):
             values = np.array(shap_values[0].values).flatten()
 
             # Cap the SHAP values if they are excessively large
-            values = np.clip(values, -5, 5)
+            values = np.clip(values, -3, 3)  # Lower cap for values
 
             # Retrieve feature names from vectorizer
             feature_names = tfidf_vectorizer.get_feature_names_out()
 
-            # Limit to the top 3 features for more compact plots
-            top_indices = np.argsort(np.abs(values))[::-1][:3]
+            # Limit to the top 1 or 2 features for even smaller plots
+            top_indices = np.argsort(np.abs(values))[::-1][:2]
             top_values = values[top_indices]
             top_feature_names = [feature_names[idx] for idx in top_indices]
 
@@ -59,9 +59,9 @@ def get_shap_explanation(recommendations):
             image_path = os.path.join("images", image_filename)
 
             # Set a smaller figure size and lower DPI for manageable plot dimensions
-            fig, ax = plt.subplots(figsize=(4, 3))
+            fig, ax = plt.subplots(figsize=(2, 2))  # Reduce size further
 
-            # Create the SHAP waterfall plot for the top 3 features
+            # Create the SHAP waterfall plot for the top 2 features
             shap.waterfall_plot(
                 shap.Explanation(
                     base_values=base_value,
@@ -70,9 +70,9 @@ def get_shap_explanation(recommendations):
                 ),
                 show=False
             )
-            
-            # Save the plot with a lower DPI
-            plt.savefig(image_path, bbox_inches='tight', dpi=25, format='png')
+
+            # Save the plot with a very low DPI
+            plt.savefig(image_path, bbox_inches='tight', dpi=10, format='png')
             plt.close()
 
             explanations.append({
