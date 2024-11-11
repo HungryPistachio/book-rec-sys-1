@@ -1,41 +1,55 @@
 import shap
+import joblib
 import json
 import matplotlib.pyplot as plt
 import uuid
 import os
 import numpy as np
 import logging
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 logging.basicConfig(level=logging.INFO)
+
+# Load the saved model directly
+loaded_model = joblib.load("model/trained_model.joblib")
 
 def get_shap_explanation(recommendations):
     explanations = []
 
-    # Initialize SHAP explainer with a mock model; replace this if an actual model is used
-    explainer = shap.Explainer(lambda x: np.random.rand(x.shape[0], 1))  # Replace this with actual model if available
+    # Combine title, authors, and description
+    combined_texts = [
+        f"{rec.get('title', '')} {', '.join(rec.get('authors', ['']))} {rec.get('description', '')}"
+        for rec in recommendations
+    ]
+
+    # Initialize a TF-IDF vectorizer
+    tfidf_vectorizer = TfidfVectorizer(stop_words="english")
+    tfidf_vectors = tfidf_vectorizer.fit_transform(combined_texts)
+
+    # Initialize SHAP explainer with the loaded model
+    explainer = shap.Explainer(loaded_model)
 
     for i, recommendation in enumerate(recommendations):
         title = recommendation.get("title", f"Recommendation {i + 1}")
-        description_vector = np.array(recommendation.get("description_vector", []))
-
-        # Check if description_vector and feature_names exist and are valid
-        if description_vector.size == 0 or not recommendation.get("feature_names"):
-            logging.error(f"No valid description vector or feature names for '{title}'. Skipping.")
-            continue
-
-        feature_names = recommendation["feature_names"]
+        description_vector = tfidf_vectors[i].toarray()
 
         # Generate SHAP values
-        shap_values = explainer(description_vector.reshape(1, -1))
+        shap_values = explainer(description_vector)
 
         logging.info(f"SHAP values for '{title}' generated.")
 
         try:
             # Use a static base_value as a safeguard
             base_value = 0.0
-            values = shap_values[0].values.flatten()
+            values = np.array(shap_values[0].values).flatten()
 
-            # Limit to the top 2 features for simplicity
+            # Cap the SHAP values if they are excessively large
+            values = np.clip(values, -3, 3)  # Lower cap for values
+
+            # Retrieve feature names from vectorizer
+            feature_names = tfidf_vectorizer.get_feature_names_out()
+
+            # Limit to the top 1 or 2 features for even smaller plots
             top_indices = np.argsort(np.abs(values))[::-1][:2]
             top_values = values[top_indices]
             top_feature_names = [feature_names[idx] for idx in top_indices]
@@ -45,9 +59,9 @@ def get_shap_explanation(recommendations):
             image_path = os.path.join("images", image_filename)
 
             # Set a smaller figure size and lower DPI for manageable plot dimensions
-            fig, ax = plt.subplots(figsize=(3, 3))  # Adjust size as needed
+            fig, ax = plt.subplots(figsize=(2, 2))  # Reduce size further
 
-            # Create the SHAP waterfall plot for the top features
+            # Create the SHAP waterfall plot for the top 2 features
             shap.waterfall_plot(
                 shap.Explanation(
                     base_values=base_value,
@@ -57,16 +71,14 @@ def get_shap_explanation(recommendations):
                 show=False
             )
 
-            # Save the plot
-            plt.savefig(image_path, bbox_inches='tight', dpi=20, format='png')
+            # Save the plot with a very low DPI
+            plt.savefig(image_path, bbox_inches='tight', dpi=9, format='png')
             plt.close()
 
             explanations.append({
                 "title": title,
-                "image_url": f"images/{image_filename}"
+                "image_url": f"/images/{image_filename}"
             })
-            logging.info(f"Image saved at path: {image_path}")
-            
         except Exception as e:
             logging.error(f"Failed to generate SHAP plot for '{title}': {e}")
 
