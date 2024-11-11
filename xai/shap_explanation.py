@@ -55,7 +55,7 @@ def get_shap_explanation(recommendations):
             top_feature_names = [feature_names[idx] for idx in top_indices]
 
             # Generate a unique filename for each explanation image
-            image_filename = f"shap_plot_{uuid.uuid4()}.jpg"
+            image_filename = f"shap_plot_{uuid.uuid4()}.png"
             image_path = os.path.join("images", image_filename)
 
             # Set a smaller figure size and lower DPI for manageable plot dimensions
@@ -71,7 +71,7 @@ def get_shap_explanation(recommendations):
             )
 
             plt.tight_layout()
-            plt.savefig(image_path, bbox_inches='tight', dpi=30, format='jpeg', quality=85)  # JPEG compression
+            plt.savefig(image_path, bbox_inches='tight', dpi=10, format='png', optimize=True)
             plt.close()
             logging.info(f"Image saved at path: {image_path}")
             logging.info(f"Checking existence of image file: {os.path.exists(image_path)} at path: {image_path}")
