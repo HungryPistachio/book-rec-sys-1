@@ -11,4 +11,6 @@ dice_ml
 pandas==1.3.4
 python-multipart
 typing-extensions
+torch
+transformers
 sentence-transformers
