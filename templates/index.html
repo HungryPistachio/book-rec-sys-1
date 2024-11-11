@@ -311,11 +311,11 @@ function displayShapExplanation(data) {
   explanationContainer.innerHTML = ''; // Clear previous SHAP explanations
 
   // Ensure data is in expected format and explanations is an array
-  if (!data || !data.explanations || !Array.isArray(data.explanations)) {
-    console.error("Invalid SHAP data format:", data);
-    explanationContainer.innerHTML = "<li>No SHAP explanation data available.</li>";
-    return;
-  }
+  //if (!data || !data.explanations || !Array.isArray(data.explanations)) {
+    //console.error("Invalid SHAP data format:", data);
+    //explanationContainer.innerHTML = "<li>No SHAP explanation data available.</li>";
+    //return;
+ // }
 
   console.log("Explanation data received:", data);
 
