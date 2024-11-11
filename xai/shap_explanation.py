@@ -31,34 +31,32 @@ def get_shap_explanation(recommendations):
 
     for i, recommendation in enumerate(recommendations):
         title = recommendation.get("title", f"Recommendation {i + 1}")
-
-        # Get the vectorized form of the combined text
         description_vector = tfidf_vectors[i].toarray()
 
         # Generate SHAP values using the explainer
         shap_values = explainer(description_vector)
 
-        # Debug: Log the structure of shap_values
+        # Log and inspect the structure of SHAP values
         logging.info(f"Generated SHAP values for '{title}'")
         logging.debug(f"shap_values: {shap_values}")
         
         try:
-            # Check the structure of base_values and values
+            # Extract base_values and values
             base_value = shap_values[0].base_values
             values = shap_values[0].values
-            logging.debug(f"base_value structure: {base_value}, type: {type(base_value)}")
-            logging.debug(f"values structure: {values}, type: {type(values)}")
 
-            # If base_value or values is a scalar, we may need to adjust accordingly
-            if not isinstance(base_value, np.ndarray):
-                base_value = np.array([base_value])  # Ensure it's an array
-            if not isinstance(values, np.ndarray):
-                values = np.array([values])  # Ensure it's an array
+            # Check if base_value and values are arrays, if not, wrap them
+            if np.isscalar(base_value):
+                logging.debug(f"Base value is scalar. Converting to array.")
+                base_value = np.array([base_value])
+            if np.isscalar(values):
+                logging.debug(f"Values is scalar. Converting to array.")
+                values = np.array([values])
 
             base_value = base_value[0] if base_value.size > 0 else 0.0
             values = values[0] if values.size > 0 else np.zeros_like(description_vector[0])
 
-            # Get feature names from the vectorizer
+            # Retrieve feature names from vectorizer
             feature_names = tfidf_vectorizer.get_feature_names_out()
 
             # Get the top 10 influential features
