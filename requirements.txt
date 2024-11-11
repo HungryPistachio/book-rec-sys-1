@@ -7,7 +7,6 @@ uvicorn
 requests
 lime
 shap==0.41.0
-dice_ml
 pandas==1.3.4
 python-multipart
 typing-extensions
