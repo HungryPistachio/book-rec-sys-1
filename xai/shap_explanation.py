@@ -31,9 +31,11 @@ def get_shap_explanation(recommendations):
 
     for i, recommendation in enumerate(recommendations):
         title = recommendation.get("title", f"Recommendation {i + 1}")
-        description_vector = tfidf_vectors[i].toarray()
+        # Generate a vector specifically for this book
+        book_text = f"{recommendation.get('title', '')} {', '.join(recommendation.get('authors', ['']))} {recommendation.get('description', '')}"
+        description_vector = tfidf_vectorizer.transform([book_text]).toarray()
 
-        # Generate SHAP values
+        # Generate SHAP values for the specific vector
         shap_values = explainer(description_vector)
         logging.info(f"SHAP values for '{title}' generated.")
 
@@ -50,7 +52,7 @@ def get_shap_explanation(recommendations):
                 (name[:10] + "...") if len(name) > 10 else name for name in [feature_names[idx] for idx in top_indices]
             ]
 
-            # Generate unique filename for each explanation image
+            # Generate a unique filename for each explanation image
             image_filename = f"shap_plot_{uuid.uuid4()}.png"
             image_path = os.path.join("images", image_filename)
 
@@ -62,7 +64,7 @@ def get_shap_explanation(recommendations):
             plt.tight_layout()
 
             # Save plot with minimal DPI
-            plt.savefig(image_path, bbox_inches='tight', dpi=100, format='png')
+            plt.savefig(image_path, bbox_inches='tight', dpi=10, format='png')
             plt.close()
             logging.info(f"Image saved at path: {image_path}")
 
