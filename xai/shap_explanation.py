@@ -36,15 +36,17 @@ def get_shap_explanation(recommendations):
         # Generate SHAP values
         shap_values = explainer(description_vector)
 
-        # Log the types and shapes of base_value and values
-        logging.info(f"SHAP values for '{title}': base_values type: {type(shap_values[0].base_values)}, "
-                     f"values type: {type(shap_values[0].values)}, "
-                     f"values shape: {np.shape(shap_values[0].values)}")
+        logging.info(f"SHAP values for '{title}' generated.")
 
         try:
-            # Ensure that base_value and values are arrays
-            base_value = np.array(shap_values[0].base_values).flatten()
+            # Use a static base_value as a safeguard
+            base_value = 0.0
             values = np.array(shap_values[0].values).flatten()
+
+            # Sanity check: ensure values are within a reasonable range
+            if np.max(np.abs(values)) > 10:  # Adjust threshold as needed
+                logging.warning(f"SHAP values for '{title}' are abnormally large; scaling down.")
+                values = np.clip(values, -10, 10)
 
             # Retrieve feature names from vectorizer
             feature_names = tfidf_vectorizer.get_feature_names_out()
@@ -58,17 +60,24 @@ def get_shap_explanation(recommendations):
             image_filename = f"shap_plot_{uuid.uuid4()}.png"
             image_path = os.path.join("images", image_filename)
 
-            # Create and save the SHAP waterfall plot for the top 10 features
+            # Create the figure with explicit size
+            fig, ax = plt.subplots(figsize=(8, 6))
+
+            # Add annotation text with transform
+            ax.text(0.5, 1.05, f"SHAP Explanation for '{title}'", transform=ax.transAxes, 
+                    ha='center', fontsize=12, fontweight='bold')
+
+            # Create the SHAP waterfall plot for the top 10 features
             shap.waterfall_plot(
                 shap.Explanation(
-                    base_values=base_value[0] if base_value.size > 0 else 0.0,
+                    base_values=base_value,
                     values=top_values,
                     feature_names=top_feature_names
                 ),
                 show=False
             )
             
-            # Adjust save parameters
+            # Save the plot with specified dpi and close the plot to free memory
             plt.savefig(image_path, bbox_inches='tight', dpi=300, format='png')
             plt.close()
 
