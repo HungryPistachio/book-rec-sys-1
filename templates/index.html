@@ -347,8 +347,8 @@
         imgElement.src = explanationData.image_url;
         imgElement.alt = `SHAP explanation for ${explanationData.title}`;
         imgElement.style.maxWidth = "100%";
-        imgElement.style.width = "300px";
-        imgElement.style.height = "200px";
+        imgElement.style.width = "600px";
+        imgElement.style.height = "400px";
         imgElement.onload = function() {
           console.log(`Image dimensions for ${explanationData.title}:`, imgElement.naturalWidth, "x", imgElement.naturalHeight);
         };
