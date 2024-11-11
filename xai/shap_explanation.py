@@ -49,8 +49,8 @@ def get_shap_explanation(recommendations):
             # Retrieve feature names from vectorizer
             feature_names = tfidf_vectorizer.get_feature_names_out()
 
-            # Limit to the top 5 features for more compact plots
-            top_indices = np.argsort(np.abs(values))[::-1][:5]
+            # Limit to the top 3 features for more compact plots
+            top_indices = np.argsort(np.abs(values))[::-1][:3]
             top_values = values[top_indices]
             top_feature_names = [feature_names[idx] for idx in top_indices]
 
@@ -58,10 +58,10 @@ def get_shap_explanation(recommendations):
             image_filename = f"shap_plot_{uuid.uuid4()}.png"
             image_path = os.path.join("images", image_filename)
 
-            # Set a smaller figure size and DPI for manageable plot dimensions
-            fig, ax = plt.subplots(figsize=(6, 4))
+            # Set a smaller figure size and lower DPI for manageable plot dimensions
+            fig, ax = plt.subplots(figsize=(4, 3))
 
-            # Create the SHAP waterfall plot for the top 5 features
+            # Create the SHAP waterfall plot for the top 3 features
             shap.waterfall_plot(
                 shap.Explanation(
                     base_values=base_value,
@@ -72,7 +72,7 @@ def get_shap_explanation(recommendations):
             )
             
             # Save the plot with a lower DPI
-            plt.savefig(image_path, bbox_inches='tight', dpi=100, format='png')
+            plt.savefig(image_path, bbox_inches='tight', dpi=80, format='png')
             plt.close()
 
             explanations.append({
