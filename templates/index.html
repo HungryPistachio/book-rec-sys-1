@@ -347,6 +347,7 @@ function displayShapExplanation(data) {
     imgElement.src = explanationData.image_url;
     imgElement.alt = `SHAP explanation for ${explanationData.title}`;
     imgElement.style.maxWidth = "100%";
+    imgElement.style.height = "auto"; // Ensure image retains its original height based on content
     explanationContainer.appendChild(imgElement);
   });
 }
