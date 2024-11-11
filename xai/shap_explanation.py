@@ -62,7 +62,7 @@ def get_shap_explanation(recommendations):
             plt.tight_layout()
 
             # Save plot with minimal DPI
-            plt.savefig(image_path, bbox_inches='tight', dpi=10, format='png')
+            plt.savefig(image_path, bbox_inches='tight', dpi=100, format='png')
             plt.close()
             logging.info(f"Image saved at path: {image_path}")
 
