@@ -16,13 +16,13 @@ loaded_model = joblib.load("model/trained_model.joblib")
 def get_shap_explanation(recommendations):
     explanations = []
 
-    # Combine title, authors, and description with default values if missing
+    # Combine title, authors, and description
     combined_texts = [
         f"{rec.get('title', '')} {', '.join(rec.get('authors', ['']))} {rec.get('description', '')}"
         for rec in recommendations
     ]
 
-    # Initialize a TF-IDF vectorizer for the combined text
+    # Initialize a TF-IDF vectorizer
     tfidf_vectorizer = TfidfVectorizer(stop_words="english")
     tfidf_vectors = tfidf_vectorizer.fit_transform(combined_texts)
 
@@ -33,12 +33,11 @@ def get_shap_explanation(recommendations):
         title = recommendation.get("title", f"Recommendation {i + 1}")
         description_vector = tfidf_vectors[i].toarray()
 
-        # Generate SHAP values using the explainer
+        # Generate SHAP values
         shap_values = explainer(description_vector)
 
-        # Ensure shap_values[0].values and shap_values[0].base_values have the correct structure
         try:
-            # Reshape base_value if it's a scalar or single-element array
+            # Ensure base_value is within a reasonable range
             base_value = shap_values[0].base_values
             if np.isscalar(base_value):
                 base_value = np.array([base_value])
@@ -46,13 +45,21 @@ def get_shap_explanation(recommendations):
                 base_value = np.expand_dims(base_value, 0)
             base_value = base_value[0]
 
-            # Reshape values if needed
+            # Fallback to default if base_value is unrealistically large or small
+            if abs(base_value) > 1000:
+                logging.warning(f"Base value {base_value} is out of range; defaulting to 0.0")
+                base_value = 0.0
+
+            # Check and clip values within a reasonable range
             values = shap_values[0].values
             if np.isscalar(values):
                 values = np.array([values])
             if values.ndim == 1:
                 values = np.expand_dims(values, axis=0)
             values = values[0]
+
+            # Clip values to prevent excessively large magnitudes
+            values = np.clip(values, -1, 1)
 
             # Retrieve feature names from vectorizer
             feature_names = tfidf_vectorizer.get_feature_names_out()
