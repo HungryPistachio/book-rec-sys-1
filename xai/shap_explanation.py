@@ -77,7 +77,7 @@ def get_shap_explanation(recommendations):
 
             explanations.append({
                 "title": title,
-                "image_url": f"/images/{image_filename}"
+                "image_url": f"images/{image_filename}"
             })
         except Exception as e:
             logging.error(f"Failed to generate SHAP plot for '{title}': {e}")
