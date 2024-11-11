@@ -306,55 +306,55 @@
     }
 
 
-function displayShapExplanation(data) {
-  const explanationContainer = document.getElementById("shapExplanationList");
-  explanationContainer.innerHTML = ''; // Clear previous SHAP explanations
+    function displayShapExplanation(data) {
+      const explanationContainer = document.getElementById("shapExplanationList");
+      explanationContainer.innerHTML = ''; // Clear previous SHAP explanations
 
-  // Parse `data` if it's a JSON string
-  if (typeof data === "string") {
-    try {
-      data = JSON.parse(data);
-    } catch (error) {
-      console.error("Failed to parse explanation data as JSON:", error);
-      explanationContainer.innerHTML = "<li>Failed to load SHAP explanations.</li>";
-      return;
+      // Parse `data` if it's a JSON string
+      if (typeof data === "string") {
+        try {
+          data = JSON.parse(data);
+        } catch (error) {
+          console.error("Failed to parse explanation data as JSON:", error);
+          explanationContainer.innerHTML = "<li>Failed to load SHAP explanations.</li>";
+          return;
+        }
+      }
+
+      // Ensure data is in expected format and explanations is an array
+      if (!data || !data.explanations || !Array.isArray(data.explanations)) {
+        console.error("Invalid SHAP data format:", data);
+        explanationContainer.innerHTML = "<li>No SHAP explanation data available.</li>";
+        return;
+      }
+
+      console.log("Explanation data received:", data);
+
+      document.getElementById("shapExplanation").style.display = "block";
+
+      data.explanations.forEach((explanationData) => {
+        // Check if title and image_url are available
+        if (!explanationData.title || !explanationData.image_url) {
+          console.error("Missing title or image_url in explanation data:", explanationData);
+          return;
+        }
+
+        const titleElement = document.createElement('h3');
+        titleElement.textContent = explanationData.title;
+        explanationContainer.appendChild(titleElement);
+
+        const imgElement = document.createElement('img');
+        imgElement.src = explanationData.image_url;
+        imgElement.alt = `SHAP explanation for ${explanationData.title}`;
+        imgElement.style.maxWidth = "100%";
+        imgElement.style.width = "300px";
+        imgElement.style.height = "200px";
+        imgElement.onload = function() {
+          console.log(`Image dimensions for ${explanationData.title}:`, imgElement.naturalWidth, "x", imgElement.naturalHeight);
+        };
+        explanationContainer.appendChild(imgElement);
+      });
     }
-  }
-
-  // Ensure data is in expected format and explanations is an array
-  if (!data || !data.explanations || !Array.isArray(data.explanations)) {
-    console.error("Invalid SHAP data format:", data);
-    explanationContainer.innerHTML = "<li>No SHAP explanation data available.</li>";
-    return;
-  }
-
-  console.log("Explanation data received:", data);
-
-  document.getElementById("shapExplanation").style.display = "block";
-
-  data.explanations.forEach((explanationData) => {
-    // Check if title and image_url are available
-    if (!explanationData.title || !explanationData.image_url) {
-      console.error("Missing title or image_url in explanation data:", explanationData);
-      return;
-    }
-
-    const titleElement = document.createElement('h3');
-    titleElement.textContent = explanationData.title;
-    explanationContainer.appendChild(titleElement);
-
-    const imgElement = document.createElement('img');
-    imgElement.src = explanationData.image_url;
-    imgElement.alt = `SHAP explanation for ${explanationData.title}`;
-    imgElement.style.minWidth = "300px";
-    imgElement.style.maxWidth = "100%";
-    imgElement.style.height = "auto"; // Ensure height adjusts based on image dimensions
-    imgElement.style.minHeight = "200px"; 
-    explanationContainer.appendChild(imgElement);
-  });
-}
-
-
 
 
 
