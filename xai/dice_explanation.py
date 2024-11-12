@@ -86,3 +86,10 @@ def get_dice_explanation(dice, input_data, feature_names):
         error_message = f"Exception in get_dice_explanation: {str(e)} of type {type(e).__name__}"
         print(error_message)
         return json.dumps({"error": error_message})
+
+
+
+
+
+
+
