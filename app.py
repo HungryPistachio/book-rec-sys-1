@@ -99,23 +99,19 @@ async def dice_explanation(request: Request):
         description_vector = recommendations[0]["description_vector"]
         feature_names = recommendations[0]["feature_names"]
 
-        # Create a DataFrame for input_data with the same columns as in initialize_dice
+        # Create a DataFrame for input_data with the feature names
         input_data = pd.DataFrame([description_vector], columns=feature_names)
 
-        # Ensure all feature values are numeric
-        input_data = input_data.apply(pd.to_numeric)
-
-        # Check if the column names in input_data match the feature names
-        if set(input_data.columns) != set(feature_names):
-            logging.error("Column names in input_data do not match feature names")
-            return JSONResponse(content={"error": "Column names in input_data do not match feature names"}, status_code=400)
+        # Ensure all feature values are numeric for compatibility
+        input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
 
         # Generate counterfactual explanation
-        explanation = get_dice_explanation(dice, input_data, feature_names)
+        explanation = get_dice_explanation(dice, input_data, model)  # Pass the model directly to handle feature names
         logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 
