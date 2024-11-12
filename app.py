@@ -80,7 +80,8 @@ async def vectorize_descriptions(request: Request):
         return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
 
     # Create a vectorizer with the fixed vocabulary
-    vectorizer = TfidfVectorizer(vocabulary=fixed_vocabulary, stop_words='english')
+    vectorizer = TfidfVectorizer(vocabulary=fixed_vocabulary)
+
 
     # Vectorize the descriptions
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
