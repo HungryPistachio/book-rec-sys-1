@@ -11,6 +11,7 @@ from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 import joblib
 import numpy as np
+import pandas as pd
 
 # Load the trained model at the start
 try:
