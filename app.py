@@ -9,11 +9,12 @@ from xai.dice_explanation import initialize_dice
 from sklearn.feature_extraction.text import TfidfVectorizer
 import uvicorn
 from pathlib import Path
-from fastapi.staticfiles import StaticFiles
 import joblib
 import pandas as pd
-
 import numpy as np
+
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
 
 # Load the trained model at the start
 try:
@@ -22,8 +23,8 @@ try:
 except Exception as e:
     print(f"Error loading model: {e}")
 
-# Initialize logging
-logging.basicConfig(level=logging.INFO)
+# Initialize the TF-IDF Vectorizer
+vectorizer = TfidfVectorizer()
 
 app = FastAPI()
 
@@ -54,8 +55,7 @@ async def vectorize_descriptions(request: Request):
         logging.error("No descriptions provided.")
         return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
 
-    # Vectorize descriptions
-    vectorizer = TfidfVectorizer()
+    # Fit the vectorizer on the descriptions to extract features
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
     feature_names = vectorizer.get_feature_names_out()
     description_vector = tfidf_matrix[0].tolist()  # Assume first description is target
@@ -66,6 +66,10 @@ async def vectorize_descriptions(request: Request):
         "feature_names": feature_names.tolist(),
         "description_vector": description_vector
     })
+
+# Extract TF-IDF feature names for initializing DiCE
+tfidf_feature_names = vectorizer.get_feature_names_out().tolist()
+dice = initialize_dice(model, tfidf_feature_names)  # Initialize DiCE with extracted feature names
 
 # LIME Explanation Endpoint
 @app.post("/lime-explanation")
@@ -83,11 +87,7 @@ async def lime_explanation(request: Request):
         logging.error(f"Error in LIME explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-
-# SHAP Explanation Endpoint
-# Initialize DiCE model at the start
-dice = initialize_dice()
-
+# Dice Explanation Endpoint
 @app.post("/dice-explanation")
 async def dice_explanation(request: Request):
     data = await request.json()
@@ -112,7 +112,4 @@ async def dice_explanation(request: Request):
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-
-
-
 
