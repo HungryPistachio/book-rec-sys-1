@@ -52,8 +52,22 @@ def get_dice_explanation(dice, input_data):
     try:
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
-        # Convert the DataFrame to a dictionary
-        explanation_data = cf.cf_examples_list[0].final_cfs_df.to_dict(orient="records")
-        return json.dumps(explanation_data)  # Convert to JSON string
+
+        # Check if the counterfactual generation was successful and the result is a DataFrame
+        if hasattr(cf.cf_examples_list[0], "final_cfs_df"):
+            explanation_data = cf.cf_examples_list[0].final_cfs_df.to_dict(orient="records")
+            json_explanation = json.dumps(explanation_data)  # Convert to JSON string
+
+            # Validation check: ensure JSON is not empty and has expected structure
+            parsed_data = json.loads(json_explanation)
+            if isinstance(parsed_data, list) and parsed_data:  # Expecting a non-empty list
+                return json_explanation
+            else:
+                # Log or handle unexpected structure
+                return json.dumps({"error": "Generated explanation data is empty or invalid"})
+        else:
+            return json.dumps({"error": "Counterfactual generation failed; final_cfs_df not found"})
+
     except Exception as e:
-        return json.dumps({"error": str(e)})
+        return json.dumps({"error": str(e)})  # Return the error in JSON format
+
