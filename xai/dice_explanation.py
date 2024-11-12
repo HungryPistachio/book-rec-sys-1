@@ -57,25 +57,23 @@ def pad_missing_columns(input_data, model):
     # Drop any extra columns not expected by the model
     return input_data[model_feature_names]  # Align columns exactly with model
 
-def get_dice_explanation(dice, input_data, model):
+def get_dice_explanation(dice, input_data, feature_names):
     try:
         # Ensure input_data is a DataFrame
         if isinstance(input_data, dict):
             print("Converting input_data dict to DataFrame")
             input_data = pd.DataFrame([input_data])  # Convert to single-row DataFrame
 
-        # Apply padding to ensure input_data matches the model's expected structure
-        input_data = pad_missing_columns(input_data, model)
+        # Pad missing columns based on the dynamically generated TF-IDF feature names
+        input_data = pad_missing_columns(input_data, feature_names)
 
-        # Log the modified data structure for verification
-        print("Modified input_data structure after padding process:")
-        print("Column names:", input_data.columns.tolist())
-        print("Data sample:\n", input_data.head())
+        # Logging the TF-IDF feature names used for counterfactuals
+        print("Using dynamically generated TF-IDF feature names:", feature_names)
 
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
 
-        # Process the generated counterfactuals as usual
+        # Process the generated counterfactuals
         cf_example = cf.cf_examples_list[0]
         if hasattr(cf_example, "final_cfs_df") and isinstance(cf_example.final_cfs_df, pd.DataFrame):
             explanation_data = cf_example.final_cfs_df.to_dict(orient="records")
@@ -91,3 +89,10 @@ def get_dice_explanation(dice, input_data, model):
         error_message = f"Exception in get_dice_explanation: {str(e)} of type {type(e).__name__}"
         print(error_message)
         return json.dumps({"error": error_message})
+
+
+
+
+
+
+
