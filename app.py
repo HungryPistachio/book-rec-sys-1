@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 
 # Initialize logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 # Load the trained model at the start
 try:
