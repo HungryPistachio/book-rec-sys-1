@@ -44,20 +44,20 @@
         <ul id="limeExplanationList"></ul>
       </div>
     </div>
-    <div id="shap" class="tab-content" style="display:none;">
-      <h2>SHAP Explanation</h2>
-      <input type="text" id="bookTitleShap" placeholder="Enter a book title">
+    <div id="dice" class="tab-content" style="display:none;">
+      <h2>DICE Explanation</h2>
+      <input type="text" id="bookTitleDice" placeholder="Enter a book title">
       <div class="toggle-label">
-        <input type="checkbox" id="includeSameAuthorShap" checked>
-        <label for="includeSameAuthorShap">Include recommendations by the same author</label>
+        <input type="checkbox" id="includeSameAuthorDice" checked>
+        <label for="includeSameAuthorDice">Include recommendations by the same author</label>
       </div>
-      <button class="get-recommendations-button" data-tab="shap">Get Recommendations</button>
+      <button class="get-recommendations-button" data-tab="dice">Get Recommendations</button>
       <ul id="recommendationsShap"></ul>
 
-      <!-- SHAP Explanation Section -->
-      <div id="shapExplanation" style="display:none;">
-        <h2>SHAP Explanation for <span id="explainedTitleShap"></span></h2>
-        <ul id="shapExplanationList">
+      <!-- Dice Explanation Section -->
+      <div id="diceExplanation" style="display:none;">
+        <h2>Dice Explanation for <span id="explainedTitleDice"></span></h2>
+        <ul id="diceExplanationList">
           <!-- Explanations for each recommended book will be appended here by JavaScript -->
         </ul>
       </div>
@@ -188,18 +188,18 @@
       recommendationsList.appendChild(li);
     });
 
-    try {
-      let explanationData;
-      if (tab === "lime") {
-        explanationData = await fetchExplanation('lime', recommendations);
-        displayLimeExplanation(explanationData, 'lime'); // Use existing display for LIME
-      } else if (tab === "shap") {
-        explanationData = await fetchExplanation('shap', recommendations);
-        displayShapExplanation(explanationData); // Use new function for SHAP
+      try {
+        let explanationData;
+        if (tab === "lime") {
+          explanationData = await fetchExplanation('lime', recommendations);
+          displayLimeExplanation(explanationData, 'lime'); // Use existing display for LIME
+        } else if (tab === "dice") {
+          explanationData = await fetchExplanation('dice', recommendations);
+          displayDiceExplanations(explanationData);
+        }
+      } catch (error) {
+        console.error("Error fetching explanation:", error);
       }
-    } catch (error) {
-      console.error("Error fetching explanation:", error);
-    }
 
     function capitalize(word) {
       return word.charAt(0).toUpperCase() + word.slice(1);
@@ -305,56 +305,37 @@
       });
     }
 
+    function displayDiceExplanations(data) {
+      const explanationContainer = document.getElementById("diceExplanationList");
+      explanationContainer.innerHTML = ''; // Clear previous explanations
 
-    function displayShapExplanation(data) {
-      const explanationContainer = document.getElementById("shapExplanationList");
-      explanationContainer.innerHTML = ''; // Clear previous SHAP explanations
-
-      // Parse `data` if it's a JSON string
-      if (typeof data === "string") {
-        try {
-          data = JSON.parse(data);
-        } catch (error) {
-          console.error("Failed to parse explanation data as JSON:", error);
-          explanationContainer.innerHTML = "<li>Failed to load SHAP explanations.</li>";
-          return;
-        }
-      }
-
-      // Ensure data is in expected format and explanations is an array
-      if (!data || !data.explanations || !Array.isArray(data.explanations)) {
-        console.error("Invalid SHAP data format:", data);
-        explanationContainer.innerHTML = "<li>No SHAP explanation data available.</li>";
+      // Check if data is in the expected format
+      if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
+        console.error("Invalid Dice explanation data:", data);
+        explanationContainer.innerHTML = "<li>No Dice explanation data available.</li>";
         return;
       }
 
-      console.log("Explanation data received:", data);
+      // Display each counterfactual example in the data
+      data.cf_examples_list[0].final_cfs_df.forEach((counterfactual, index) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `Counterfactual ${index + 1}: `;
 
-      document.getElementById("shapExplanation").style.display = "block";
-
-      data.explanations.forEach((explanationData) => {
-        // Check if title and image_url are available
-        if (!explanationData.title || !explanationData.image_url) {
-          console.error("Missing title or image_url in explanation data:", explanationData);
-          return;
+        const details = document.createElement("ul");
+        for (const [feature, value] of Object.entries(counterfactual)) {
+          const detailItem = document.createElement("li");
+          detailItem.textContent = `${feature}: ${value}`;
+          details.appendChild(detailItem);
         }
-
-        const titleElement = document.createElement('h3');
-        titleElement.textContent = explanationData.title;
-        explanationContainer.appendChild(titleElement);
-
-        const imgElement = document.createElement('img');
-        imgElement.src = explanationData.image_url;
-        imgElement.alt = `SHAP explanation for ${explanationData.title}`;
-        imgElement.style.maxWidth = "100%";
-        imgElement.style.width = "600px";
-        imgElement.style.height = "400px";
-        imgElement.onload = function() {
-          console.log(`Image dimensions for ${explanationData.title}:`, imgElement.naturalWidth, "x", imgElement.naturalHeight);
-        };
-        explanationContainer.appendChild(imgElement);
+        listItem.appendChild(details);
+        explanationContainer.appendChild(listItem);
       });
+
+      document.getElementById("diceExplanation").style.display = "block"; // Make sure explanation container is visible
     }
+
+
+
 
 
 
