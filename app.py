@@ -107,27 +107,41 @@ async def lime_explanation(request: Request):
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 # Dice Explanation Endpoint
+def pad_missing_columns(input_data, feature_names):
+    """Pads the input_data DataFrame to ensure it has all columns in feature_names."""
+    missing_cols = set(feature_names) - set(input_data.columns)
+    for col in missing_cols:
+        input_data[col] = 0  # Fill missing columns with zero
+    return input_data[feature_names]  # Reorder columns to match feature_names
+
 @app.post("/dice-explanation")
 async def dice_explanation(request: Request):
+    global tfidf_feature_names
     data = await request.json()
     recommendations = data.get("recommendations", [])
     logging.info("Received request for Dice explanation.")
 
-    if feature_names is None:
-        logging.error("TF-IDF feature names not available; ensure fixed_vocabulary.csv is loaded.")
-        return JSONResponse(content={"error": "TF-IDF feature names not available; run vectorize-descriptions first."}, status_code=400)
-
     try:
+        if tfidf_feature_names is None:
+            logging.error("TF-IDF feature names not available; run vectorize-descriptions first.")
+            return JSONResponse(content={"error": "TF-IDF feature names not available."}, status_code=400)
+
+        dice = initialize_dice(model, fixed_vocabulary)
         description_vector = recommendations[0]["description_vector"]
 
-        input_data = pd.DataFrame([description_vector], columns=feature_names)
+        # Create input_data with the TF-IDF feature names
+        input_data = pd.DataFrame([description_vector], columns=recommendations[0]["feature_names"])
         input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
 
-        explanation = get_dice_explanation(dice, input_data, feature_names)
+        # Pad input_data to match 10,000 TF-IDF feature names
+        input_data = pad_missing_columns(input_data, tfidf_feature_names)
+
+        explanation = get_dice_explanation(dice, input_data, tfidf_feature_names)
         logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 
