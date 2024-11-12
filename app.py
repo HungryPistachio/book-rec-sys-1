@@ -34,6 +34,11 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 vectorizer = TfidfVectorizer()
 tfidf_feature_names = None  # Initialize as None
 
+def load_fixed_vocabulary():
+    vocab_df = pd.read_csv("static/fixed_vocabulary.csv")
+    return vocab_df["Vocabulary"].tolist()
+
+fixed_vocabulary = load_fixed_vocabulary()
 
 # Serve index.html at the root
 @app.get("/", response_class=HTMLResponse)
@@ -51,7 +56,6 @@ async def root():
 # Global variable to store TF-IDF feature names
 @app.post("/vectorize-descriptions")
 async def vectorize_descriptions(request: Request):
-    global tfidf_feature_names  # Declare it as global to modify the global variable
     data = await request.json()
     descriptions = data.get("descriptions", [])
     logging.info("Received descriptions for TF-IDF vectorization.")
@@ -60,17 +64,19 @@ async def vectorize_descriptions(request: Request):
         logging.error("No descriptions provided.")
         return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
 
-    # Perform TF-IDF vectorization
+    # Use TfidfVectorizer with the fixed vocabulary
+    vectorizer = TfidfVectorizer(vocabulary=fixed_vocabulary)
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
-    tfidf_feature_names = vectorizer.get_feature_names_out().tolist()  # Set global variable here
+    feature_names = vectorizer.get_feature_names_out()
     description_vector = tfidf_matrix[0].tolist()  # Assume first description is target
 
     logging.info("TF-IDF vectorization complete.")
     return JSONResponse(content={
         "tfidf_matrix": tfidf_matrix.tolist(),
-        "feature_names": tfidf_feature_names,
+        "feature_names": feature_names.tolist(),
         "description_vector": description_vector
     })
+
 
 # LIME Explanation Endpoint
 @app.post("/lime-explanation")
@@ -103,7 +109,7 @@ async def dice_explanation(request: Request):
             return JSONResponse(content={"error": "TF-IDF feature names not available."}, status_code=400)
 
         # Initialize DiCE with the feature names dynamically
-        dice = initialize_dice(model, tfidf_feature_names)
+        dice = initialize_dice(model, fixed_vocabulary)
 
         # Extract the first recommendation's description vector
         description_vector = recommendations[0]["description_vector"]
