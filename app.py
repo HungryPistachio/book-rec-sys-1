@@ -127,11 +127,11 @@ async def dice_explanation(request: Request):
         # Extract the first recommendation's description vector
         description_vector = recommendations[0]["description_vector"]
 
-        # Create a DataFrame for input_data with the fixed vocabulary
+# Create a DataFrame for input_data with the fixed vocabulary
         input_data = pd.DataFrame([description_vector], columns=fixed_vocabulary)
 
-        # Pad missing columns
-        input_data = pad_missing_columns(input_data, fixed_vocabulary)
+# Ensure all feature values are numeric, with missing values filled with 0
+        input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
 
         # Generate counterfactual explanation
         explanation = get_dice_explanation(dice, input_data, fixed_vocabulary)
