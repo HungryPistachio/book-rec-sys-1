@@ -94,15 +94,15 @@
     });
   }
 
-  // Function to filter non-zero elements in description_vector
+  // Function to filter non-zero elements in vectorized_descriptions
   function filterNonZeroFeatures(descriptionVector, featureNames) {
     return descriptionVector.reduce((filteredData, weight, index) => {
       if (weight !== 0) {
-        filteredData.description_vector.push(weight);
+        filteredData.vectorized_descriptions.push(weight);
         filteredData.feature_names.push(featureNames[index]);
       }
       return filteredData;
-    }, { description_vector: [], feature_names: [] });
+    }, { vectorized_descriptions: [], feature_names: [] });
   }
 
   const stopwords = new Set([
@@ -190,10 +190,10 @@
       return;
     }
 
-    const {tfidf_matrix, feature_names, description_vector} = tfidfData;
+    const {tfidf_matrix, feature_names, vectorized_descriptions} = tfidfData;
 
     // Generate final recommendations
-    const finalRecommendations = filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor);
+    const finalRecommendations = filterRecommendations(processedBooks, tfidf_matrix, vectorized_descriptions, includeSameAuthor);
     console.log("Final filtered recommendations:", finalRecommendations);
 
     if (finalRecommendations.length === 0) {
@@ -207,7 +207,7 @@
 
       recommendations.push({
                              title: bookInfo.title,
-                             description_vector: nonZeroFeatures.description_vector,
+                             vectorized_descriptions: nonZeroFeatures.vectorized_descriptions,
                              feature_names: nonZeroFeatures.feature_names
                            });
 
@@ -242,9 +242,9 @@
       return recommendations.every(rec =>
                                        rec &&
                                        typeof rec.title === 'string' &&
-                                       Array.isArray(rec.description_vector) &&
+                                       Array.isArray(rec.vectorized_descriptions) &&
                                        Array.isArray(rec.feature_names) &&
-                                       rec.description_vector.length === rec.feature_names.length
+                                       rec.vectorized_descriptions.length === rec.feature_names.length
       );
     }
 
@@ -382,7 +382,7 @@
       return title.replace(/[^\w\s]/g, '').toLowerCase().trim(); // Remove punctuation, convert to lowercase, trim spaces
     }
 
-    function filterRecommendations(processedBooks, tfidf_matrix, description_vector, includeSameAuthor) {
+    function filterRecommendations(processedBooks, tfidf_matrix, vectorized_descriptions, includeSameAuthor) {
       const finalRecommendations = [];
       const similarityScoreThreshold = 0.05;
 
@@ -392,7 +392,7 @@
 
       processedBooks.forEach((book, index) => {
         const bookVector = tfidf_matrix[index];
-        const similarity = cosineSimilarity(description_vector, bookVector);
+        const similarity = cosineSimilarity(vectorized_descriptions, bookVector);
 
         if (similarity > similarityScoreThreshold) {
           // Compare authors using normalized names
