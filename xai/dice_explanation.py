@@ -54,23 +54,27 @@ def get_dice_explanation(dice, input_data):
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
 
-        # Check if cf.cf_examples_list[0].final_cfs_df is a DataFrame
+        # Check if final_cfs_df is a DataFrame
         if hasattr(cf.cf_examples_list[0], "final_cfs_df") and isinstance(cf.cf_examples_list[0].final_cfs_df, pd.DataFrame):
             explanation_data = cf.cf_examples_list[0].final_cfs_df.to_dict(orient="records")
             json_explanation = json.dumps(explanation_data)  # Convert to JSON string
 
-            # Validation check: ensure JSON is not empty and has expected structure
-            parsed_data = json.loads(json_explanation)
-            if isinstance(parsed_data, list) and parsed_data:  # Expecting a non-empty list
-                return json_explanation
-            else:
-                # Log or handle unexpected structure
-                return json.dumps({"error": "Generated explanation data is empty or invalid"})
+            # Final validation of JSON output
+            try:
+                parsed_data = json.loads(json_explanation)
+                if isinstance(parsed_data, list) and parsed_data:
+                    print("Explanation JSON structure validated and ready for return:", parsed_data)  # Log the data structure
+                    return json_explanation
+                else:
+                    return json.dumps({"error": "Invalid or empty JSON structure"})
+            except json.JSONDecodeError as decode_error:
+                return json.dumps({"error": f"JSON decoding failed: {str(decode_error)}"})
         else:
-            # Handle case where final_cfs_df is not a DataFrame
             return json.dumps({"error": "Counterfactual generation failed; final_cfs_df is not a DataFrame"})
 
     except Exception as e:
         return json.dumps({"error": str(e)})  # Return the error in JSON format
+
+
 
 
