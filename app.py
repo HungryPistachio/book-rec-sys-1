@@ -11,8 +11,8 @@ import uvicorn
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 import joblib
-import numpy as np
 import pandas as pd
+import numpy as np
 
 # Load the trained model at the start
 try:
@@ -83,6 +83,10 @@ async def lime_explanation(request: Request):
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
+# SHAP Explanation Endpoint
+# Initialize DiCE model at the start
+dice = initialize_dice()
+
 @app.post("/dice-explanation")
 async def dice_explanation(request: Request):
     data = await request.json()
@@ -92,7 +96,7 @@ async def dice_explanation(request: Request):
     try:
         # Prepare input_data for DiCE (use the first recommendation as an example)
         input_data = pd.DataFrame([recommendations[0]["description_vector"]], columns=recommendations[0]["feature_names"])
-        
+
         # Generate counterfactual explanation
         explanation = get_dice_explanation(dice, input_data)  # Add input_data argument here
         logging.info("Dice explanations generated successfully.")
