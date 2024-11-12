@@ -2,6 +2,7 @@ import joblib
 import pandas as pd
 from dice_ml.utils import helpers
 from dice_ml import Data, Model, Dice
+import json
 
 print("Classes in dice_ml module:", dir(Dice))  # Print Dice class details
 print("Classes in dice_ml.Data:", dir(Data))    # Print Data class details
@@ -27,7 +28,7 @@ print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 #     return dice
 def initialize_dice():
     # Load the model pipeline (TF-IDF + RandomForest)
-    model = joblib.load("model/trained_model.joblib")
+    model = joblib.load("trained_model.joblib")
 
     # Define the feature names (from TF-IDF vectorizer)
     feature_names = model.named_steps['tfidfvectorizer'].get_feature_names_out()
@@ -47,10 +48,12 @@ def initialize_dice():
     return dice
 
 # Function to get a counterfactual explanation for a recommendation
+# Function to get a counterfactual explanation for a recommendation
 def get_dice_explanation(dice, input_data):
     try:
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
-        return cf.cf_examples_list[0].final_cfs_df.to_json(orient='records')
+        # Convert the result to JSON string
+        return json.dumps(cf.cf_examples_list[0].final_cfs_df.to_dict())
     except Exception as e:
-        return {"error": str(e)}
+        return json.dumps({"error": str(e)})  # Return error as JSON string
