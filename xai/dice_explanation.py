@@ -51,20 +51,39 @@ def initialize_dice():
 # dice_explanation.py
 def get_dice_explanation(dice, input_data):
     try:
+        # Ensure input_data is a DataFrame
+        if isinstance(input_data, dict):
+            print("Converting input_data dict to DataFrame")
+            input_data = pd.DataFrame([input_data])  # Convert to single-row DataFrame
+
+        print("Input data type:", type(input_data))
+        print("Input data contents:\n", input_data)
+
+        # Check for any unusual data entries
+        for col in input_data.columns:
+            print(f"Column '{col}' contents: {input_data[col].values}")
+
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
 
-        # Extract the counterfactual examples as a JSON-friendly structure
-        if hasattr(cf.cf_examples_list[0], "final_cfs_df") and isinstance(cf.cf_examples_list[0].final_cfs_df, pd.DataFrame):
-            explanation_data = cf.cf_examples_list[0].final_cfs_df.to_dict(orient="records")
-            return json.dumps(explanation_data)
+        # Log the structure of cf_examples_list to confirm expected data
+        cf_example = cf.cf_examples_list[0]
+        if hasattr(cf_example, "final_cfs_df") and isinstance(cf_example.final_cfs_df, pd.DataFrame):
+            explanation_data = cf_example.final_cfs_df.to_dict(orient="records")
+            json_explanation = json.dumps(explanation_data)  # Convert to JSON string
+            
+            # Detailed log before returning data
+            print("Explanation JSON structure:", json_explanation)
+            return json_explanation
         else:
-            error_msg = "Counterfactual generation failed; final_cfs_df is not a DataFrame"
-            logging.error(error_msg)
+            error_msg = "Counterfactual generation failed; final_cfs_df is not a DataFrame or is missing."
+            print(error_msg)  # Log specific error
             return json.dumps({"error": error_msg})
+    
     except Exception as e:
-        error_message = str(e)
-        logging.error(f"Exception in get_dice_explanation: {error_message}")
+        # Log the error and type
+        error_message = f"Exception in get_dice_explanation: {str(e)} of type {type(e).__name__}"
+        print(error_message)  # Log detailed error
         return json.dumps({"error": error_message})
 
 
