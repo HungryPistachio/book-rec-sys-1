@@ -48,13 +48,14 @@ def initialize_dice():
     return dice
 
 # Function to get a counterfactual explanation for a recommendation
+
 def get_dice_explanation(dice, input_data):
     try:
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
 
-        # Check if the counterfactual generation was successful and the result is a DataFrame
-        if hasattr(cf.cf_examples_list[0], "final_cfs_df"):
+        # Check if cf.cf_examples_list[0].final_cfs_df is a DataFrame
+        if hasattr(cf.cf_examples_list[0], "final_cfs_df") and isinstance(cf.cf_examples_list[0].final_cfs_df, pd.DataFrame):
             explanation_data = cf.cf_examples_list[0].final_cfs_df.to_dict(orient="records")
             json_explanation = json.dumps(explanation_data)  # Convert to JSON string
 
@@ -66,8 +67,10 @@ def get_dice_explanation(dice, input_data):
                 # Log or handle unexpected structure
                 return json.dumps({"error": "Generated explanation data is empty or invalid"})
         else:
-            return json.dumps({"error": "Counterfactual generation failed; final_cfs_df not found"})
+            # Handle case where final_cfs_df is not a DataFrame
+            return json.dumps({"error": "Counterfactual generation failed; final_cfs_df is not a DataFrame"})
 
     except Exception as e:
         return json.dumps({"error": str(e)})  # Return the error in JSON format
+
 
