@@ -1,143 +1,72 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
-import logging
-import json
-from xai.lime_explanation import get_lime_explanation
-from xai.dice_explanation import get_dice_explanation
-from xai.dice_explanation import initialize_dice
-from sklearn.feature_extraction.text import TfidfVectorizer
-from utils import pad_missing_columns  # Import pad_missing_columns from utils
-import uvicorn
-from pathlib import Path
 import joblib
 import pandas as pd
-import numpy as np
+from dice_ml.utils import helpers
+from dice_ml import Data, Model, Dice
+import json
+from utils import pad_missing_columns
+import logging
+import pandas as pd
 
-# Initialize logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Load the trained model at the start
-try:
-    model = joblib.load('model/trained_model.joblib')
-    print("Model loaded successfully.")
-except Exception as e:
-    print(f"Error loading model: {e}")
-
-# Load the fixed vocabulary once on startup
-# Load the fixed vocabulary from CSV
-vocab_path = "static/fixed_vocabulary.csv"
-try:
-    fixed_vocabulary = pd.read_csv(vocab_path)["Vocabulary"].tolist()
-    logging.info("Fixed vocabulary loaded successfully.")
-except Exception as e:
-    logging.error(f"Error loading fixed vocabulary: {e}")
-    fixed_vocabulary = None
+print("Classes in dice_ml module:", dir(Dice))  # Print Dice class details
+print("Classes in dice_ml.Data:", dir(Data))    # Print Data class details
+print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 
 
-
-app = FastAPI()
-
-# Mount static files for serving CSS and JS if they exist
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/images", StaticFiles(directory="images"), name="images")
-
-
-# Initialize the TF-IDF Vectorizer
-
-
-def load_fixed_vocabulary():
-    vocab_df = pd.read_csv("static/fixed_vocabulary.csv")
-    return vocab_df["Vocabulary"].tolist()
-
-fixed_vocabulary = load_fixed_vocabulary()
-dice = initialize_dice(model, fixed_vocabulary)
-vectorizer = TfidfVectorizer()
-tfidf_feature_names = None  # Initialize as None
-
-# Serve index.html at the root
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    index_path = Path("templates/index.html")  # Adjust path if necessary
-    if not index_path.exists():
-        logging.error("index.html not found!")
-        return JSONResponse(content={"error": "index.html not found"}, status_code=404)
-
-    with open(index_path, "r") as file:
-        html_content = file.read()
-    return HTMLResponse(content=html_content)
-
-
-# Global variable to store TF-IDF feature names
-# Original vectorize_descriptions endpoint (without fixed vocabulary)
-# Updated vectorize_descriptions function output to maintain compatibility
-@app.post("/vectorize-descriptions")
-async def vectorize_descriptions(request: Request):
-    data = await request.json()
-    descriptions = data.get("descriptions", [])
-    logging.info("Received descriptions for TF-IDF vectorization.")
-
-    if not descriptions:
-        logging.error("No descriptions provided.")
-        return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
-
-    # Dynamically generate vocabulary based on descriptions
-    vectorizer = TfidfVectorizer()  # No fixed vocabulary
-    tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
-    feature_names = vectorizer.get_feature_names_out()
-    vectorized_descriptions = tfidf_matrix[0].tolist()
-
-    logging.info("TF-IDF vectorization complete.")
-    return JSONResponse(content={
-        "vectorized_descriptions": vectorized_descriptions,
-        "feature_names": feature_names.tolist(),
-        "tfidf_matrix": tfidf_matrix.tolist()
-    })
-
-
-
-
-
-# LIME Explanation Endpoint
-@app.post("/lime-explanation")
-async def lime_explanation(request: Request):
-    data = await request.json()
-    recommendations = data.get("recommendations", [])  # List of recommendation details
-
-    logging.info("Received request for LIME explanation.")
-
+def load_fixed_vocabulary(file_path):
     try:
-        explanation = get_lime_explanation(recommendations)
-        logging.info("LIME explanations generated successfully.")
-        return JSONResponse(content=json.loads(explanation))
+        fixed_vocabulary = pd.read_csv(file_path)["Vocabulary"].tolist()
+        logging.info("Fixed vocabulary loaded successfully.")
+        return fixed_vocabulary
     except Exception as e:
-        logging.error(f"Error in LIME explanation generation: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        logging.error(f"Failed to load fixed vocabulary from {file_path}: {e}")
+        return []
+# Load the fixed vocabulary once when the module is imported
+fixed_vocabulary = load_fixed_vocabulary('static/fixed_vocabulary.csv')
+model = joblib.load("model/trained_model.joblib")
+
+def initialize_dice(model, fixed_vocabulary):
+    dummy_data = pd.DataFrame([[0] * len(fixed_vocabulary), [1] * len(fixed_vocabulary)], columns=fixed_vocabulary)
+    dummy_data["label"] = [0, 1]
+
+    data = Data(dataframe=dummy_data, continuous_features=fixed_vocabulary, outcome_name="label")
+    dice_model = Model(model=model, backend="sklearn")
+    dice = Dice(data, dice_model, method="random")
+
+    return dice
 
 
-@app.post("/dice-explanation")
-async def dice_explanation(request: Request):
-    data = await request.json()
-    recommendations = data.get("recommendations", [])
-    logging.info("Received request for Dice explanation.")
-
+# Updated get_dice_explanation function to use fixed vocabulary
+def get_dice_explanation(dice, input_data):
     try:
-        # Get the vectorized description
-        vectorized_descriptions = recommendations[0]["vectorized_descriptions"]
+        # Load fixed vocabulary
+        fixed_vocabulary = load_fixed_vocabulary('static/fixed_vocabulary.csv')
 
-        # Create a DataFrame with the correct number of columns
-        input_data = pd.DataFrame([vectorized_descriptions], columns=fixed_vocabulary)
+        # Ensure input_data has the fixed vocabulary columns
+        input_data = pad_missing_columns(input_data, fixed_vocabulary)
 
-        # Ensure all feature values are numeric
-        input_data = input_data.apply(pd.to_numeric)
+        # Generate counterfactual explanation using DiCE
+        cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
+        cf_example = cf.cf_examples_list[0]
 
-        # Generate counterfactual explanation
-        explanation = get_dice_explanation(dice, input_data)
-        logging.info("Dice explanations generated successfully.")
-        return JSONResponse(content=json.loads(explanation))
+        if hasattr(cf_example, "final_cfs_df") and isinstance(cf_example.final_cfs_df, pd.DataFrame):
+            explanation_data = cf_example.final_cfs_df.to_dict(orient="records")
+            json_explanation = json.dumps(explanation_data)
+            logging.info("Dice explanation generated successfully.")
+            return json_explanation
+        else:
+            error_msg = "Counterfactual generation failed; final_cfs_df is not a DataFrame or is missing."
+            logging.error(error_msg)
+            return json.dumps({"error": error_msg})
+
     except Exception as e:
-        logging.error(f"Error in Dice explanation generation: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
+        error_message = f"Exception in get_dice_explanation: {str(e)}"
+        logging.error(error_message)
+        return json.dumps({"error": error_message})
+
+
+
+
+
 
 
 
