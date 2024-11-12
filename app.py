@@ -79,23 +79,31 @@ async def vectorize_descriptions(request: Request):
         logging.error("No descriptions provided.")
         return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
 
-    # Ensure the vocabulary is loaded
-    if fixed_vocabulary is None:
-        logging.error("Fixed vocabulary not available.")
-        return JSONResponse(content={"error": "Fixed vocabulary not available."}, status_code=500)
-
-    # Vectorize descriptions with the fixed vocabulary
+    # Create a vectorizer with the fixed vocabulary
     vectorizer = TfidfVectorizer(vocabulary=fixed_vocabulary)
-    tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
-    feature_names = vectorizer.get_feature_names_out()
-    description_vector = tfidf_matrix[0].tolist()  # Assume first description is target
 
-    logging.info("TF-IDF vectorization complete.")
-    return JSONResponse(content={
-        "tfidf_matrix": tfidf_matrix.tolist(),
-        "feature_names": feature_names.tolist(),
-        "description_vector": description_vector
-    })
+    # Vectorize the descriptions
+    tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
+
+    # Get the feature names (i.e. the words in the fixed vocabulary)
+    feature_names = vectorizer.get_feature_names_out()
+
+    # Create a dictionary to store the vectorized descriptions
+    vectorized_descriptions = {}
+
+    # Loop through the descriptions and create a dictionary for each one
+    for i, description in enumerate(descriptions):
+        # Get the vectorized description
+        vectorized_description = tfidf_matrix[i]
+
+        # Create a dictionary with the feature names as keys and the vectorized values as values
+        vectorized_description_dict = dict(zip(feature_names, vectorized_description))
+
+        # Add the dictionary to the list of vectorized descriptions
+        vectorized_descriptions[i] = vectorized_description_dict
+
+    # Return the vectorized descriptions
+    return JSONResponse(content={"vectorized_descriptions": vectorized_descriptions})
 
 
 
@@ -118,23 +126,22 @@ async def lime_explanation(request: Request):
 
 @app.post("/dice-explanation")
 async def dice_explanation(request: Request):
-    global fixed_vocabulary
     data = await request.json()
     recommendations = data.get("recommendations", [])
     logging.info("Received request for Dice explanation.")
 
     try:
-        # Extract the first recommendation's description vector
-        description_vector = recommendations[0]["description_vector"]
+        # Get the vectorized description
+        vectorized_description = recommendations[0]["vectorized_description"]
 
-# Create a DataFrame for input_data with the fixed vocabulary
-        input_data = pd.DataFrame([description_vector], columns=fixed_vocabulary)
+        # Create a DataFrame with the correct number of columns
+        input_data = pd.DataFrame([vectorized_description], columns=fixed_vocabulary)
 
-# Ensure all feature values are numeric, with missing values filled with 0
-        input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
+        # Ensure all feature values are numeric
+        input_data = input_data.apply(pd.to_numeric)
 
         # Generate counterfactual explanation
-        explanation = get_dice_explanation(dice, input_data, fixed_vocabulary)
+        explanation = get_dice_explanation(dice, input_data)
         logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
