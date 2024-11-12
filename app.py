@@ -44,9 +44,13 @@ async def root():
         html_content = file.read()
     return HTMLResponse(content=html_content)
 
-# TF-IDF Vectorization Endpoint
+
+# Global variable to store TF-IDF feature names
+tfidf_feature_names = []
+
 @app.post("/vectorize-descriptions")
 async def vectorize_descriptions(request: Request):
+    global tfidf_feature_names  # Allow modification of the global variable
     data = await request.json()
     descriptions = data.get("descriptions", [])
     logging.info("Received descriptions for TF-IDF vectorization.")
@@ -55,20 +59,19 @@ async def vectorize_descriptions(request: Request):
         logging.error("No descriptions provided.")
         return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
 
-    # Fit the vectorizer on the descriptions to extract features
+    # Vectorize descriptions
+    vectorizer = TfidfVectorizer()
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
-    feature_names = vectorizer.get_feature_names_out()
+    tfidf_feature_names = vectorizer.get_feature_names_out().tolist()  # Store for DiCE initialization
     description_vector = tfidf_matrix[0].tolist()  # Assume first description is target
 
     logging.info("TF-IDF vectorization complete.")
     return JSONResponse(content={
         "tfidf_matrix": tfidf_matrix.tolist(),
-        "feature_names": feature_names.tolist(),
+        "feature_names": tfidf_feature_names,
         "description_vector": description_vector
     })
 
-# Extract TF-IDF feature names for initializing DiCE
-tfidf_feature_names = vectorizer.get_feature_names_out().tolist()
 dice = initialize_dice(model, tfidf_feature_names)  # Initialize DiCE with extracted feature names
 
 # LIME Explanation Endpoint
