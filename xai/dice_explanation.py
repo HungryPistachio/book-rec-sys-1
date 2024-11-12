@@ -35,14 +35,14 @@ def initialize_dice(model, fixed_vocabulary):
     return dice
 
 
-def get_dice_explanation(dice, input_data, feature_names):
+def get_dice_explanation(dice, input_data):
     try:
         # Ensure input_data is a DataFrame
         if isinstance(input_data, dict):
             input_data = pd.DataFrame([input_data])  # Convert to single-row DataFrame
 
         # Pad missing columns using fixed vocabulary
-        input_data = pad_missing_columns(input_data, feature_names)
+        input_data = pad_missing_columns(input_data, fixed_vocabulary)
 
         # Log final column count after padding and alignment
         logging.info(f"Final input_data column count after padding and alignment: {len(input_data.columns)}")
