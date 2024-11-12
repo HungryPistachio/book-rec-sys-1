@@ -26,15 +26,24 @@ print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 #
 #     return dice
 def initialize_dice():
-    # Dummy data for testing
-    data_df = pd.DataFrame(columns=["feature1", "feature2"])
-    data_df["label"] = [0, 1]
+    # Load the model pipeline (TF-IDF + RandomForest)
+    model = joblib.load("trained_model.joblib")
 
-    # Initialize DiCE
+    # Define the feature names (from TF-IDF vectorizer)
+    feature_names = model.named_steps['tfidfvectorizer'].get_feature_names_out()
+
+    # Create a DataFrame with numeric dummy data for DiCE's input requirements
+    data_df = pd.DataFrame({
+        "feature1": [1.0, 2.0],  # Ensure features are float
+        "feature2": [1.5, 2.5]
+    })
+    data_df["label"] = [0, 1]  # Label should also be an integer
+
+    # Initialize DiCE with this data and model
     data = Data(dataframe=data_df, continuous_features=["feature1", "feature2"], outcome_name="label")
-    dice_model = Model(model=None, backend="sklearn")  # Model is None for minimal test
-
+    dice_model = Model(model=model.named_steps["randomforestclassifier"], backend="sklearn")
     dice = Dice(data, dice_model, method="random")
+
     return dice
 
 # Function to get a counterfactual explanation for a recommendation
