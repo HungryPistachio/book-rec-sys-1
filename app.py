@@ -7,7 +7,7 @@ from xai.lime_explanation import get_lime_explanation
 from xai.dice_explanation import get_dice_explanation
 from xai.dice_explanation import initialize_dice
 from sklearn.feature_extraction.text import TfidfVectorizer
-from utils import pad_missing_columns  
+from utils import pad_missing_columns  # Import pad_missing_columns from utils
 import uvicorn
 from pathlib import Path
 import joblib
@@ -124,19 +124,14 @@ async def dice_explanation(request: Request):
     logging.info("Received request for Dice explanation.")
 
     try:
-        # Check if fixed vocabulary is loaded
-        if fixed_vocabulary is None:
-            logging.error("Fixed vocabulary not available; ensure it is loaded.")
-            return JSONResponse(content={"error": "Fixed vocabulary not available."}, status_code=400)
-
         # Extract the first recommendation's description vector
         description_vector = recommendations[0]["description_vector"]
 
         # Create a DataFrame for input_data with the fixed vocabulary
         input_data = pd.DataFrame([description_vector], columns=fixed_vocabulary)
 
-        # Ensure all feature values are numeric
-        input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
+        # Pad missing columns
+        input_data = pad_missing_columns(input_data, fixed_vocabulary)
 
         # Generate counterfactual explanation
         explanation = get_dice_explanation(dice, input_data, fixed_vocabulary)
@@ -145,6 +140,7 @@ async def dice_explanation(request: Request):
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 
 
