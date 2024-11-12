@@ -10,4 +10,4 @@ shap==0.41.0
 pandas==1.3.4
 python-multipart
 typing-extensions
-dice_ml
+dice_ml==0.9
