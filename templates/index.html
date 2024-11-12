@@ -191,6 +191,10 @@
     }
 
     const {tfidf_matrix, feature_names, vectorized_descriptions} = tfidfData;
+    console.log("Processed Books:", processedBooks);
+    console.log("TF-IDF Matrix:", tfidf_matrix);
+    console.log("Vectorized Descriptions:", vectorized_descriptions);
+
 
     // Generate final recommendations
     const finalRecommendations = filterRecommendations(processedBooks, tfidf_matrix, vectorized_descriptions, includeSameAuthor);
@@ -385,6 +389,12 @@
     function filterRecommendations(processedBooks, tfidf_matrix, vectorized_descriptions, includeSameAuthor) {
       const finalRecommendations = [];
       const similarityScoreThreshold = 0.05;
+
+      // Check that vectorized_descriptions is defined and accessible
+      if (!vectorized_descriptions || vectorized_descriptions.length === 0) {
+        console.error("Vectorized descriptions are missing or empty.");
+        return [];
+      }
 
       // Get the normalized original title for comparison
       const originalTitle = normalizeTitle(processedBooks[0].title);
