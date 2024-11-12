@@ -24,13 +24,15 @@ except Exception as e:
     print(f"Error loading model: {e}")
 
 # Load the fixed vocabulary once on startup
-vocabulary_path = Path("static/fixed_vocabulary.csv")
-if vocabulary_path.exists():
-    feature_names = pd.read_csv(vocabulary_path)["Vocabulary"].tolist()
-    print("Fixed vocabulary loaded successfully.")
-else:
-    feature_names = None
-    print("Error: fixed_vocabulary.csv not found.")
+# Load the fixed vocabulary from CSV
+vocab_path = "static/fixed_vocabulary.csv"
+try:
+    fixed_vocabulary = pd.read_csv(vocab_path)["Vocabulary"].tolist()
+    logging.info("Fixed vocabulary loaded successfully.")
+except Exception as e:
+    logging.error(f"Error loading fixed vocabulary: {e}")
+    fixed_vocabulary = None
+
 
 
 app = FastAPI()
@@ -76,7 +78,12 @@ async def vectorize_descriptions(request: Request):
         logging.error("No descriptions provided.")
         return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
 
-    # Use TfidfVectorizer with the fixed vocabulary
+    # Ensure the vocabulary is loaded
+    if fixed_vocabulary is None:
+        logging.error("Fixed vocabulary not available.")
+        return JSONResponse(content={"error": "Fixed vocabulary not available."}, status_code=500)
+
+    # Vectorize descriptions with the fixed vocabulary
     vectorizer = TfidfVectorizer(vocabulary=fixed_vocabulary)
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
     feature_names = vectorizer.get_feature_names_out()
@@ -88,6 +95,7 @@ async def vectorize_descriptions(request: Request):
         "feature_names": feature_names.tolist(),
         "description_vector": description_vector
     })
+
 
 
 # LIME Explanation Endpoint
@@ -116,32 +124,37 @@ def pad_missing_columns(input_data, feature_names):
 
 @app.post("/dice-explanation")
 async def dice_explanation(request: Request):
-    global tfidf_feature_names
+    global fixed_vocabulary
     data = await request.json()
     recommendations = data.get("recommendations", [])
     logging.info("Received request for Dice explanation.")
 
     try:
-        if tfidf_feature_names is None:
-            logging.error("TF-IDF feature names not available; run vectorize-descriptions first.")
-            return JSONResponse(content={"error": "TF-IDF feature names not available."}, status_code=400)
+        # Check if fixed vocabulary is loaded
+        if fixed_vocabulary is None:
+            logging.error("Fixed vocabulary not available; ensure it is loaded.")
+            return JSONResponse(content={"error": "Fixed vocabulary not available."}, status_code=400)
 
+        # Initialize DiCE with the fixed vocabulary
         dice = initialize_dice(model, fixed_vocabulary)
+
+        # Extract the first recommendation's description vector
         description_vector = recommendations[0]["description_vector"]
 
-        # Create input_data with the TF-IDF feature names
-        input_data = pd.DataFrame([description_vector], columns=recommendations[0]["feature_names"])
+        # Create a DataFrame for input_data with the fixed vocabulary
+        input_data = pd.DataFrame([description_vector], columns=fixed_vocabulary)
+
+        # Ensure all feature values are numeric
         input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
 
-        # Pad input_data to match 10,000 TF-IDF feature names
-        input_data = pad_missing_columns(input_data, tfidf_feature_names)
-
-        explanation = get_dice_explanation(dice, input_data, tfidf_feature_names)
+        # Generate counterfactual explanation
+        explanation = get_dice_explanation(dice, input_data, fixed_vocabulary)
         logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 
 
