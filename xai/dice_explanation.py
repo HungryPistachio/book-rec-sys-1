@@ -53,39 +53,42 @@ def get_dice_explanation(dice, input_data):
     try:
         # Ensure input_data is a DataFrame
         if isinstance(input_data, dict):
-            print("Converting input_data dict to DataFrame")  # Log if conversion is necessary
+            print("Converting input_data dict to DataFrame")
             input_data = pd.DataFrame([input_data])  # Convert to single-row DataFrame
 
-        # Log the type and contents of the input data for debugging
-        print("Input data type:", type(input_data))
-        print("Input data contents:\n", input_data)
+        # Remove any columns named "12th"
+        if "12th" in input_data.columns:
+            print("Removing column '12th' from input_data.")
+            input_data = input_data.drop(columns=["12th"])
 
-        # Check for any unusual data entries column by column
-        for col in input_data.columns:
-            print(f"Column '{col}' contents: {input_data[col].values}")
+        # Remove any occurrences of "12th" within data values
+        input_data = input_data.applymap(lambda x: None if x == "12th" else x)
+
+        # Log the modified data structure for verification
+        print("Modified input_data structure after removal process:")
+        print("Column names:", input_data.columns.tolist())
+        print("Data sample:\n", input_data.head())
 
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
 
-        # Log the structure of cf_examples_list to confirm expected data
+        # Process the generated counterfactuals as usual
         cf_example = cf.cf_examples_list[0]
         if hasattr(cf_example, "final_cfs_df") and isinstance(cf_example.final_cfs_df, pd.DataFrame):
             explanation_data = cf_example.final_cfs_df.to_dict(orient="records")
-            json_explanation = json.dumps(explanation_data)  # Convert to JSON string
-
-            # Detailed log before returning data
+            json_explanation = json.dumps(explanation_data)
             print("Explanation JSON structure:", json_explanation)
             return json_explanation
         else:
             error_msg = "Counterfactual generation failed; final_cfs_df is not a DataFrame or is missing."
-            print(error_msg)  # Log specific error if generation fails
+            print(error_msg)
             return json.dumps({"error": error_msg})
 
     except Exception as e:
-        # Log the error with additional context
         error_message = f"Exception in get_dice_explanation: {str(e)} of type {type(e).__name__}"
-        print(error_message)  # Log detailed error information
+        print(error_message)
         return json.dumps({"error": error_message})
+
 
 
 
