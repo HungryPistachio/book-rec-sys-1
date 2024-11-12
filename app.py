@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 import logging
 import json
 from xai.lime_explanation import get_lime_explanation
-from xai.shap_explanation import get_shap_explanation
+from xai.dice_explanation import get_dice_explanation
 from sklearn.feature_extraction.text import TfidfVectorizer
 import uvicorn
 from pathlib import Path
@@ -82,19 +82,17 @@ async def lime_explanation(request: Request):
 
 
 # SHAP Explanation Endpoint
-@app.post("/shap-explanation")
-async def shap_explanation(request: Request):
+@app.post("/dice-explanation")
+async def dice_explanation(request: Request):
     data = await request.json()
     recommendations = data.get("recommendations", [])
-    logging.info("Received request for SHAP explanation.")
+    logging.info("Received request for dice explanation.")
 
     try:
         # Call the get_shap_explanation function without passing the model
-        explanation = get_shap_explanation(recommendations)
-        logging.info("SHAP explanations generated successfully.")
+        explanation = get_dice_explanation(recommendations)
+        logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=explanation)
     except Exception as e:
-        logging.error(f"Error in SHAP explanation generation: {e}")
+        logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-
-
