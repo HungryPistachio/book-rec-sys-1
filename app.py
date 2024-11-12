@@ -111,7 +111,7 @@ async def dice_explanation(request: Request):
             return JSONResponse(content={"error": "Column names in input_data do not match feature names"}, status_code=400)
 
         # Generate counterfactual explanation
-        explanation = get_dice_explanation(dice, input_data, model)
+        explanation = get_dice_explanation(dice, input_data, feature_names)
         logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
