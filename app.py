@@ -23,6 +23,16 @@ try:
 except Exception as e:
     print(f"Error loading model: {e}")
 
+# Load the fixed vocabulary once on startup
+vocabulary_path = Path("static/fixed_vocabulary.csv")
+if vocabulary_path.exists():
+    feature_names = pd.read_csv(vocabulary_path)["Vocabulary"].tolist()
+    print("Fixed vocabulary loaded successfully.")
+else:
+    feature_names = None
+    print("Error: fixed_vocabulary.csv not found.")
+
+
 app = FastAPI()
 
 # Mount static files for serving CSS and JS if they exist
@@ -31,14 +41,16 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 
 
 # Initialize the TF-IDF Vectorizer
-vectorizer = TfidfVectorizer()
-tfidf_feature_names = None  # Initialize as None
+
 
 def load_fixed_vocabulary():
     vocab_df = pd.read_csv("static/fixed_vocabulary.csv")
     return vocab_df["Vocabulary"].tolist()
 
 fixed_vocabulary = load_fixed_vocabulary()
+dice = initialize_dice(model, feature_names)
+vectorizer = TfidfVectorizer()
+tfidf_feature_names = None  # Initialize as None
 
 # Serve index.html at the root
 @app.get("/", response_class=HTMLResponse)
@@ -97,34 +109,25 @@ async def lime_explanation(request: Request):
 # Dice Explanation Endpoint
 @app.post("/dice-explanation")
 async def dice_explanation(request: Request):
-    global tfidf_feature_names
     data = await request.json()
     recommendations = data.get("recommendations", [])
     logging.info("Received request for Dice explanation.")
 
+    if feature_names is None:
+        logging.error("TF-IDF feature names not available; ensure fixed_vocabulary.csv is loaded.")
+        return JSONResponse(content={"error": "TF-IDF feature names not available; run vectorize-descriptions first."}, status_code=400)
+
     try:
-        # Check if tfidf_feature_names has been generated
-        if tfidf_feature_names is None:
-            logging.error("TF-IDF feature names not available; run vectorize-descriptions first.")
-            return JSONResponse(content={"error": "TF-IDF feature names not available."}, status_code=400)
-
-        # Initialize DiCE with the feature names dynamically
-        dice = initialize_dice(model, fixed_vocabulary)
-
-        # Extract the first recommendation's description vector
         description_vector = recommendations[0]["description_vector"]
 
-        # Create a DataFrame for input_data with the TF-IDF feature names
-        input_data = pd.DataFrame([description_vector], columns=tfidf_feature_names)
-
-        # Ensure all feature values are numeric
+        input_data = pd.DataFrame([description_vector], columns=feature_names)
         input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
 
-        # Generate counterfactual explanation
-        explanation = get_dice_explanation(dice, input_data, tfidf_feature_names)
+        explanation = get_dice_explanation(dice, input_data, feature_names)
         logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
