@@ -27,9 +27,8 @@ print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 #     dice = Dice(data, dice_model, method="random")
 #
 #     return dice
+model = joblib.load("model/trained_model.joblib")
 def initialize_dice():
-    # Load the model pipeline (TF-IDF + RandomForest)
-    model = joblib.load("model/trained_model.joblib")
 
     # Extract the feature names from the TF-IDF vectorizer
     feature_names = model.named_steps['tfidfvectorizer'].get_feature_names_out()
@@ -92,9 +91,3 @@ def get_dice_explanation(dice, input_data, model):
         error_message = f"Exception in get_dice_explanation: {str(e)} of type {type(e).__name__}"
         print(error_message)
         return json.dumps({"error": error_message})
-
-
-
-
-
-
