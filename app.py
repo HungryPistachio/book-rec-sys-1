@@ -7,6 +7,7 @@ from xai.lime_explanation import get_lime_explanation
 from xai.dice_explanation import get_dice_explanation
 from xai.dice_explanation import initialize_dice
 from sklearn.feature_extraction.text import TfidfVectorizer
+from utils import pad_missing_columns  
 import uvicorn
 from pathlib import Path
 import joblib
@@ -114,13 +115,6 @@ async def lime_explanation(request: Request):
         logging.error(f"Error in LIME explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
-# Dice Explanation Endpoint
-def pad_missing_columns(input_data, feature_names):
-    """Pads the input_data DataFrame to ensure it has all columns in feature_names."""
-    missing_cols = set(feature_names) - set(input_data.columns)
-    for col in missing_cols:
-        input_data[col] = 0  # Fill missing columns with zero
-    return input_data[feature_names]  # Reorder columns to match feature_names
 
 @app.post("/dice-explanation")
 async def dice_explanation(request: Request):
