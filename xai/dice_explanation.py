@@ -3,6 +3,7 @@ import pandas as pd
 from dice_ml.utils import helpers
 from dice_ml import Data, Model, Dice
 import json
+from app import pad_missing_columns
 import logging
 
 print("Classes in dice_ml module:", dir(Dice))  # Print Dice class details
