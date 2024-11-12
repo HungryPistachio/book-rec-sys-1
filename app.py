@@ -97,7 +97,7 @@ async def dice_explanation(request: Request):
     try:
         # Extract the first recommendation's description vector and feature names
         description_vector = recommendations[0]["description_vector"]
-        feature_names = recommendations[0]["feature_names"]
+        feature_names = recommendations[0]["feature_names"]  # Extracted directly from TF-IDF, not model pipeline
 
         # Create a DataFrame for input_data with the feature names
         input_data = pd.DataFrame([description_vector], columns=feature_names)
@@ -106,12 +106,13 @@ async def dice_explanation(request: Request):
         input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
 
         # Generate counterfactual explanation
-        explanation = get_dice_explanation(dice, input_data, model)  # Pass the model directly to handle feature names
+        explanation = get_dice_explanation(dice, input_data, model)  # Pass the model directly without attempting to access feature names
         logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 
 
