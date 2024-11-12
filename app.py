@@ -23,14 +23,17 @@ try:
 except Exception as e:
     print(f"Error loading model: {e}")
 
-# Initialize the TF-IDF Vectorizer
-vectorizer = TfidfVectorizer()
-
 app = FastAPI()
 
 # Mount static files for serving CSS and JS if they exist
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/images", StaticFiles(directory="images"), name="images")
+
+
+# Initialize the TF-IDF Vectorizer
+vectorizer = TfidfVectorizer()
+tfidf_feature_names = None  # Initialize as None
+
 
 # Serve index.html at the root
 @app.get("/", response_class=HTMLResponse)
@@ -46,11 +49,9 @@ async def root():
 
 
 # Global variable to store TF-IDF feature names
-tfidf_feature_names = []
-
 @app.post("/vectorize-descriptions")
 async def vectorize_descriptions(request: Request):
-    global tfidf_feature_names  # Allow modification of the global variable
+    global tfidf_feature_names  # Declare it as global to modify the global variable
     data = await request.json()
     descriptions = data.get("descriptions", [])
     logging.info("Received descriptions for TF-IDF vectorization.")
@@ -59,10 +60,9 @@ async def vectorize_descriptions(request: Request):
         logging.error("No descriptions provided.")
         return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
 
-    # Vectorize descriptions
-    vectorizer = TfidfVectorizer()
+    # Perform TF-IDF vectorization
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
-    tfidf_feature_names = vectorizer.get_feature_names_out().tolist()  # Store for DiCE initialization
+    tfidf_feature_names = vectorizer.get_feature_names_out().tolist()  # Set global variable here
     description_vector = tfidf_matrix[0].tolist()  # Assume first description is target
 
     logging.info("TF-IDF vectorization complete.")
@@ -71,6 +71,7 @@ async def vectorize_descriptions(request: Request):
         "feature_names": tfidf_feature_names,
         "description_vector": description_vector
     })
+
 
 dice = initialize_dice(model, tfidf_feature_names)  # Initialize DiCE with extracted feature names
 
@@ -93,26 +94,32 @@ async def lime_explanation(request: Request):
 # Dice Explanation Endpoint
 @app.post("/dice-explanation")
 async def dice_explanation(request: Request):
+    global tfidf_feature_names
     data = await request.json()
     recommendations = data.get("recommendations", [])
     logging.info("Received request for Dice explanation.")
 
     try:
-        # Extract the first recommendation's description vector and feature names
+        # Check if tfidf_feature_names have been set
+        if tfidf_feature_names is None:
+            logging.error("TF-IDF feature names not available; run vectorize-descriptions first.")
+            return JSONResponse(content={"error": "TF-IDF feature names not available."}, status_code=400)
+
+        # Extract the first recommendation's description vector
         description_vector = recommendations[0]["description_vector"]
-        feature_names = recommendations[0]["feature_names"]  # Extracted directly from TF-IDF, not model pipeline
 
-        # Create a DataFrame for input_data with the feature names
-        input_data = pd.DataFrame([description_vector], columns=feature_names)
+        # Create a DataFrame for input_data with the TF-IDF feature names
+        input_data = pd.DataFrame([description_vector], columns=tfidf_feature_names)
 
-        # Ensure all feature values are numeric for compatibility
+        # Ensure all feature values are numeric
         input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
 
-        # Generate counterfactual explanation
-        explanation = get_dice_explanation(dice, input_data, model)  # Pass the model directly without attempting to access feature names
+        # Generate counterfactual explanation using feature_names directly
+        explanation = get_dice_explanation(dice, input_data, tfidf_feature_names)
         logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
