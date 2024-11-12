@@ -46,26 +46,30 @@ def initialize_dice():
 
     return dice
 
-# Function to get a counterfactual explanation for a recommendation
+def pad_missing_columns(input_data, model):
+    # Get the expected columns from the model (adjust based on model's actual method for feature names)
+    model_feature_names = model.get_feature_names_out()  # Ensure this matches your model's feature retrieval method
 
-# dice_explanation.py
-def get_dice_explanation(dice, input_data):
+    # Pad input data with missing columns
+    for feature in model_feature_names:
+        if feature not in input_data.columns:
+            input_data[feature] = 0  # Fill missing columns with zero
+
+    # Drop any extra columns not expected by the model
+    return input_data[model_feature_names]  # Align columns exactly with model
+
+def get_dice_explanation(dice, input_data, model):
     try:
         # Ensure input_data is a DataFrame
         if isinstance(input_data, dict):
             print("Converting input_data dict to DataFrame")
             input_data = pd.DataFrame([input_data])  # Convert to single-row DataFrame
 
-        # Remove any columns named "12th"
-        if "12th" in input_data.columns:
-            print("Removing column '12th' from input_data.")
-            input_data = input_data.drop(columns=["12th"])
-
-        # Remove any occurrences of "12th" within data values
-        input_data = input_data.applymap(lambda x: None if x == "12th" else x)
+        # Apply padding to ensure input_data matches the model's expected structure
+        input_data = pad_missing_columns(input_data, model)
 
         # Log the modified data structure for verification
-        print("Modified input_data structure after removal process:")
+        print("Modified input_data structure after padding process:")
         print("Column names:", input_data.columns.tolist())
         print("Data sample:\n", input_data.head())
 
