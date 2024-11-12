@@ -45,23 +45,25 @@
       </div>
     </div>
     <div id="dice" class="tab-content" style="display:none;">
-      <h2>DICE Explanation</h2>
-      <input type="text" id="bookTitleDice" placeholder="Enter a book title">
-      <div class="toggle-label">
-        <input type="checkbox" id="includeSameAuthorDice" checked>
-        <label for="includeSameAuthorDice">Include recommendations by the same author</label>
-      </div>
-      <button class="get-recommendations-button" data-tab="dice">Get Recommendations</button>
-      <ul id="recommendationsShap"></ul>
+  <h2>DICE Explanation</h2>
+  <input type="text" id="bookTitleDice" placeholder="Enter a book title">
+  <div class="toggle-label">
+    <input type="checkbox" id="includeSameAuthorDice" checked>
+    <label for="includeSameAuthorDice">Include recommendations by the same author</label>
+  </div>
+  <button class="get-recommendations-button" data-tab="dice">Get Recommendations</button>
+  
+  <!-- Ensure this has the correct ID -->
+  <ul id="recommendationsDice"></ul>
 
-      <!-- Dice Explanation Section -->
-      <div id="diceExplanation" style="display:none;">
-        <h2>Dice Explanation for <span id="explainedTitleDice"></span></h2>
-        <ul id="diceExplanationList">
-          <!-- Explanations for each recommended book will be appended here by JavaScript -->
-        </ul>
-      </div>
-    </div>
+  <!-- Dice Explanation Section -->
+  <div id="diceExplanation" style="display:none;">
+    <h2>Dice Explanation for <span id="explainedTitleDice"></span></h2>
+    <ul id="diceExplanationList">
+      <!-- Explanations for each recommended book will be appended here by JavaScript -->
+    </ul>
+  </div>
+</div>
 
   </div>
 </div>
