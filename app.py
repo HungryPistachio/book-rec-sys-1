@@ -95,9 +95,20 @@ async def dice_explanation(request: Request):
     logging.info("Received request for Dice explanation.")
 
     try:
-        explanation = get_dice_explanation(dice, recommendations)
+        # Extract the first recommendation's description vector and feature names
+        description_vector = recommendations[0]["description_vector"]
+        feature_names = recommendations[0]["feature_names"]
+
+        # Create a DataFrame for input_data with the same columns as in initialize_dice
+        input_data = pd.DataFrame([description_vector], columns=feature_names)
+
+        # Ensure all feature values are numeric
+        input_data = input_data.apply(pd.to_numeric)
+
+        # Generate counterfactual explanation
+        explanation = get_dice_explanation(dice, input_data)
         logging.info("Dice explanations generated successfully.")
-        return JSONResponse(content=json.loads(explanation))  # Convert JSON string back to dict
+        return JSONResponse(content=json.loads(explanation))
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
