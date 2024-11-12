@@ -48,12 +48,12 @@ def initialize_dice():
     return dice
 
 # Function to get a counterfactual explanation for a recommendation
-# Function to get a counterfactual explanation for a recommendation
 def get_dice_explanation(dice, input_data):
     try:
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
-        # Convert the result to JSON string
-        return json.dumps(cf.cf_examples_list[0].final_cfs_df.to_dict())
+        # Convert the DataFrame to a dictionary
+        explanation_data = cf.cf_examples_list[0].final_cfs_df.to_dict(orient="records")
+        return json.dumps(explanation_data)  # Convert to JSON string
     except Exception as e:
-        return json.dumps({"error": str(e)})  # Return error as JSON string
+        return json.dumps({"error": str(e)})
