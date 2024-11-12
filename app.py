@@ -105,6 +105,11 @@ async def dice_explanation(request: Request):
         # Ensure all feature values are numeric
         input_data = input_data.apply(pd.to_numeric)
 
+        # Check if the column names in input_data match the feature names
+        if set(input_data.columns) != set(feature_names):
+            logging.error("Column names in input_data do not match feature names")
+            return JSONResponse(content={"error": "Column names in input_data do not match feature names"}, status_code=400)
+
         # Generate counterfactual explanation
         explanation = get_dice_explanation(dice, input_data)
         logging.info("Dice explanations generated successfully.")
