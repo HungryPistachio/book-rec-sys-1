@@ -88,8 +88,9 @@ async def vectorize_descriptions(request: Request):
 
     logging.info("TF-IDF vectorization complete.")
     return JSONResponse(content={
-        "vectorized_descriptions": tfidf_matrix.tolist(),  # Alias tfidf_matrix as vectorized_descriptions
-        "feature_names": feature_names.tolist()
+        "vectorized_descriptions": tfidf_matrix.tolist(),
+        "feature_names": feature_names.tolist(),
+        "tfidf_matrix": tfidf_matrix.tolist()
     })
 
 
