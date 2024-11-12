@@ -13,7 +13,6 @@ print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 
 
 def load_fixed_vocabulary(file_path):
-    """Load the fixed vocabulary from a CSV file."""
     try:
         fixed_vocabulary = pd.read_csv(file_path)["Vocabulary"].tolist()
         logging.info("Fixed vocabulary loaded successfully.")
@@ -38,8 +37,18 @@ def initialize_dice(model, fixed_vocabulary):
 
 def get_dice_explanation(dice, input_data, feature_names):
     try:
-        input_data = pad_missing_columns(input_data, fixed_vocabulary)
+        # Ensure input_data is a DataFrame
+        if isinstance(input_data, dict):
+            input_data = pd.DataFrame([input_data])  # Convert to single-row DataFrame
 
+        # Pad missing columns using fixed vocabulary
+        input_data = pad_missing_columns(input_data, feature_names)
+
+        # Log final column count after padding and alignment
+        logging.info(f"Final input_data column count after padding and alignment: {len(input_data.columns)}")
+        logging.debug(f"Final input_data column names: {input_data.columns.tolist()}")
+
+        # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
 
         # Process the generated counterfactuals
@@ -47,17 +56,17 @@ def get_dice_explanation(dice, input_data, feature_names):
         if hasattr(cf_example, "final_cfs_df") and isinstance(cf_example.final_cfs_df, pd.DataFrame):
             explanation_data = cf_example.final_cfs_df.to_dict(orient="records")
             json_explanation = json.dumps(explanation_data)
-            print("Explanation JSON structure:", json_explanation)
             return json_explanation
         else:
             error_msg = "Counterfactual generation failed; final_cfs_df is not a DataFrame or is missing."
-            print(error_msg)
+            logging.error(error_msg)
             return json.dumps({"error": error_msg})
 
     except Exception as e:
         error_message = f"Exception in get_dice_explanation: {str(e)} of type {type(e).__name__}"
-        print(error_message)
+        logging.error(error_message)
         return json.dumps({"error": error_message})
+
 
 
 
