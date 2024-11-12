@@ -97,8 +97,9 @@ async def dice_explanation(request: Request):
     try:
         explanation = get_dice_explanation(dice, recommendations)
         logging.info("Dice explanations generated successfully.")
-        return JSONResponse(content=json.loads(explanation))  # Parse string back to JSON
+        return JSONResponse(content=json.loads(explanation))  # Convert JSON string back to dict
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
