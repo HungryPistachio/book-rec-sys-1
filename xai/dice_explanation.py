@@ -53,13 +53,14 @@ def get_dice_explanation(dice, input_data):
     try:
         # Ensure input_data is a DataFrame
         if isinstance(input_data, dict):
-            print("Converting input_data dict to DataFrame")
+            print("Converting input_data dict to DataFrame")  # Log if conversion is necessary
             input_data = pd.DataFrame([input_data])  # Convert to single-row DataFrame
 
+        # Log the type and contents of the input data for debugging
         print("Input data type:", type(input_data))
         print("Input data contents:\n", input_data)
 
-        # Check for any unusual data entries
+        # Check for any unusual data entries column by column
         for col in input_data.columns:
             print(f"Column '{col}' contents: {input_data[col].values}")
 
@@ -71,20 +72,21 @@ def get_dice_explanation(dice, input_data):
         if hasattr(cf_example, "final_cfs_df") and isinstance(cf_example.final_cfs_df, pd.DataFrame):
             explanation_data = cf_example.final_cfs_df.to_dict(orient="records")
             json_explanation = json.dumps(explanation_data)  # Convert to JSON string
-            
+
             # Detailed log before returning data
             print("Explanation JSON structure:", json_explanation)
             return json_explanation
         else:
             error_msg = "Counterfactual generation failed; final_cfs_df is not a DataFrame or is missing."
-            print(error_msg)  # Log specific error
+            print(error_msg)  # Log specific error if generation fails
             return json.dumps({"error": error_msg})
-    
+
     except Exception as e:
-        # Log the error and type
+        # Log the error with additional context
         error_message = f"Exception in get_dice_explanation: {str(e)} of type {type(e).__name__}"
-        print(error_message)  # Log detailed error
+        print(error_message)  # Log detailed error information
         return json.dumps({"error": error_message})
+
 
 
 
