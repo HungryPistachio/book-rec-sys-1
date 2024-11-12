@@ -3,7 +3,7 @@ import pandas as pd
 from dice_ml.utils import helpers
 from dice_ml import Data, Model, Dice
 import json
-from utils import pad_missing_columns  
+from utils import pad_missing_columns
 
 print("Classes in dice_ml module:", dir(Dice))  # Print Dice class details
 print("Classes in dice_ml.Data:", dir(Data))    # Print Data class details
@@ -28,7 +28,7 @@ print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 #
 #     return dice
 model = joblib.load("model/trained_model.joblib")
-
+fixed_vocabulary = load_fixed_vocabulary('static/fixed_vocabulary.csv')
 def initialize_dice(model, fixed_vocabulary):
     dummy_data = pd.DataFrame([[0] * len(fixed_vocabulary), [1] * len(fixed_vocabulary)], columns=fixed_vocabulary)
     dummy_data["label"] = [0, 1]
@@ -54,18 +54,9 @@ def pad_missing_columns(input_data, model):
     return input_data[model_feature_names]  # Align columns exactly with model
 
 def get_dice_explanation(dice, input_data, feature_names):
-
     try:
-        # Ensure input_data is a DataFrame
-        if isinstance(input_data, dict):
-            print("Converting input_data dict to DataFrame")
-            input_data = pd.DataFrame([input_data])  # Convert to single-row DataFrame
-
-        # Pad missing columns based on the dynamically generated TF-IDF feature names
+        # Ensure input_data is a DataFrame and pad with fixed vocabulary
         input_data = pad_missing_columns(input_data, feature_names)
-
-        # Logging the TF-IDF feature names used for counterfactuals
-        print("Using dynamically generated TF-IDF feature names:", feature_names)
 
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
@@ -86,6 +77,7 @@ def get_dice_explanation(dice, input_data, feature_names):
         error_message = f"Exception in get_dice_explanation: {str(e)} of type {type(e).__name__}"
         print(error_message)
         return json.dumps({"error": error_message})
+
 
 
 
