@@ -72,9 +72,6 @@ async def vectorize_descriptions(request: Request):
         "description_vector": description_vector
     })
 
-
-dice = initialize_dice(model, tfidf_feature_names)  # Initialize DiCE with extracted feature names
-
 # LIME Explanation Endpoint
 @app.post("/lime-explanation")
 async def lime_explanation(request: Request):
@@ -100,10 +97,13 @@ async def dice_explanation(request: Request):
     logging.info("Received request for Dice explanation.")
 
     try:
-        # Check if tfidf_feature_names have been set
+        # Check if tfidf_feature_names has been generated
         if tfidf_feature_names is None:
             logging.error("TF-IDF feature names not available; run vectorize-descriptions first.")
             return JSONResponse(content={"error": "TF-IDF feature names not available."}, status_code=400)
+
+        # Initialize DiCE with the feature names dynamically
+        dice = initialize_dice(model, tfidf_feature_names)
 
         # Extract the first recommendation's description vector
         description_vector = recommendations[0]["description_vector"]
@@ -114,12 +114,11 @@ async def dice_explanation(request: Request):
         # Ensure all feature values are numeric
         input_data = input_data.apply(pd.to_numeric, errors='coerce').fillna(0)
 
-        # Generate counterfactual explanation using feature_names directly
+        # Generate counterfactual explanation
         explanation = get_dice_explanation(dice, input_data, tfidf_feature_names)
         logging.info("Dice explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-
 
