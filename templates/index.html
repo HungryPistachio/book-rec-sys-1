@@ -105,6 +105,37 @@
     }, { description_vector: [], feature_names: [] });
   }
 
+  const stopwords = new Set([
+                              "i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", "yours", "yourself", "yourselves",
+                              "he", "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their",
+                              "theirs", "themselves", "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is", "are",
+                              "was", "were", "be", "been", "being", "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an",
+                              "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about",
+                              "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up",
+                              "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there",
+                              "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some",
+                              "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will",
+                              "just", "don", "should", "now"
+                            ]);
+
+
+  function cleanDescription(description) {
+    // Regular expression to remove punctuation and numbers
+    const words = description
+        .replace(/[0-9.,/#!$%^&*;:{}=_`~()]/g, "")
+        .toLowerCase()
+        .split(" ");
+
+    // Filter out stopwords and ensure words are alphanumeric only
+    const cleanedWords = words.filter(word =>
+                                          word && !stopwords.has(word) && /^[a-zA-Z]+$/.test(word)
+    );
+
+    // Join the cleaned words into a cleaned description string
+    return cleanedWords.join(" ");
+  }
+
+
   async function getRecommendations(tab) {
     console.log(`Fetching recommendations for tab: ${tab}`);
     const recommendations = [];
@@ -132,10 +163,10 @@
     const processedBooks = books.map(book => ({
       title: book.volumeInfo.title || "Unknown Title",
       authors: book.volumeInfo.authors || [],
-      description: book.volumeInfo.description || "No description available",
+      description: cleanDescription(book.volumeInfo.description || "No description available"),
       link: book.volumeInfo.infoLink || "#"
-    }))
-        .filter(book => book.description && book.description.length > 50);
+    })).filter(book => book.description && book.description.length > 50);
+
 
     const descriptions = processedBooks.map(book => book.description);
     const selectedBook = processedBooks.find(book => book.title.toLowerCase() === bookTitle.toLowerCase());
