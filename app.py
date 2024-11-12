@@ -85,10 +85,11 @@ async def vectorize_descriptions(request: Request):
     vectorizer = TfidfVectorizer()  # No fixed vocabulary
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
     feature_names = vectorizer.get_feature_names_out()
+    vectorized_descriptions = tfidf_matrix[0].tolist()
 
     logging.info("TF-IDF vectorization complete.")
     return JSONResponse(content={
-        "vectorized_descriptions": tfidf_matrix.tolist(),
+        "vectorized_descriptions": vectorized_descriptions,
         "feature_names": feature_names.tolist(),
         "tfidf_matrix": tfidf_matrix.tolist()
     })
