@@ -69,6 +69,8 @@ async def root():
 
 
 # Global variable to store TF-IDF feature names
+# Original vectorize_descriptions endpoint (without fixed vocabulary)
+# Updated vectorize_descriptions function output to maintain compatibility
 @app.post("/vectorize-descriptions")
 async def vectorize_descriptions(request: Request):
     data = await request.json()
@@ -79,32 +81,18 @@ async def vectorize_descriptions(request: Request):
         logging.error("No descriptions provided.")
         return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
 
-    # Create a vectorizer with the fixed vocabulary
-    vectorizer = TfidfVectorizer(vocabulary=fixed_vocabulary)
-
-
-    # Vectorize the descriptions
+    # Dynamically generate vocabulary based on descriptions
+    vectorizer = TfidfVectorizer()  # No fixed vocabulary
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
-
-    # Get the feature names (i.e. the words in the fixed vocabulary)
     feature_names = vectorizer.get_feature_names_out()
 
-    # Create a dictionary to store the vectorized descriptions
-    vectorized_descriptions = {}
+    logging.info("TF-IDF vectorization complete.")
+    return JSONResponse(content={
+        "vectorized_descriptions": tfidf_matrix.tolist(),  # Alias tfidf_matrix as vectorized_descriptions
+        "feature_names": feature_names.tolist()
+    })
 
-    # Loop through the descriptions and create a dictionary for each one
-    for i, description in enumerate(descriptions):
-        # Get the vectorized description
-        vectorized_description = tfidf_matrix[i]
 
-        # Create a dictionary with the feature names as keys and the vectorized values as values
-        vectorized_description_dict = dict(zip(feature_names, vectorized_description))
-
-        # Add the dictionary to the list of vectorized descriptions
-        vectorized_descriptions[i] = vectorized_description_dict
-
-    # Return the vectorized descriptions
-    return JSONResponse(content={"vectorized_descriptions": vectorized_descriptions})
 
 
 
