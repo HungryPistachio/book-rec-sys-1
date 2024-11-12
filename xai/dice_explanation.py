@@ -29,19 +29,16 @@ print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 #     return dice
 model = joblib.load("model/trained_model.joblib")
 
-def initialize_dice(model, tfidf_feature_names):
-    # Create a DataFrame with dummy data using the TF-IDF feature names
-    dummy_data = pd.DataFrame([[0] * len(tfidf_feature_names), [1] * len(tfidf_feature_names)], columns=tfidf_feature_names)
-    dummy_data["label"] = [0, 1]  # Add a label column
+def initialize_dice(model, fixed_vocabulary):
+    dummy_data = pd.DataFrame([[0] * len(fixed_vocabulary), [1] * len(fixed_vocabulary)], columns=fixed_vocabulary)
+    dummy_data["label"] = [0, 1]
 
-    # Initialize DiCE with the dummy data
-    data = Data(dataframe=dummy_data, continuous_features=tfidf_feature_names, outcome_name="label")
-
-    # Pass in the model directly if it's already trained
+    data = Data(dataframe=dummy_data, continuous_features=fixed_vocabulary, outcome_name="label")
     dice_model = Model(model=model, backend="sklearn")
     dice = Dice(data, dice_model, method="random")
 
     return dice
+
 
 
 def pad_missing_columns(input_data, model):
@@ -57,7 +54,6 @@ def pad_missing_columns(input_data, model):
     return input_data[model_feature_names]  # Align columns exactly with model
 
 def get_dice_explanation(dice, input_data, feature_names):
-    feature_names = tfidf_data.get("feature_names", [])
 
     try:
         # Ensure input_data is a DataFrame
