@@ -28,22 +28,21 @@ print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 #
 #     return dice
 model = joblib.load("model/trained_model.joblib")
-def initialize_dice():
 
-    # Extract the feature names from the TF-IDF vectorizer
-    feature_names = model.named_steps['tfidfvectorizer'].get_feature_names_out()
-
-    # Create a DataFrame with dummy data
-    # Ensure all features are numeric and match the feature names
-    dummy_data = pd.DataFrame([[0]*len(feature_names), [1]*len(feature_names)], columns=feature_names)
+def initialize_dice(model, tfidf_feature_names):
+    # Create a DataFrame with dummy data using the TF-IDF feature names
+    dummy_data = pd.DataFrame([[0] * len(tfidf_feature_names), [1] * len(tfidf_feature_names)], columns=tfidf_feature_names)
     dummy_data["label"] = [0, 1]  # Add a label column
 
     # Initialize DiCE with the dummy data
-    data = Data(dataframe=dummy_data, continuous_features=feature_names.tolist(), outcome_name="label")
-    dice_model = Model(model=model.named_steps["randomforestclassifier"], backend="sklearn")
+    data = Data(dataframe=dummy_data, continuous_features=tfidf_feature_names, outcome_name="label")
+
+    # Pass in the model directly if it's already trained
+    dice_model = Model(model=model, backend="sklearn")
     dice = Dice(data, dice_model, method="random")
 
     return dice
+
 
 def pad_missing_columns(input_data, model):
     # Get the expected columns from the model (adjust based on model's actual method for feature names)
@@ -58,6 +57,8 @@ def pad_missing_columns(input_data, model):
     return input_data[model_feature_names]  # Align columns exactly with model
 
 def get_dice_explanation(dice, input_data, feature_names):
+    feature_names = tfidf_data.get("feature_names", [])
+
     try:
         # Ensure input_data is a DataFrame
         if isinstance(input_data, dict):
@@ -89,10 +90,3 @@ def get_dice_explanation(dice, input_data, feature_names):
         error_message = f"Exception in get_dice_explanation: {str(e)} of type {type(e).__name__}"
         print(error_message)
         return json.dumps({"error": error_message})
-
-
-
-
-
-
-
