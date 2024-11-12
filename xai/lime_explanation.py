@@ -16,7 +16,7 @@ def get_lime_explanation(recommendations):
     # Loop through each recommendation
     for idx, rec in enumerate(recommendations):
         try:
-            description_vector = rec.get("description_vector", [])
+            description_vector = rec.get("vectorized_description", [])
             feature_names = rec.get("feature_names", [])
             input_text = ' '.join(feature_names[:85000])  # Limit input text for LIME
 
