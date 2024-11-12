@@ -4,6 +4,8 @@ from dice_ml.utils import helpers
 from dice_ml import Data, Model, Dice
 import json
 from utils import pad_missing_columns
+import logging
+import pandas as pd
 
 print("Classes in dice_ml module:", dir(Dice))  # Print Dice class details
 print("Classes in dice_ml.Data:", dir(Data))    # Print Data class details
@@ -27,8 +29,20 @@ print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 #     dice = Dice(data, dice_model, method="random")
 #
 #     return dice
-model = joblib.load("model/trained_model.joblib")
+
+def load_fixed_vocabulary(file_path):
+    """Load the fixed vocabulary from a CSV file."""
+    try:
+        fixed_vocabulary = pd.read_csv(file_path)["Vocabulary"].tolist()
+        logging.info("Fixed vocabulary loaded successfully.")
+        return fixed_vocabulary
+    except Exception as e:
+        logging.error(f"Failed to load fixed vocabulary from {file_path}: {e}")
+        return []
+# Load the fixed vocabulary once when the module is imported
 fixed_vocabulary = load_fixed_vocabulary('static/fixed_vocabulary.csv')
+model = joblib.load("model/trained_model.joblib")
+
 def initialize_dice(model, fixed_vocabulary):
     dummy_data = pd.DataFrame([[0] * len(fixed_vocabulary), [1] * len(fixed_vocabulary)], columns=fixed_vocabulary)
     dummy_data["label"] = [0, 1]
