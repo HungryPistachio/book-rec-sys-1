@@ -16,14 +16,14 @@ def get_lime_explanation(recommendations):
     # Loop through each recommendation
     for idx, rec in enumerate(recommendations):
         try:
-            vectorized_description = rec.get("vectorized_description", [])
+            vectorized_descriptions = rec.get("vectorized_descriptions", [])
             feature_names = rec.get("feature_names", [])
             input_text = ' '.join(feature_names[:85000])  # Limit input text for LIME
 
             # Generate explanation using LIME
             explanation = explainer.explain_instance(
                 input_text,
-                lambda x: np.array([vectorized_description] * len(x)),
+                lambda x: np.array([vectorized_descriptions] * len(x)),
                 num_features=min(len(feature_names), 85000)
             )
 
