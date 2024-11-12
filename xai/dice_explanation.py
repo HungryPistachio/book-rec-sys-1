@@ -51,10 +51,14 @@ def initialize_dice():
 
 def get_dice_explanation(dice, input_data):
     try:
+        # Ensure input_data is a DataFrame
+        if isinstance(input_data, dict):
+            input_data = pd.DataFrame([input_data])  # Convert dict to DataFrame with one row
+
         # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
-        
-        # Check if final_cfs_df is a DataFrame
+
+        # Check if final_cfs_df is a DataFrame and log the structure
         if hasattr(cf.cf_examples_list[0], "final_cfs_df") and isinstance(cf.cf_examples_list[0].final_cfs_df, pd.DataFrame):
             explanation_data = cf.cf_examples_list[0].final_cfs_df.to_dict(orient="records")
             json_explanation = json.dumps(explanation_data)  # Convert to JSON string
@@ -70,7 +74,7 @@ def get_dice_explanation(dice, input_data):
     except Exception as e:
         error_message = str(e)
         print("Exception in get_dice_explanation:", error_message)  # Detailed error log
-        return json.dumps({"error": error_message}) 
+        return json.dumps({"error": error_message})  
 
 
 
