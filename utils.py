@@ -13,8 +13,4 @@ def pad_missing_columns(input_data, fixed_vocabulary):
     # Ensure columns are in the same order as fixed_vocabulary
     input_data = input_data.reindex(columns=fixed_vocabulary, fill_value=0)
 
-    # Log the column names to ensure correct alignment
-    logging.debug(f"Input data column names: {input_data.columns.tolist()}")
-    logging.debug(f"Fixed vocabulary column names: {fixed_vocabulary}")
-
-    return input_data
+    return input_data[fixed_vocabulary]
