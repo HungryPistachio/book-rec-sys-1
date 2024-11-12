@@ -27,7 +27,7 @@ print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 #     return dice
 def initialize_dice():
     # Load the model pipeline (TF-IDF + RandomForest)
-    model = joblib.load("trained_model.joblib")
+    model = joblib.load("/model/trained_model.joblib")
 
     # Define the feature names (from TF-IDF vectorizer)
     feature_names = model.named_steps['tfidfvectorizer'].get_feature_names_out()
