@@ -5,6 +5,7 @@ import logging
 import json
 from xai.lime_explanation import get_lime_explanation
 from xai.dice_explanation import get_dice_explanation
+from xai.dice_explanation import initialize_dice
 from sklearn.feature_extraction.text import TfidfVectorizer
 import uvicorn
 from pathlib import Path
