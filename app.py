@@ -12,6 +12,7 @@ from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 import joblib
 import pandas as pd
+
 import numpy as np
 
 # Load the trained model at the start
@@ -94,13 +95,10 @@ async def dice_explanation(request: Request):
     logging.info("Received request for Dice explanation.")
 
     try:
-        # Prepare input_data for DiCE (use the first recommendation as an example)
-        input_data = pd.DataFrame([recommendations[0]["description_vector"]], columns=recommendations[0]["feature_names"])
-
-        # Generate counterfactual explanation
-        explanation = get_dice_explanation(dice, input_data)  # Add input_data argument here
+        explanation = get_dice_explanation(dice, recommendations)
         logging.info("Dice explanations generated successfully.")
-        return JSONResponse(content=json.loads(explanation))
+        return JSONResponse(content=json.loads(explanation))  # Parse string back to JSON
     except Exception as e:
         logging.error(f"Error in Dice explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
