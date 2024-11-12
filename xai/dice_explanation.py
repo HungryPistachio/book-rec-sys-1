@@ -11,24 +11,6 @@ print("Classes in dice_ml module:", dir(Dice))  # Print Dice class details
 print("Classes in dice_ml.Data:", dir(Data))    # Print Data class details
 print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
 
-# Load the trained model and set up DiCE
-# def initialize_dice():
-#     # Load the model pipeline (TF-IDF + RandomForest)
-#     model = joblib.load("trained_model.joblib")
-#
-#     # Define the feature names (from TF-IDF vectorizer)
-#     feature_names = model.named_steps['tfidfvectorizer'].get_feature_names_out()
-#
-#     # Create a DataFrame with dummy data for DiCE's input requirements
-#     data_df = pd.DataFrame(columns=feature_names)
-#     data_df["label"] = [0, 1]  # Two dummy classes
-#
-#     # Initialize DiCE with this data and model
-#     data = Data(dataframe=data_df, continuous_features=feature_names, outcome_name="label")
-#     dice_model = Model(model=model.named_steps["randomforestclassifier"], backend="sklearn")
-#     dice = Dice(data, dice_model, method="random")
-#
-#     return dice
 
 def load_fixed_vocabulary(file_path):
     """Load the fixed vocabulary from a CSV file."""
@@ -54,25 +36,10 @@ def initialize_dice(model, fixed_vocabulary):
     return dice
 
 
-
-def pad_missing_columns(input_data, model):
-    # Get the expected columns from the model (adjust based on model's actual method for feature names)
-    model_feature_names = model.get_feature_names_out()  # Ensure this matches your model's feature retrieval method
-
-    # Pad input data with missing columns
-    for feature in model_feature_names:
-        if feature not in input_data.columns:
-            input_data[feature] = 0  # Fill missing columns with zero
-
-    # Drop any extra columns not expected by the model
-    return input_data[model_feature_names]  # Align columns exactly with model
-
 def get_dice_explanation(dice, input_data, feature_names):
     try:
-        # Ensure input_data is a DataFrame and pad with fixed vocabulary
-        input_data = pad_missing_columns(input_data, feature_names)
+        input_data = pad_missing_columns(input_data, fixed_vocabulary)
 
-        # Generate counterfactuals
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
 
         # Process the generated counterfactuals
