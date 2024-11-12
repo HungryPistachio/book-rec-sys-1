@@ -50,7 +50,7 @@ def load_fixed_vocabulary():
     return vocab_df["Vocabulary"].tolist()
 
 fixed_vocabulary = load_fixed_vocabulary()
-dice = initialize_dice(model, feature_names)
+dice = initialize_dice(model, fixed_vocabulary)
 vectorizer = TfidfVectorizer()
 tfidf_feature_names = None  # Initialize as None
 
@@ -134,9 +134,6 @@ async def dice_explanation(request: Request):
         if fixed_vocabulary is None:
             logging.error("Fixed vocabulary not available; ensure it is loaded.")
             return JSONResponse(content={"error": "Fixed vocabulary not available."}, status_code=400)
-
-        # Initialize DiCE with the fixed vocabulary
-        dice = initialize_dice(model, fixed_vocabulary)
 
         # Extract the first recommendation's description vector
         description_vector = recommendations[0]["description_vector"]
