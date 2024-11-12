@@ -388,7 +388,7 @@
 
     function filterRecommendations(processedBooks, tfidf_matrix, vectorized_descriptions, includeSameAuthor) {
       const finalRecommendations = [];
-      const similarityScoreThreshold = 0.05;
+      const similarityScoreThreshold = 0.01;
 
       // Check that vectorized_descriptions is defined and accessible
       if (!vectorized_descriptions || vectorized_descriptions.length === 0) {
