@@ -1,74 +1,45 @@
 import joblib
 import pandas as pd
-from dice_ml.utils import helpers
 from dice_ml import Data, Model, Dice
 import json
-# from utils import pad_missing_columns
 import logging
-import pandas as pd
 
-print("Classes in dice_ml module:", dir(Dice))  # Print Dice class details
-print("Classes in dice_ml.Data:", dir(Data))    # Print Data class details
-print("Classes in dice_ml.Model:", dir(Model))  # Print Model class details
-
-
-def load_fixed_vocabulary(file_path):
+def load_fixed_vocabulary(file_path, expected_size=79):
     try:
         fixed_vocabulary = pd.read_csv(file_path)["Vocabulary"].tolist()
-        logging.info("Fixed vocabulary loaded successfully.")
-        logging.info(f"Fixed vocabulary loaded with {len(fixed_vocabulary)} terms.")
-        return fixed_vocabulary
+        if len(fixed_vocabulary) != expected_size:
+            logging.warning(f"Fixed vocabulary size mismatch. Expected {expected_size}, got {len(fixed_vocabulary)}.")
+        return fixed_vocabulary[:expected_size]
     except Exception as e:
         logging.error(f"Failed to load fixed vocabulary from {file_path}: {e}")
         return []
-# Load the fixed vocabulary once when the module is imported
+
+def pad_missing_columns(input_data, fixed_vocabulary):
+    return input_data.reindex(columns=fixed_vocabulary, fill_value=0)
+
 fixed_vocabulary = load_fixed_vocabulary('static/fixed_vocabulary.csv')
 model = joblib.load("model/trained_model.joblib")
 
 def initialize_dice(model, fixed_vocabulary):
     dummy_data = pd.DataFrame([[0] * len(fixed_vocabulary), [1] * len(fixed_vocabulary)], columns=fixed_vocabulary)
     dummy_data["label"] = [0, 1]
-
     data = Data(dataframe=dummy_data, continuous_features=fixed_vocabulary, outcome_name="label")
     dice_model = Model(model=model, backend="sklearn")
-    dice = Dice(data, dice_model, method="random")
+    return Dice(data, dice_model, method="random")
 
-    return dice
-
-def pad_missing_columns(input_data, fixed_vocabulary):
-    # Create a DataFrame with fixed vocabulary columns, filling missing ones with zero
-    for column in fixed_vocabulary:
-        if column not in input_data.columns:
-            input_data[column] = 0  # Add missing column with default zero values
-    # Reorder columns to match fixed_vocabulary
-    input_data = input_data[fixed_vocabulary]
-    return input_data
-
-# Updated get_dice_explanation function to use fixed vocabulary
 def get_dice_explanation(dice, input_data):
     try:
-        # Load fixed vocabulary
-        fixed_vocabulary = load_fixed_vocabulary('static/fixed_vocabulary.csv')
-
-        # Ensure input_data has the fixed vocabulary columns
         input_data = pad_missing_columns(input_data, fixed_vocabulary)
-        logging.info(f"Input data shape after padding: {input_data.shape}")
-        
-        # Generate counterfactual explanation using DiCE
+        if input_data.shape[1] != len(fixed_vocabulary):
+            logging.error("Mismatch between input data columns and fixed vocabulary size.")
+            return json.dumps({"error": "Input data does not match the required vocabulary size."})
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
         cf_example = cf.cf_examples_list[0]
-
         if hasattr(cf_example, "final_cfs_df") and isinstance(cf_example.final_cfs_df, pd.DataFrame):
-            explanation_data = cf_example.final_cfs_df.to_dict(orient="records")
-            json_explanation = json.dumps(explanation_data)
-            logging.info("Dice explanation generated successfully.")
-            return json_explanation
+            return json.dumps(cf_example.final_cfs_df.to_dict(orient="records"))
         else:
-            error_msg = "Counterfactual generation failed; final_cfs_df is not a DataFrame or is missing."
-            logging.error(error_msg)
-            return json.dumps({"error": error_msg})
-
+            logging.error("Counterfactual generation failed; final_cfs_df is not valid.")
+            return json.dumps({"error": "Counterfactual generation failed."})
     except Exception as e:
-        error_message = f"Exception in get_dice_explanation: {str(e)}"
-        logging.error(error_message)
-        return json.dumps({"error": error_message})
+        logging.error(f"Exception in get_dice_explanation: {e}")
+        return json.dumps({"error": str(e)})
