@@ -24,7 +24,7 @@ def get_anchor_explanation(recommendations, original_description):
         return np.array([int(sim >= 0.5) for sim in similarities])
 
     # Initialize AnchorText explainer with the predictor function
-    explainer = AnchorText(nlp=nlp, predictor=predict_fn, use_unk=True)
+    explainer = AnchorText(nlp=nlp, predictor=predict_fn)
 
     # Process each recommendation to generate explanations
     for idx, rec in enumerate(recommendations):
