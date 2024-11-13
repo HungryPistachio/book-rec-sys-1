@@ -1,22 +1,39 @@
 import json
-import logging
 import spacy
-import en_core_web_sm
-import numpy as np
+import logging
 from alibi.explainers import AnchorText
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
-# Load spaCy model
-nlp = en_core_web_sm.load()
+# Load the spaCy model
+nlp = spacy.load('en_core_web_sm')
 
-# Initialize the alibi AnchorText explainer
-explainer = AnchorText(nlp=nlp, use_unk=True)
+# Initialize the AnchorText explainer from Alibi with placeholder prediction function
+explainer = AnchorText(nlp, predictor=None, use_unk=True)
 
-def predict_fn(texts):
-    # Replace this with your own prediction logic, e.g., using a trained model or rule-based classification
-    return np.array([1 if "good" in text.lower() else 0 for text in texts])
+# Function to set up the predictor function based on the initial book description
+def setup_predictor(original_description, descriptions):
+    # Vectorize the original description along with recommendations
+    vectorizer = TfidfVectorizer()
+    all_descriptions = [original_description] + descriptions
+    tfidf_matrix = vectorizer.fit_transform(all_descriptions)
 
-def get_anchor_explanation(recommendations):
+    # Calculate cosine similarity of each recommendation to the original
+    similarity_scores = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
+
+    # Return binary predictions based on similarity threshold
+    return [1 if score >= 0.5 else 0 for score in similarity_scores]
+
+def get_anchor_explanation(recommendations, original_description):
     explanations = []
+    descriptions = [rec.get("description", "") for rec in recommendations]
+    
+    # Define the predictor function dynamically based on similarity with original description
+    def predict_fn(texts):
+        return setup_predictor(original_description, texts)
+    
+    # Attach the predictor to the explainer
+    explainer.predictor = predict_fn
 
     for idx, rec in enumerate(recommendations):
         try:
@@ -25,12 +42,12 @@ def get_anchor_explanation(recommendations):
                 logging.warning(f"No description found for recommendation {idx + 1}")
                 continue
 
-            # Generate anchor explanation
-            explanation = explainer.explain(description, predict_fn=predict_fn, threshold=0.95)
+            # Generate an explanation
+            explanation = explainer.explain(description, threshold=0.95)
 
-            # Extract anchor words and precision
-            anchor_words = " AND ".join(explanation.anchor)
-            precision = explanation.precision
+            # Collect anchor words and precision score
+            anchor_words = " AND ".join(explanation.data['anchor'])
+            precision = explanation.data['precision']
 
             explanations.append({
                 "title": rec.get("title", f"Recommendation {idx + 1}"),
