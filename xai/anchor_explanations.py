@@ -42,6 +42,12 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     # Define the predictor function based on similarity with the original vector
     def predict_fn(texts):
         logging.info(f"prediction function received texts data: {json.dumps(texts, indent=2)}")
+
+        # Ensure texts are expected and not empty
+        if not texts or "Hello world" in texts:
+            logging.warning("Unexpected input in predict_fn; returning default prediction.")
+            return np.array([0] * len(texts))  # Default to "not similar" prediction for unexpected inputs
+
         text_vectors = vectorizer.transform(texts).toarray()
         logging.info(f"prediction function changed texts to array: {json.dumps(text_vectors, indent=2)}")
         similarities = np.dot(text_vectors, original_vector) / (
