@@ -3,39 +3,19 @@ import logging
 from alibi.explainers import AnchorText
 import numpy as np
 import spacy
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
 
-def get_anchor_explanation(recommendations, original_description):
+def get_anchor_explanation(recommendations, original_vector):
     explanations = []
 
-    # Initialize TF-IDF Vectorizer and vectorize descriptions
-    vectorizer = TfidfVectorizer()
-    all_descriptions = [original_description] + [' '.join(rec.get("feature_names", [])) for rec in recommendations]
-    tfidf_matrix = vectorizer.fit_transform(all_descriptions).toarray()
-    original_vector = tfidf_matrix[0]
-
-    # Define predictor function, ensuring output is numpy array
+    # Define the predictor function using precomputed vector similarities
     def predict_fn(texts):
-        # Vectorize each text
-        text_vectors = vectorizer.transform(texts).toarray()
-        similarities = []
-
-        # Calculate similarity only if both norms are non-zero
-        original_norm = np.linalg.norm(original_vector)
-        for text_vector in text_vectors:
-            text_norm = np.linalg.norm(text_vector)
-            if original_norm == 0 or text_norm == 0:
-                similarities.append(0)  # No similarity if one of the vectors has zero norm
-            else:
-                similarity = np.dot(text_vector, original_vector) / (text_norm * original_norm)
-                similarities.append(int(similarity >= 0.5))
-
-    # Convert to numpy array as expected by the Anchor explainer
-        return np.array(similarities)
-
+        # Instead of recomputing similarity, we directly return a constant relevance score
+        return np.array([1 if np.dot(original_vector, rec['vectorized_descriptions']) /
+                         (np.linalg.norm(original_vector) * np.linalg.norm(rec['vectorized_descriptions'])) >= 0.5 else 0
+                         for rec in recommendations])
 
     # Initialize AnchorText explainer with the predictor function
     explainer = AnchorText(nlp=nlp, predictor=predict_fn)
@@ -43,9 +23,10 @@ def get_anchor_explanation(recommendations, original_description):
     # Process each recommendation to generate explanations
     for idx, rec in enumerate(recommendations):
         try:
-            # Combine feature names to create input text, logging missing data
-            feature_names = rec.get("feature_names", [])
-            if not feature_names:
+            # Combine feature names to create the input text for the anchor explainer
+            input_text = ' '.join(rec.get("feature_names", []))
+
+            if not rec.get("feature_names"):
                 logging.warning(f"Missing feature names for recommendation {idx + 1}")
                 explanations.append({
                     "title": rec.get("title", f"Recommendation {idx + 1}"),
@@ -54,12 +35,10 @@ def get_anchor_explanation(recommendations, original_description):
                 })
                 continue
 
-            input_text = ' '.join(feature_names)
-
             # Generate the anchor explanation
             explanation = explainer.explain(input_text, threshold=0.95)
 
-            # Extract anchor words and precision
+            # Extract anchor words and precision score
             anchor_words = " AND ".join(explanation.data['anchor'])
             precision = explanation.data['precision']
 
