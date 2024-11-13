@@ -46,7 +46,6 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
 
     # Define the predictor function based on similarity with the original vector
     def predict_fn(texts):
-        logging.info(f"Received texts in predict_fn: {texts}")
 
     # Filter out any "Hello world" or other unexpected inputs
         filtered_texts = [text for text in texts if text != "Hello world"]
@@ -109,6 +108,4 @@ def get_anchor_explanation(recommendations, original_feature_names):
     for idx, rec in enumerate(recommendations):
         explanation = get_anchor_explanation_for_recommendation(rec, original_vector)
         explanations.append(explanation)
-        logging.info(f"Anchor explanation generated for recommendation {idx + 1}")
-        logging.info("Anchor explanations generated successfully for all recommendations.")
     return json.dumps(explanations)
