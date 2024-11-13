@@ -1,13 +1,18 @@
 import json
-import spacy
-from anchor import anchor_text
 import logging
+import spacy
+import numpy as np
+from alibi.explainers import AnchorText
 
-# Load the spaCy model
+# Load spaCy model
 nlp = spacy.load('en_core_web_sm')
 
-# Initialize AnchorText explainer
-explainer = anchor_text.AnchorText(nlp, ['Relevant', 'Not Relevant'], use_unk_distribution=True)
+# Initialize the alibi AnchorText explainer
+explainer = AnchorText(nlp=nlp, use_unk=True)
+
+def predict_fn(texts):
+    # Replace this with your own prediction logic, e.g., using a trained model or rule-based classification
+    return np.array([1 if "good" in text.lower() else 0 for text in texts])
 
 def get_anchor_explanation(recommendations):
     explanations = []
@@ -19,16 +24,12 @@ def get_anchor_explanation(recommendations):
                 logging.warning(f"No description found for recommendation {idx + 1}")
                 continue
 
-            # Generate the Anchor explanation
-            explanation = explainer.explain_instance(
-                description,
-                predict_fn,
-                threshold=0.95
-            )
+            # Generate anchor explanation
+            explanation = explainer.explain(description, predict_fn=predict_fn, threshold=0.95)
 
-            # Get anchor words and precision score
-            anchor_words = " AND ".join(explanation.names())
-            precision = explanation.precision()
+            # Extract anchor words and precision
+            anchor_words = " AND ".join(explanation.anchor)
+            precision = explanation.precision
 
             explanations.append({
                 "title": rec.get("title", f"Recommendation {idx + 1}"),
@@ -45,7 +46,3 @@ def get_anchor_explanation(recommendations):
 
     logging.info("Anchor explanations generated for all recommendations.")
     return json.dumps(explanations)
-
-def predict_fn(texts):
-    # Dummy prediction function for demonstration; should return 1 for 'relevant' and 0 otherwise.
-    return [1 if "good" in text.lower() else 0 for text in texts]
