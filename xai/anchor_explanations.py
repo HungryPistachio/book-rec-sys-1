@@ -18,7 +18,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
     # Filter out stop words and create a combined description
     original_description = ' '.join(original_feature_names)
     #logging for original description
-    logging.info(f"prepare_vectorizer_and_original_vector created original_description data: {json.dumps(original_description, indent=2)}")
+    # logging.info(f"prepare_vectorizer_and_original_vector created original_description data: {json.dumps(original_description, indent=2)}")
     # Fit vectorizer on the original description and create the original vector
     vectorizer.fit([original_description])
     original_vector = vectorizer.transform([original_description]).toarray()[0]
@@ -28,7 +28,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
 
 def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     logging.info(f"get_anchor_explanation_for_recommendation received recommendations data: {json.dumps(recommendation, indent=2)}")
-    logging.info(f"get_anchor_explanation_for_recommendation received original_vector data: {json.dumps(original_vector, indent=2)}")
+    logging.info(f"get_anchor_explanation_for_recommendation received original_vector data: {original_vector.tolist()}")
     # Create input text from recommendation's feature names
     input_text = ' '.join(filter_stopwords(recommendation.get('feature_names', [])))
     if not input_text:
@@ -88,13 +88,13 @@ def get_anchor_explanation(recommendations, original_feature_names):
     if isinstance(original_feature_names, str):
         original_feature_names = original_feature_names.split()
 
-    logging.info(f"get_anchor_explanation received recommendations data: {json.dumps(recommendations, indent=2)}")
-    logging.info(f"get_anchor_explanation processed original_feature_names data: {original_feature_names}")
+    # logging.info(f"get_anchor_explanation received recommendations data: {json.dumps(recommendations, indent=2)}")
+    # logging.info(f"get_anchor_explanation processed original_feature_names data: {original_feature_names}")
 
     explanations = []
     # Prepare the vectorizer and original vector once
     original_vector = prepare_vectorizer_and_original_vector(original_feature_names)
-    logging.info(f"get_anchor_explanation received original_vector data: {json.dumps(original_vector.tolist(), indent=2)}")
+    # logging.info(f"get_anchor_explanation received original_vector data: {json.dumps(original_vector.tolist(), indent=2)}")
 
     for idx, rec in enumerate(recommendations):
         explanation = get_anchor_explanation_for_recommendation(rec, original_vector)
