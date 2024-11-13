@@ -208,6 +208,12 @@
                              vectorized_descriptions: nonZeroFeatures.vectorized_descriptions,
                              feature_names: nonZeroFeatures.feature_names
                            });
+      // Add a console log to check the values being pushed
+      console.log("Recommendation added:", {
+        title: bookInfo.title,
+        vectorized_descriptions: nonZeroFeatures.vectorized_descriptions,
+        feature_names: nonZeroFeatures.feature_names
+      });
 
       // Display each recommendation in the UI
       const li = document.createElement("li");
