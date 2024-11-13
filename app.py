@@ -4,37 +4,20 @@ from fastapi.staticfiles import StaticFiles
 import logging
 import json
 from xai.lime_explanation import get_lime_explanation
-from xai.dice_explanation import get_dice_explanation
-from xai.dice_explanation import initialize_dice
-from xai.anchor_explanations import generate_anchor_explanations
+from xai.anchor_explanations import get_anchor_explanation
 from sklearn.feature_extraction.text import TfidfVectorizer
-from utils import pad_missing_columns  # Import pad_missing_columns from utils
-import uvicorn
 from pathlib import Path
-import joblib
-import pandas as pd
-import numpy as np
+
 
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Load the trained model at the start
-try:
-    model = joblib.load('model/trained_model.joblib')
-    print("Model loaded successfully.")
-except Exception as e:
-    print(f"Error loading model: {e}")
-
-# Load the fixed vocabulary once on startup
-# Load the fixed vocabulary from CSV
-vocab_path = "static/fixed_vocabulary.csv"
-try:
-    fixed_vocabulary = pd.read_csv(vocab_path)["Vocabulary"].tolist()
-    logging.info("Fixed vocabulary loaded successfully.")
-except Exception as e:
-    logging.error(f"Error loading fixed vocabulary: {e}")
-    fixed_vocabulary = None
-
+# try:
+#     model = joblib.load('model/trained_model.joblib')
+#     print("Model loaded successfully.")
+# except Exception as e:
+#     print(f"Error loading model: {e}")
 
 
 app = FastAPI()
@@ -45,14 +28,6 @@ app.mount("/images", StaticFiles(directory="images"), name="images")
 
 
 # Initialize the TF-IDF Vectorizer
-
-
-def load_fixed_vocabulary():
-    vocab_df = pd.read_csv("static/fixed_vocabulary.csv")
-    return vocab_df["Vocabulary"].tolist()
-
-fixed_vocabulary = load_fixed_vocabulary()
-dice = initialize_dice(model, fixed_vocabulary)
 vectorizer = TfidfVectorizer()
 tfidf_feature_names = None  # Initialize as None
 
@@ -69,9 +44,7 @@ async def root():
     return HTMLResponse(content=html_content)
 
 
-# Global variable to store TF-IDF feature names
-# Original vectorize_descriptions endpoint (without fixed vocabulary)
-# Updated vectorize_descriptions function output to maintain compatibility
+
 @app.post("/vectorize-descriptions")
 async def vectorize_descriptions(request: Request):
     data = await request.json()
@@ -95,10 +68,6 @@ async def vectorize_descriptions(request: Request):
         "tfidf_matrix": tfidf_matrix.tolist()
     })
 
-
-
-
-
 # LIME Explanation Endpoint
 @app.post("/lime-explanation")
 async def lime_explanation(request: Request):
@@ -114,32 +83,6 @@ async def lime_explanation(request: Request):
     except Exception as e:
         logging.error(f"Error in LIME explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
-
-
-@app.post("/dice-explanation")
-async def dice_explanation(request: Request):
-    data = await request.json()
-    recommendations = data.get("recommendations", [])
-    logging.info("Received request for Dice explanation.")
-
-    try:
-        # Get the vectorized description
-        vectorized_descriptions = recommendations[0]["vectorized_descriptions"]
-
-        # Create a DataFrame with the correct number of columns
-        input_data = pd.DataFrame([vectorized_descriptions], columns=fixed_vocabulary)
-
-        # Ensure all feature values are numeric
-        input_data = input_data.apply(pd.to_numeric)
-
-        # Generate counterfactual explanation
-        explanation = get_dice_explanation(dice, input_data)
-        logging.info("Dice explanations generated successfully.")
-        return JSONResponse(content=json.loads(explanation))
-    except Exception as e:
-        logging.error(f"Error in Dice explanation generation: {e}")
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
 
 @app.post("/anchor-explanation")
 async def anchor_explanation(request: Request):
