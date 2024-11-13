@@ -6,7 +6,7 @@ import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Load spaCy model
-nlp = spacy.load('en_core_web_md')
+nlp = spacy.load('en_core_web_sm')
 
 def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
     # Create the original "description" by joining feature names
