@@ -3,7 +3,7 @@ import pandas as pd
 from dice_ml.utils import helpers
 from dice_ml import Data, Model, Dice
 import json
-from utils import pad_missing_columns
+# from utils import pad_missing_columns
 import logging
 import pandas as pd
 
@@ -16,6 +16,7 @@ def load_fixed_vocabulary(file_path):
     try:
         fixed_vocabulary = pd.read_csv(file_path)["Vocabulary"].tolist()
         logging.info("Fixed vocabulary loaded successfully.")
+        logging.info(f"Fixed vocabulary loaded with {len(fixed_vocabulary)} terms.")
         return fixed_vocabulary
     except Exception as e:
         logging.error(f"Failed to load fixed vocabulary from {file_path}: {e}")
@@ -34,6 +35,14 @@ def initialize_dice(model, fixed_vocabulary):
 
     return dice
 
+def pad_missing_columns(input_data, fixed_vocabulary):
+    # Create a DataFrame with fixed vocabulary columns, filling missing ones with zero
+    for column in fixed_vocabulary:
+        if column not in input_data.columns:
+            input_data[column] = 0  # Add missing column with default zero values
+    # Reorder columns to match fixed_vocabulary
+    input_data = input_data[fixed_vocabulary]
+    return input_data
 
 # Updated get_dice_explanation function to use fixed vocabulary
 def get_dice_explanation(dice, input_data):
@@ -43,7 +52,8 @@ def get_dice_explanation(dice, input_data):
 
         # Ensure input_data has the fixed vocabulary columns
         input_data = pad_missing_columns(input_data, fixed_vocabulary)
-
+        logging.info(f"Input data shape after padding: {input_data.shape}")
+        
         # Generate counterfactual explanation using DiCE
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
         cf_example = cf.cf_examples_list[0]
@@ -62,13 +72,3 @@ def get_dice_explanation(dice, input_data):
         error_message = f"Exception in get_dice_explanation: {str(e)}"
         logging.error(error_message)
         return json.dumps({"error": error_message})
-
-
-
-
-
-
-
-
-
-
