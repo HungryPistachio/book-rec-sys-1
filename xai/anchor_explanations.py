@@ -1,9 +1,9 @@
 import json
-import spacy
+import logging
 from alibi.explainers import AnchorText
 import numpy as np
+import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
-import logging
 
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
@@ -11,32 +11,30 @@ nlp = spacy.load('en_core_web_sm')
 def get_anchor_explanation(recommendations, original_description):
     explanations = []
 
-    # Initialize TF-IDF Vectorizer and fit it with the original and recommended descriptions
-    all_descriptions = [original_description] + [rec['description'] for rec in recommendations]
+    # Create an input text for TF-IDF by combining feature names from original_description
     vectorizer = TfidfVectorizer()
+    all_descriptions = [original_description] + [' '.join(rec['feature_names']) for rec in recommendations]
     tfidf_matrix = vectorizer.fit_transform(all_descriptions).toarray()
     original_vector = tfidf_matrix[0]
 
-    # Define a prediction function based on vector similarity with the original description
+    # Define the predictor function based on similarity to the original vector
     def predict_fn(texts):
         text_vectors = vectorizer.transform(texts).toarray()
         similarities = np.dot(text_vectors, original_vector) / (np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector))
-        # Return 1 if similarity exceeds threshold, otherwise 0
         return [int(sim >= 0.5) for sim in similarities]
 
-    # Initialize AnchorText explainer
+    # Initialize AnchorText explainer with the predictor function
     explainer = AnchorText(nlp=nlp, predictor=predict_fn, use_unk=True)
 
+    # Process each recommendation to generate explanations
     for idx, rec in enumerate(recommendations):
         try:
-            # Retrieve description and combine feature names to create input text
-            description = rec.get("description", "")
-            feature_names = rec.get("feature_names", [])
-            input_text = ' '.join(feature_names)
+            # Combine feature names to create the input text
+            input_text = ' '.join(rec.get("feature_names", []))
 
-            # If description or feature names are missing, log a warning and skip to the next item
-            if not description or not feature_names:
-                logging.warning(f"Missing description or feature names for recommendation {idx + 1}")
+            # If feature names are missing, log a warning and skip this recommendation
+            if not rec.get("feature_names"):
+                logging.warning(f"Missing feature names for recommendation {idx + 1}")
                 explanations.append({
                     "title": rec.get("title", f"Recommendation {idx + 1}"),
                     "anchor_words": "None",
@@ -44,7 +42,7 @@ def get_anchor_explanation(recommendations, original_description):
                 })
                 continue
 
-            # Generate the anchor explanation
+            # Generate the anchor explanation using the input text
             explanation = explainer.explain(input_text, threshold=0.95)
 
             # Extract anchor words and precision score
