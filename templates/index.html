@@ -226,7 +226,7 @@
         displayLimeExplanation(explanationData, 'lime');
       } else if (tab === "anchor") {
         explanationData = await fetchExplanation('anchor', recommendations);
-        displayAnchorExplanations(explanationData);
+        displayAnchorExplanation(explanationData);
       }
     } catch (error) {
       console.error("Error fetching explanation:", error);
@@ -271,16 +271,26 @@
       return explanationData;
     }
 
-    function displayAnchorExplanations(data) {
-      const explanationContainer = document.getElementById("anchorExplanationList");
-      explanationContainer.innerHTML = "";  // Clear previous explanations
+    function displayAnchorExplanation(data) {
+      const explanationContainer = document.getElementById('anchorExplanationList');
+      explanationContainer.innerHTML = ''; // Clear previous explanations
 
-      data.forEach((exp, index) => {
-        const listItem = document.createElement("li");
-        listItem.innerHTML = `<strong>${exp.title}</strong>: Anchor Words - ${exp.anchor_words}, Precision - ${exp.precision}`;
-        explanationContainer.appendChild(listItem);
+      data.forEach((explanation, index) => {
+        const title = document.createElement('h3');
+        title.textContent = explanation.title;
+
+        const anchorWords = document.createElement('p');
+        anchorWords.textContent = `Anchor Words: ${explanation.anchor_words}`;
+
+        const precision = document.createElement('p');
+        precision.textContent = `Precision: ${explanation.precision.toFixed(2)}`;
+
+        explanationContainer.appendChild(title);
+        explanationContainer.appendChild(anchorWords);
+        explanationContainer.appendChild(precision);
       });
     }
+
 
     function displayLimeExplanation(data, type) {
       console.log("Data passed to displayLimeExplanation:", data); // Log the initial data received
