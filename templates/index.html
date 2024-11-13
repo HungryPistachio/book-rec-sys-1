@@ -222,10 +222,10 @@
     try {
       let explanationData;
       if (tab === "lime") {
-        explanationData = await fetchExplanation('lime', recommendations);
+        explanationData = await fetchLimeExplanation('lime', recommendations);
         displayLimeExplanation(explanationData, 'lime');
       } else if (tab === "anchor") {
-        explanationData = await fetchExplanation('anchor', recommendations);
+        explanationData = await fetchAnchorExplanation('anchor', recommendations, selectedBook.description);
         displayAnchorExplanation(explanationData);
       }
     } catch (error) {
@@ -247,7 +247,7 @@
       );
     }
 
-    async function fetchExplanation(type, recommendations) {
+    async function fetchLimeExplanation(type, recommendations) {
       // Validate recommendations before proceeding
       if (!validateRecommendations(recommendations)) {
         console.error("Invalid recommendations structure.");
@@ -268,6 +268,22 @@
       }
       const explanationData = await response.json();
       console.log("Explanation data received:", explanationData); // Log explanation data
+      return explanationData;
+    }
+
+    async function fetchAnchorExplanation(type, recommendations, originalDescription = "") {
+      const url = `/${type}-explanation`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ recommendations, original_description: originalDescription })
+      });
+      if (!response.ok) {
+        console.error(`Error: ${response.status} - ${response.statusText}`);
+        return { error: `Failed to fetch explanation for ${type}` };
+      }
+      const explanationData = await response.json();
+      console.log("Explanation data received:", explanationData);
       return explanationData;
     }
 
