@@ -21,7 +21,7 @@ def get_anchor_explanation(recommendations, original_description):
     def predict_fn(texts):
         text_vectors = vectorizer.transform(texts).toarray()
         similarities = np.dot(text_vectors, original_vector) / (np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector))
-        return [int(sim >= 0.5) for sim in similarities]
+        return np.array([int(sim >= 0.5) for sim in similarities])
 
     # Initialize AnchorText explainer with the predictor function
     explainer = AnchorText(nlp=nlp, predictor=predict_fn, use_unk=True)
