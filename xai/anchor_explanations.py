@@ -1,11 +1,12 @@
 import json
 import logging
 import spacy
+import en_core_web_sm
 import numpy as np
 from alibi.explainers import AnchorText
 
 # Load spaCy model
-nlp = spacy.load('en_core_web_sm')
+nlp = en_core_web_sm.load()
 
 # Initialize the alibi AnchorText explainer
 explainer = AnchorText(nlp=nlp, use_unk=True)
