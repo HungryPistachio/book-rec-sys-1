@@ -6,6 +6,7 @@ import json
 from xai.lime_explanation import get_lime_explanation
 from xai.dice_explanation import get_dice_explanation
 from xai.dice_explanation import initialize_dice
+from xai.anchor_explanations import generate_anchor_explanations
 from sklearn.feature_extraction.text import TfidfVectorizer
 from utils import pad_missing_columns  # Import pad_missing_columns from utils
 import uvicorn
@@ -140,6 +141,20 @@ async def dice_explanation(request: Request):
         return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
+@app.post("/anchor-explanation")
+async def anchor_explanation(request: Request):
+    data = await request.json()
+    recommendations = data.get("recommendations", [])  # List of recommendation details
+
+    logging.info("Received request for Anchor explanation.")
+
+    try:
+        explanation = get_anchor_explanation(recommendations)
+        logging.info("Anchor explanations generated successfully.")
+        return JSONResponse(content=json.loads(explanation))
+    except Exception as e:
+        logging.error(f"Error in Anchor explanation generation: {e}")
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 
 
