@@ -23,9 +23,17 @@ def get_anchor_explanation(recommendations, original_feature_names):
     # Define the predictor function based on similarity with the original vector
     def predict_fn(texts):
         text_vectors = vectorizer.transform(texts).toarray()
-        similarities = np.dot(text_vectors, original_vector) / (
-            np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector))
+        original_norm = np.linalg.norm(original_vector)
+        text_norms = np.linalg.norm(text_vectors, axis=1)
+
+        # Avoid division by zero
+        valid_norms = (original_norm != 0) & (text_norms != 0)
+        similarities = np.zeros(text_vectors.shape[0])  # Default similarities to zero
+        similarities[valid_norms] = np.dot(text_vectors[valid_norms], original_vector) / (
+            text_norms[valid_norms] * original_norm
+        )
         return np.array([int(sim >= 0.5) for sim in similarities])
+
 
     # Initialize AnchorText explainer with the predictor function
     explainer = AnchorText(nlp=nlp, predictor=predict_fn)
