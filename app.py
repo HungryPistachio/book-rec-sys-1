@@ -87,12 +87,13 @@ async def lime_explanation(request: Request):
 @app.post("/anchor-explanation")
 async def anchor_explanation(request: Request):
     data = await request.json()
-    recommendations = data.get("recommendations", [])  # List of recommendation details
+    recommendations = data.get("recommendations", [])
+    original_description = data.get("original_description", "")
 
     logging.info("Received request for Anchor explanation.")
 
     try:
-        explanation = get_anchor_explanation(recommendations)
+        explanation = get_anchor_explanation(recommendations, original_description)
         logging.info("Anchor explanations generated successfully.")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
