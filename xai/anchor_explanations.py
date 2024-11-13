@@ -46,6 +46,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
 
     # Define the predictor function based on similarity with the original vector
     def predict_fn(texts):
+        logging.info(f"Received texts in predict_fn: {texts}")
 
     # Filter out any "Hello world" or other unexpected inputs
         filtered_texts = [text for text in texts if text != "Hello world"]
@@ -69,10 +70,16 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
         )
 
     # Generate binary predictions based on similarity threshold
-        predictions = np.array([int(sim >= 0.1) for sim in similarities])
+        predictions = np.array([int(sim >= 0.5) for sim in similarities])
+
+    # Log similarities for debugging
+        logging.info(f"Computed similarities: {similarities.tolist()}")
+        logging.info(f"Generated predictions: {predictions.tolist()}")
 
     # Pad predictions to match the original input length if needed
         return np.pad(predictions, (0, len(texts) - len(predictions)), 'constant')
+
+
 
     # Initialize AnchorText explainer
     explainer = AnchorText(nlp=nlp, predictor=predict_fn)
@@ -82,6 +89,13 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
         explanation = explainer.explain(input_text, threshold=0.95)
         anchor_words = " AND ".join(explanation.data['anchor'])
         precision = explanation.data['precision']
+
+    # Log the generated explanation
+        logging.info(json.dumps({
+            "title": recommendation.get("title", "Recommendation"),
+            "anchor_words": anchor_words,
+            "precision": precision
+        }))
         # Return the generated explanation
         return {
             "title": recommendation.get("title", "Recommendation"),
@@ -101,11 +115,17 @@ def get_anchor_explanation(recommendations, original_feature_names):
     if isinstance(original_feature_names, str):
         original_feature_names = original_feature_names.split()
 
+    # logging.info(f"get_anchor_explanation received recommendations data: {json.dumps(recommendations, indent=2)}")
+    # logging.info(f"get_anchor_explanation processed original_feature_names data: {original_feature_names}")
+
     explanations = []
     # Prepare the vectorizer and original vector once
     original_vector = prepare_vectorizer_and_original_vector(original_feature_names)
+    # logging.info(f"get_anchor_explanation received original_vector data: {json.dumps(original_vector.tolist(), indent=2)}")
 
     for idx, rec in enumerate(recommendations):
         explanation = get_anchor_explanation_for_recommendation(rec, original_vector)
         explanations.append(explanation)
+        logging.info(f"Anchor explanation generated for recommendation {idx + 1}")
+        logging.info("Anchor explanations generated successfully for all recommendations.")
     return json.dumps(explanations)
