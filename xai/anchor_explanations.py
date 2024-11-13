@@ -26,11 +26,22 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
     logging.info(f"Original vector values: {original_vector.tolist()}")
     return original_vector
 
+def get_top_features(feature_names, description_vector, top_n=20):
+    """Get the top N features by vector weight."""
+    # Pair each feature with its corresponding vector value
+    feature_importance = list(zip(feature_names, description_vector))
+    # Sort by the absolute vector value in descending order
+    sorted_features = sorted(feature_importance, key=lambda x: abs(x[1]), reverse=True)
+    # Select the top N features
+    top_features = [feature for feature, _ in sorted_features[:top_n]]
+    return ' '.join(top_features)  # Join as a single input text
+
 def get_anchor_explanation_for_recommendation(recommendation, original_vector):
-    logging.info(f"get_anchor_explanation_for_recommendation received recommendations data: {json.dumps(recommendation, indent=2)}")
-    logging.info(f"get_anchor_explanation_for_recommendation received original_vector data: {original_vector.tolist()}")
-    # Create input text from recommendation's feature names
-    input_text = ' '.join(recommendation.get('feature_names', []))
+    feature_names = recommendation.get('feature_names', [])
+    description_vector = recommendation.get('vectorized_descriptions', [])
+
+    # Select the top 20 features based on their vector weights
+    input_text = get_top_features(feature_names, description_vector, top_n=20)
     if not input_text:
         logging.warning("Recommendation has no usable features.")
         return {
@@ -48,7 +59,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
         if not filtered_texts:
             logging.warning("No valid texts received in predict_fn.")
             return np.array([0] * len(texts))  # D# Default to "not similar" prediction for unexpected inputs
-        
+
         # Vectorize the valid texts and compute similarity
         text_vectors = vectorizer.transform(filtered_texts).toarray()
         similarities = np.dot(text_vectors, original_vector) / (
