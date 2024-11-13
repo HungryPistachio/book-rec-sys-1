@@ -23,7 +23,7 @@ def initialize_dice(model, fixed_vocabulary):
     # Initialize with dummy data to match fixed vocabulary structure
     dummy_data = pd.DataFrame([[0] * len(fixed_vocabulary)], columns=fixed_vocabulary)
     dummy_data["label"] = [0]  # Dummy label for initialization
-    
+
     data = Data(dataframe=dummy_data, continuous_features=fixed_vocabulary, outcome_name="label")
     dice_model = Model(model=model, backend="sklearn")
     return Dice(data, dice_model, method="random")
@@ -38,21 +38,38 @@ def prepare_input_data(feature_names, vectorized_description, fixed_vocabulary):
         if word in input_df.columns:
             input_df.at[0, word] = weight
 
-    logging.info(f"Prepared input data shape with full vocabulary: {input_df.shape}")
+    # Remove columns where all values are zero to reduce dimensionality
+    input_df = input_df.loc[:, (input_df != 0).any(axis=0)]
+
+    logging.info(f"Prepared input data shape after filtering zeros: {input_df.shape}")
     return input_df
 
 def get_dice_explanation(dice, feature_names, vectorized_description):
     try:
-        # Prepare input data with all columns retained
+        # Prepare input data
         input_data = prepare_input_data(feature_names, vectorized_description, fixed_vocabulary)
-        
+
+        if input_data.shape[1] == 0:
+            logging.error("Input data contains no features after filtering zeros.")
+            return json.dumps({"error": "No features left in input data after filtering zero columns."})
+
         # Generate counterfactual explanation using DiCE
         cf = dice.generate_counterfactuals(input_data, total_CFs=1, desired_class="opposite")
         cf_example = cf.cf_examples_list[0]
 
         if hasattr(cf_example, "final_cfs_df") and isinstance(cf_example.final_cfs_df, pd.DataFrame):
-            # Convert counterfactual explanation to dictionary
             explanation_data = cf_example.final_cfs_df.to_dict(orient="records")
-            
-            # Filter to show only the top non-zero features in the UI
-            top_features = [{k: v for k, v in
+            logging.info("Dice explanation generated successfully.")
+            return json.dumps(explanation_data)
+        else:
+            error_msg = "Counterfactual generation failed; final_cfs_df is not valid."
+            logging.error(error_msg)
+            return json.dumps({"error": error_msg})
+
+    except Exception as e:
+        error_message = f"Exception in get_dice_explanation: {str(e)}"
+        logging.error(error_message)
+        return json.dumps({"error": error_message})
+
+# Initialize DiCE with the model and fixed vocabulary
+dice = initialize_dice(model, fixed_vocabulary)
