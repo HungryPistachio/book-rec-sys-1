@@ -64,6 +64,20 @@
         </ul>
       </div>
     </div>
+    <div id="anchor" class="tab-content" style="display:none;">
+      <h2>Anchor Explanation</h2>
+      <input type="text" id="bookTitleAnchor" placeholder="Enter a book title">
+      <div class="toggle-label">
+        <input type="checkbox" id="includeSameAuthorAnchor" checked>
+        <label for="includeSameAuthorAnchor">Include recommendations by the same author</label>
+      </div>
+      <button class="get-recommendations-button" data-tab="anchor">Get Recommendations</button>
+      <ul id="recommendationsAnchor"></ul>
+      <div id="anchorExplanation">
+        <h2>Anchor Explanations for Recommended Books:</h2>
+        <ul id="anchorExplanationList"></ul>
+      </div>
+    </div>
 
   </div>
 </div>
@@ -234,6 +248,10 @@
           explanationData = await fetchExplanation('dice', recommendations);
           displayDiceExplanations(explanationData);
         }
+        else if (tab === "anchor") {
+          explanationData = await fetchExplanation('anchor', recommendations);
+          displayAnchorExplanations(explanationData);
+        }
       } catch (error) {
         console.error("Error fetching explanation:", error);
       }
@@ -274,6 +292,17 @@
       const explanationData = await response.json();
       console.log("Explanation data received:", explanationData); // Log explanation data
       return explanationData;
+    }
+
+    function displayAnchorExplanations(data) {
+      const explanationContainer = document.getElementById("anchorExplanationList");
+      explanationContainer.innerHTML = "";  // Clear previous explanations
+
+      data.forEach((exp, index) => {
+        const listItem = document.createElement("li");
+        listItem.innerHTML = `<strong>${exp.title}</strong>: Anchor Words - ${exp.anchor_words}, Precision - ${exp.precision}`;
+        explanationContainer.appendChild(listItem);
+      });
     }
 
     function displayLimeExplanation(data, type) {
@@ -380,15 +409,13 @@
       return name.replace(/[^\w]/g, '').toLowerCase().trim(); // Remove punctuation and spaces, convert to lowercase
     }
 
-    // Helper function to normalize titles by removing punctuation and converting to lowercase
-    // Helper function to normalize titles by removing punctuation, converting to lowercase, and trimming spaces
     function normalizeTitle(title) {
       return title.replace(/[^\w\s]/g, '').toLowerCase().trim(); // Remove punctuation, convert to lowercase, trim spaces
     }
 
     function filterRecommendations(processedBooks, tfidf_matrix, vectorized_descriptions, includeSameAuthor) {
       const finalRecommendations = [];
-      const similarityScoreThreshold = 0.01;
+      const similarityScoreThreshold = 0.05;
 
       // Check that vectorized_descriptions is defined and accessible
       if (!vectorized_descriptions || vectorized_descriptions.length === 0) {
