@@ -12,19 +12,17 @@ nlp = spacy.load('en_core_web_sm')
 # Initialize TfidfVectorizer once
 vectorizer = TfidfVectorizer()
 
-# Function to filter out stop words
-def filter_stopwords(feature_names):
-    return [word for word in feature_names if word not in ENGLISH_STOP_WORDS]
 
 # Function to prepare the vectorizer and create the original vector
 def prepare_vectorizer_and_original_vector(original_feature_names):
     # Filter out stop words and create a combined description
-    filtered_original_feature_names = filter_stopwords(original_feature_names)
-    original_description = ' '.join(filtered_original_feature_names)
-
+    original_description = ' '.join(original_feature_names)
+    #logging for original description
+    logging.info(f"prepare_vectorizer_and_original_vector created original_description data: {json.dumps(original_description, indent=2)}")
     # Fit vectorizer on the original description and create the original vector
     vectorizer.fit([original_description])
     original_vector = vectorizer.transform([original_description]).toarray()[0]
+    logging.info(f"prepare_vectorizer_and_original_vector created original_vector data: {json.dumps(original_vector, indent=2)}")
     return original_vector
 
 def get_anchor_explanation_for_recommendation(recommendation, original_vector):
