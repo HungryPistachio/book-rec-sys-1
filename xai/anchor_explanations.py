@@ -22,7 +22,8 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
     # Fit vectorizer on the original description and create the original vector
     vectorizer.fit([original_description])
     original_vector = vectorizer.transform([original_description]).toarray()[0]
-    logging.info(f"prepare_vectorizer_and_original_vector created original_vector data: {json.dumps(original_vector, indent=2)}")
+    logging.info(f"Original vector shape: {original_vector.shape}")
+    logging.info(f"Original vector values: {original_vector.tolist()}")
     return original_vector
 
 def get_anchor_explanation_for_recommendation(recommendation, original_vector):
@@ -99,5 +100,5 @@ def get_anchor_explanation(recommendations, original_feature_names):
         explanation = get_anchor_explanation_for_recommendation(rec, original_vector)
         explanations.append(explanation)
         logging.info(f"Anchor explanation generated for recommendation {idx + 1}")
-    logging.info("Anchor explanations generated successfully for all recommendations.")
+        logging.info("Anchor explanations generated successfully for all recommendations.")
     return json.dumps(explanations)
