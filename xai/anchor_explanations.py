@@ -63,8 +63,9 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
         # Vectorize the valid texts and compute similarity
         text_vectors = vectorizer.transform(filtered_texts).toarray()
         similarities = np.dot(text_vectors, original_vector) / (
-                np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
+                np.linalg.norm(text_vectors, axis=1, where=(np.linalg.norm(text_vectors, axis=1) != 0)) * np.linalg.norm(original_vector)
         )
+
 
         predictions = np.array([int(sim >= 0.5) for sim in similarities])
 
@@ -80,28 +81,23 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     explainer = AnchorText(nlp=nlp, predictor=predict_fn)
 
     try:
-        # Generate the anchor explanation using the input text
+    # Generate the anchor explanation
         explanation = explainer.explain(input_text, threshold=0.95)
-        logging.info(f"get_anchor_explanation_for_recommendation created explanation data: {json.dumps(explanation, indent=2)}")
-
-        # Extract anchor words and precision score
         anchor_words = " AND ".join(explanation.data['anchor'])
         precision = explanation.data['precision']
 
-        # Log the generated explanation
+    # Log the generated explanation
         logging.info(json.dumps({
             "title": recommendation.get("title", "Recommendation"),
             "anchor_words": anchor_words,
             "precision": precision
         }))
-
         # Return the generated explanation
         return {
             "title": recommendation.get("title", "Recommendation"),
             "anchor_words": anchor_words,
             "precision": precision
         }
-
     except Exception as e:
         logging.error(f"Error generating Anchor explanation: {e}")
         return {
