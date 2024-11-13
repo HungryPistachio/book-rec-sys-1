@@ -83,12 +83,18 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
         }
 
 def get_anchor_explanation(recommendations, original_feature_names):
+    # Ensure original_feature_names is a list of words
+    if isinstance(original_feature_names, str):
+        original_feature_names = original_feature_names.split()
+
     logging.info(f"get_anchor_explanation received recommendations data: {json.dumps(recommendations, indent=2)}")
-    logging.info(f"get_anchor_explanation received original_feature_names data: {json.dumps(original_feature_names, indent=2)}")
+    logging.info(f"get_anchor_explanation processed original_feature_names data: {original_feature_names}")
+
     explanations = []
     # Prepare the vectorizer and original vector once
     original_vector = prepare_vectorizer_and_original_vector(original_feature_names)
-    logging.info(f"get_anchor_explanation received original_vector data: {json.dumps(original_vector, indent=2)}")
+    logging.info(f"get_anchor_explanation received original_vector data: {json.dumps(original_vector.tolist(), indent=2)}")
+
     for idx, rec in enumerate(recommendations):
         explanation = get_anchor_explanation_for_recommendation(rec, original_vector)
         explanations.append(explanation)
