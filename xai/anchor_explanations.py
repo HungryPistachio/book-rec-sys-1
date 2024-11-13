@@ -4,7 +4,6 @@ from alibi.explainers import AnchorText
 import numpy as np
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 # Load spaCy model once
 nlp = spacy.load('en_core_web_sm')
@@ -15,15 +14,10 @@ vectorizer = TfidfVectorizer()
 
 # Function to prepare the vectorizer and create the original vector
 def prepare_vectorizer_and_original_vector(original_feature_names):
-    # Filter out stop words and create a combined description
     original_description = ' '.join(original_feature_names)
-    #logging for original description
-    # logging.info(f"prepare_vectorizer_and_original_vector created original_description data: {json.dumps(original_description, indent=2)}")
-    # Fit vectorizer on the original description and create the original vector
     vectorizer.fit([original_description])
     original_vector = vectorizer.transform([original_description]).toarray()[0]
-    logging.info(f"Original vector shape: {original_vector.shape}")
-    logging.info(f"Original vector values: {original_vector.tolist()}")
+
     return original_vector
 
 def get_top_features(feature_names, description_vector, top_n=20):
@@ -54,27 +48,37 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     def predict_fn(texts):
         logging.info(f"Received texts in predict_fn: {texts}")
 
-        # Handle unexpected or empty inputs
+    # Filter out any "Hello world" or other unexpected inputs
         filtered_texts = [text for text in texts if text != "Hello world"]
         if not filtered_texts:
             logging.warning("No valid texts received in predict_fn.")
-            return np.array([0] * len(texts))  # D# Default to "not similar" prediction for unexpected inputs
+            return np.array([0] * len(texts))  # Default to "not similar" prediction for unexpected inputs
 
-        # Vectorize the valid texts and compute similarity
+    # Vectorize the valid texts
         text_vectors = vectorizer.transform(filtered_texts).toarray()
-        similarities = np.dot(text_vectors, original_vector) / (
-                np.linalg.norm(text_vectors, axis=1, where=(np.linalg.norm(text_vectors, axis=1) != 0)) * np.linalg.norm(original_vector)
+
+    # Calculate norms, handle cases where text_vectors or original_vector norm might be zero
+        text_norms = np.linalg.norm(text_vectors, axis=1)
+        original_norm = np.linalg.norm(original_vector)
+
+    # Only calculate similarities for non-zero norms to prevent NaN values
+        valid_norms = (text_norms != 0) & (original_norm != 0)
+        similarities = np.zeros(text_vectors.shape[0])  # Default similarities to zero
+        if valid_norms.any():
+            similarities[valid_norms] = np.dot(text_vectors[valid_norms], original_vector) / (
+                    text_norms[valid_norms] * original_norm
         )
 
-
+    # Generate binary predictions based on similarity threshold
         predictions = np.array([int(sim >= 0.5) for sim in similarities])
 
-        # Log similarities for debugging
+    # Log similarities for debugging
         logging.info(f"Computed similarities: {similarities.tolist()}")
         logging.info(f"Generated predictions: {predictions.tolist()}")
 
-        # Pad predictions to match original input length
+    # Pad predictions to match the original input length if needed
         return np.pad(predictions, (0, len(texts) - len(predictions)), 'constant')
+
 
 
     # Initialize AnchorText explainer
