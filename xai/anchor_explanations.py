@@ -1,39 +1,33 @@
 import json
 import spacy
-import logging
 from alibi.explainers import AnchorText
+import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+import logging
 
 # Load the spaCy model
 nlp = spacy.load('en_core_web_sm')
 
-# Initialize the AnchorText explainer from Alibi with placeholder prediction function
-explainer = AnchorText(nlp, predictor=None, use_unk=True)
-
-# Function to set up the predictor function based on the initial book description
-def setup_predictor(original_description, descriptions):
-    # Vectorize the original description along with recommendations
-    vectorizer = TfidfVectorizer()
-    all_descriptions = [original_description] + descriptions
-    tfidf_matrix = vectorizer.fit_transform(all_descriptions)
-
-    # Calculate cosine similarity of each recommendation to the original
-    similarity_scores = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:]).flatten()
-
-    # Return binary predictions based on similarity threshold
-    return [1 if score >= 0.5 else 0 for score in similarity_scores]
+# Initialize TF-IDF Vectorizer (you can reuse this across explanations)
+vectorizer = TfidfVectorizer()
 
 def get_anchor_explanation(recommendations, original_description):
     explanations = []
-    descriptions = [rec.get("description", "") for rec in recommendations]
-    
-    # Define the predictor function dynamically based on similarity with original description
-    def predict_fn(texts):
-        return setup_predictor(original_description, texts)
-    
-    # Attach the predictor to the explainer
-    explainer.predictor = predict_fn
+
+    # Transform descriptions into vectors for similarity comparison
+    all_descriptions = [original_description] + [rec['description'] for rec in recommendations]
+    tfidf_matrix = vectorizer.fit_transform(all_descriptions).toarray()
+    original_vector = tfidf_matrix[0]
+
+    def predictor(texts):
+        # Vectorize each text and compute similarity with the original description vector
+        text_vectors = vectorizer.transform(texts).toarray()
+        similarities = np.dot(text_vectors, original_vector) / (np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector))
+        # Return 1 if similarity exceeds threshold, otherwise 0
+        return [int(sim >= 0.5) for sim in similarities]
+
+    # Initialize AnchorText explainer with the predictor function
+    explainer = AnchorText(nlp, predictor=predictor, use_unk=True)
 
     for idx, rec in enumerate(recommendations):
         try:
@@ -42,12 +36,12 @@ def get_anchor_explanation(recommendations, original_description):
                 logging.warning(f"No description found for recommendation {idx + 1}")
                 continue
 
-            # Generate an explanation
+            # Generate the Anchor explanation
             explanation = explainer.explain(description, threshold=0.95)
 
-            # Collect anchor words and precision score
-            anchor_words = " AND ".join(explanation.data['anchor'])
-            precision = explanation.data['precision']
+            # Get anchor words and precision score
+            anchor_words = " AND ".join(explanation.names())
+            precision = explanation.precision()
 
             explanations.append({
                 "title": rec.get("title", f"Recommendation {idx + 1}"),
