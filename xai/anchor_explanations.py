@@ -20,7 +20,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
 
     return original_vector
 
-def get_top_features(feature_names, description_vector, top_n=20):
+def get_top_features(feature_names, description_vector, top_n=30):
     """Get the top N features by vector weight."""
     # Pair each feature with its corresponding vector value
     feature_importance = list(zip(feature_names, description_vector))
@@ -35,7 +35,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     description_vector = recommendation.get('vectorized_descriptions', [])
 
     # Select the top 20 features based on their vector weights
-    input_text = get_top_features(feature_names, description_vector, top_n=20)
+    input_text = get_top_features(feature_names, description_vector, top_n=30)
     if not input_text:
         logging.warning("Recommendation has no usable features.")
         return {
@@ -48,35 +48,35 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     def predict_fn(texts):
         logging.info(f"Received texts in predict_fn: {texts}")
 
-    # Filter out any "Hello world" or other unexpected inputs
+        # Filter out any "Hello world" or other unexpected inputs
         filtered_texts = [text for text in texts if text != "Hello world"]
         if not filtered_texts:
             logging.warning("No valid texts received in predict_fn.")
             return np.array([0] * len(texts))  # Default to "not similar" prediction for unexpected inputs
 
-    # Vectorize the valid texts
+        # Vectorize the valid texts
         text_vectors = vectorizer.transform(filtered_texts).toarray()
 
-    # Calculate norms, handle cases where text_vectors or original_vector norm might be zero
+        # Calculate norms, handle cases where text_vectors or original_vector norm might be zero
         text_norms = np.linalg.norm(text_vectors, axis=1)
         original_norm = np.linalg.norm(original_vector)
 
-    # Only calculate similarities for non-zero norms to prevent NaN values
+        # Only calculate similarities for non-zero norms to prevent NaN values
         valid_norms = (text_norms != 0) & (original_norm != 0)
         similarities = np.zeros(text_vectors.shape[0])  # Default similarities to zero
         if valid_norms.any():
             similarities[valid_norms] = np.dot(text_vectors[valid_norms], original_vector) / (
                     text_norms[valid_norms] * original_norm
-        )
+            )
 
-    # Generate binary predictions based on similarity threshold
-        predictions = np.array([int(sim >= 0.5) for sim in similarities])
+        # Generate binary predictions based on similarity threshold
+        predictions = np.array([int(sim >= 0.3) for sim in similarities])
 
-    # Log similarities for debugging
-        logging.info(f"Computed similarities: {similarities.tolist()}")
-        logging.info(f"Generated predictions: {predictions.tolist()}")
+        # Log similarities for debugging
+        # logging.info(f"Computed similarities: {similarities.tolist()}")
+        # logging.info(f"Generated predictions: {predictions.tolist()}")
 
-    # Pad predictions to match the original input length if needed
+        # Pad predictions to match the original input length if needed
         return np.pad(predictions, (0, len(texts) - len(predictions)), 'constant')
 
 
@@ -85,17 +85,17 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     explainer = AnchorText(nlp=nlp, predictor=predict_fn)
 
     try:
-    # Generate the anchor explanation
+        # Generate the anchor explanation
         explanation = explainer.explain(input_text, threshold=0.95)
         anchor_words = " AND ".join(explanation.data['anchor'])
         precision = explanation.data['precision']
 
-    # Log the generated explanation
-        logging.info(json.dumps({
-            "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": anchor_words,
-            "precision": precision
-        }))
+        # Log the generated explanation
+        # logging.info(json.dumps({
+        #     "title": recommendation.get("title", "Recommendation"),
+        #     "anchor_words": anchor_words,
+        #     "precision": precision
+        # }))
         # Return the generated explanation
         return {
             "title": recommendation.get("title", "Recommendation"),
