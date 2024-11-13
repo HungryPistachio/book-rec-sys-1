@@ -20,7 +20,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
 
     return original_vector
 
-def get_top_features(feature_names, description_vector, top_n=30):
+def get_top_features(feature_names, description_vector, top_n=20):
     """Get the top N features by vector weight."""
     # Pair each feature with its corresponding vector value
     feature_importance = list(zip(feature_names, description_vector))
@@ -35,7 +35,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     description_vector = recommendation.get('vectorized_descriptions', [])
 
     # Select the top 20 features based on their vector weights
-    input_text = get_top_features(feature_names, description_vector, top_n=30)
+    input_text = get_top_features(feature_names, description_vector, top_n=20)
     if not input_text:
         logging.warning("Recommendation has no usable features.")
         return {
@@ -70,11 +70,11 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
             )
 
         # Generate binary predictions based on similarity threshold
-        predictions = np.array([int(sim >= 0.3) for sim in similarities])
+        predictions = np.array([int(sim >= 0.4) for sim in similarities])
 
         # Log similarities for debugging
-        # logging.info(f"Computed similarities: {similarities.tolist()}")
-        # logging.info(f"Generated predictions: {predictions.tolist()}")
+        logging.info(f"Computed similarities: {similarities.tolist()}")
+        logging.info(f"Generated predictions: {predictions.tolist()}")
 
         # Pad predictions to match the original input length if needed
         return np.pad(predictions, (0, len(texts) - len(predictions)), 'constant')
@@ -91,11 +91,11 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
         precision = explanation.data['precision']
 
         # Log the generated explanation
-        # logging.info(json.dumps({
-        #     "title": recommendation.get("title", "Recommendation"),
-        #     "anchor_words": anchor_words,
-        #     "precision": precision
-        # }))
+        logging.info(json.dumps({
+            "title": recommendation.get("title", "Recommendation"),
+            "anchor_words": anchor_words,
+            "precision": precision
+        }))
         # Return the generated explanation
         return {
             "title": recommendation.get("title", "Recommendation"),
