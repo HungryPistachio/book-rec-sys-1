@@ -4,13 +4,29 @@ from alibi.explainers import AnchorText
 import numpy as np
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
+def filter_stopwords(feature_names):
+    return [word for word in feature_names if word not in ENGLISH_STOP_WORDS]
 # Load spaCy model once
 nlp = spacy.load('en_core_web_sm')
 
 # Initialize TfidfVectorizer and fit it once
 vectorizer = TfidfVectorizer()
-def prepare_vectorizer_and_original_vector(original_feature_names):
+def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
+    # Filter out stop words from feature names
+    filtered_original_feature_names = filter_stopwords(original_feature_names)
+    original_description = ' '.join(filtered_original_feature_names)
+
+    # Apply the same filtering to recommendation feature names
+    filtered_recommendation_features = filter_stopwords(recommendation['feature_names'])
+    if not filtered_recommendation_features:
+        logging.warning("Recommendation has no usable features after stop word filtering.")
+        return {
+            "title": recommendation.get("title", "Recommendation"),
+            "anchor_words": "None",
+            "precision": 0.0
+        }
     original_description = ' '.join(original_feature_names)
     vectorizer.fit([original_description])
     original_vector = vectorizer.transform([original_description]).toarray()[0]
@@ -24,7 +40,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     def predict_fn(texts):
         text_vectors = vectorizer.transform(texts).toarray()
         similarities = np.dot(text_vectors, original_vector) / (
-            np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
+                np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
         )
         # Return predictions as a numpy array
         return np.array([int(sim >= 0.5) for sim in similarities])
