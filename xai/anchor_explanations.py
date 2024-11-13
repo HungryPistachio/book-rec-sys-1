@@ -30,7 +30,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     logging.info(f"get_anchor_explanation_for_recommendation received recommendations data: {json.dumps(recommendation, indent=2)}")
     logging.info(f"get_anchor_explanation_for_recommendation received original_vector data: {original_vector.tolist()}")
     # Create input text from recommendation's feature names
-    input_text = ' '.join(filter_stopwords(recommendation.get('feature_names', [])))
+    input_text = ' '.join(recommendation.get('feature_names', []))
     if not input_text:
         logging.warning("Recommendation has no usable features.")
         return {
