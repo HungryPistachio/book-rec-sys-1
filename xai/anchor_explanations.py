@@ -13,7 +13,7 @@ def get_anchor_explanation(recommendations, original_description):
 
     # Compute the original vector using TF-IDF for the original description
     vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform([original_description] + [rec["description"] for rec in recommendations]).toarray()
+    tfidf_matrix = vectorizer.fit_transform([original_description] + [' '.join(rec['feature_names']).toarray()
     original_vector = tfidf_matrix[0]  # Vector for the original description
 
     # Define predictor function based on similarity with the original vector
