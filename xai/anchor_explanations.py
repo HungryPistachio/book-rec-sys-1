@@ -8,19 +8,23 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 # Load spaCy model
 nlp = spacy.load('en_core_web_sm')
 
-def get_anchor_explanation(recommendations, original_description):
+def get_anchor_explanation(recommendations, original_feature_names):
     explanations = []
 
-    # Compute the original vector using TF-IDF for the original description
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform([original_description] + [' '.join(rec['feature_names']).toarray()
-    original_vector = tfidf_matrix[0]  # Vector for the original description
+    # Create the original "description" by joining feature names
+    original_description = ' '.join(original_feature_names)
 
-    # Define predictor function based on similarity with the original vector
-    def predict_fn(text_vectors):
+    # Create an input text for TF-IDF by joining feature names for each recommendation
+    vectorizer = TfidfVectorizer()
+    all_descriptions = [original_description] + [' '.join(rec['feature_names']) for rec in recommendations]
+    tfidf_matrix = vectorizer.fit_transform(all_descriptions).toarray()
+    original_vector = tfidf_matrix[0]
+
+    # Define the predictor function based on similarity with the original vector
+    def predict_fn(texts):
+        text_vectors = vectorizer.transform(texts).toarray()
         similarities = np.dot(text_vectors, original_vector) / (
             np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector))
-        # Return 1 if similarity exceeds 0.5, else 0
         return np.array([int(sim >= 0.5) for sim in similarities])
 
     # Initialize AnchorText explainer with the predictor function
@@ -45,7 +49,7 @@ def get_anchor_explanation(recommendations, original_description):
             # Combine feature names for anchor input
             input_text = ' '.join(rec.get("feature_names", []))
 
-            # Generate the anchor explanation
+            # Generate the anchor explanation using the input text
             explanation = explainer.explain(input_text, threshold=0.95)
 
             # Extract anchor words and precision score
