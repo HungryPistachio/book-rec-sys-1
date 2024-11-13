@@ -41,19 +41,29 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
 
     # Define the predictor function based on similarity with the original vector
     def predict_fn(texts):
-        logging.info(f"prediction function received texts data: {json.dumps(texts, indent=2)}")
+        logging.info(f"Received texts in predict_fn: {texts}")
 
-        # Ensure texts are expected and not empty
-        if not texts or "Hello world" in texts:
-            logging.warning("Unexpected input in predict_fn; returning default prediction.")
-            return np.array([0] * len(texts))  # Default to "not similar" prediction for unexpected inputs
-
-        text_vectors = vectorizer.transform(texts).toarray()
-        logging.info(f"prediction function changed texts to array: {json.dumps(text_vectors, indent=2)}")
+        # Handle unexpected or empty inputs
+        filtered_texts = [text for text in texts if text != "Hello world"]
+        if not filtered_texts:
+            logging.warning("No valid texts received in predict_fn.")
+            return np.array([0] * len(texts))  # D# Default to "not similar" prediction for unexpected inputs
+        
+        # Vectorize the valid texts and compute similarity
+        text_vectors = vectorizer.transform(filtered_texts).toarray()
         similarities = np.dot(text_vectors, original_vector) / (
                 np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
         )
-        return np.array([int(sim >= 0.5) for sim in similarities])
+
+        predictions = np.array([int(sim >= 0.5) for sim in similarities])
+
+        # Log similarities for debugging
+        logging.info(f"Computed similarities: {similarities.tolist()}")
+        logging.info(f"Generated predictions: {predictions.tolist()}")
+
+        # Pad predictions to match original input length
+        return np.pad(predictions, (0, len(texts) - len(predictions)), 'constant')
+
 
     # Initialize AnchorText explainer
     explainer = AnchorText(nlp=nlp, predictor=predict_fn)
