@@ -34,7 +34,7 @@ def get_lime_explanation(recommendations):
             explanation_output = [
                 (word, weight) for word, weight in explanation.as_list()
                 if abs(weight) >= inclusion_threshold
-            ][:10]  # Take up to 10 if available
+            ][:5]  # Take up to 10 if available
 
             # If no features meet the threshold, include the 10 highest regardless of weight
             if not explanation_output:
