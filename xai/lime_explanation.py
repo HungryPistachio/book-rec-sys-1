@@ -28,7 +28,7 @@ def get_lime_explanation(recommendations):
             )
 
             # Get the top 10 most influential features without stop word filtering
-            explanation_output = sorted(explanation.as_list(), key=lambda x: abs(x[1]), reverse=True)[:10]
+            explanation_output = sorted(explanation.as_list(), key=lambda x: abs(x[1]), reverse=True)[:5]
 
             # Add to explanations list
             explanations.append({
