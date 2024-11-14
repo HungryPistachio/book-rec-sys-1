@@ -28,7 +28,9 @@ def get_lime_explanation(recommendations):
                 num_features=len(feature_names),  # Use more features for wider coverage
                 num_samples=1000  # Adjust for potentially finer granularity
             )
-            logging.info(f"LIME explanation after explanation: {explanation}")
+            # Extract explanation details and log them meaningfully
+            explanation_details = explanation.as_list()  # Get feature list with weights
+            logging.info(f"LIME explanation generated: {json.dumps(explanation_details, indent=2)}")
 
             # Get the top 10 most influential features, with an inclusion threshold for low-weight features
             inclusion_threshold = 0.05  # Set threshold for minimum weight to include in output
