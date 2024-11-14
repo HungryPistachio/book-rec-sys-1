@@ -40,7 +40,7 @@ def get_lime_explanation(recommendations):
             if not explanation_output:
                 explanation_output = sorted(
                     explanation.as_list(), key=lambda x: abs(x[1]), reverse=True
-                )[:10]
+                )[:5]
 
             # Add to explanations list
             explanations.append({
