@@ -2,12 +2,12 @@ import json
 import logging
 import numpy as np
 from lime.lime_text import LimeTextExplainer
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS  # Import stop words
 
 logging.basicConfig(level=logging.INFO)
 
 def get_lime_explanation(recommendations):
     logging.info("Starting LIME explanation generation for multiple recommendations.")
+    logging.info(f"get_lime_explanation received recommendations data: {json.dumps(recommendations, indent=2)}")
 
     # Initialize LIME explainer
     explainer = LimeTextExplainer(class_names=['Book'])
@@ -27,28 +27,8 @@ def get_lime_explanation(recommendations):
                 num_features=min(len(feature_names), 85000)
             )
 
-            # Define stop words
-            stop_words = set(ENGLISH_STOP_WORDS).union({
-                "this", "for", "have", "and", "a", "is", "are", "______________________________", "be", "without",
-                "made", "when", "thing", "to", "i", "me", "my", "myself", "we", "our", "ours", "ourselves",
-                "you", "your", "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she",
-                "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs",
-                "themselves", "what", "which", "who", "whom", "that", "these", "those", "am", "is",
-                "was", "were", "been", "being", "do", "does", "did", "doing", "an", "but", "if",
-                "or", "because", "as", "until", "while", "of", "at", "by", "about", "against", "between",
-                "into", "through", "during", "before", "after", "above", "below", "from", "up", "down",
-                "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there",
-                "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other",
-                "some", "such", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t",
-                "can", "will", "just", "don", "should", "now", "book", "descriptive", "publisher", "published", "date", "available", "bestseller"
-            })
-
-            # Filter and get the top 10 most influential features
-            explanation_output = [
-                (word, weight) for word, weight in explanation.as_list()
-                if word.lower() not in stop_words
-            ]
-            explanation_output = sorted(explanation_output, key=lambda x: abs(x[1]), reverse=True)[:10]
+            # Get the top 10 most influential features without stop word filtering
+            explanation_output = sorted(explanation.as_list(), key=lambda x: abs(x[1]), reverse=True)[:10]
 
             # Add to explanations list
             explanations.append({
