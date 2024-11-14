@@ -70,7 +70,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
             )
 
         # Generate binary predictions based on similarity threshold
-        predictions = np.array([int(sim >= 0.2) for sim in similarities])
+        predictions = np.array([int(sim >= 0.8) for sim in similarities])
 
         # Log similarities for debugging
         logging.info(f"Computed similarities: {similarities.tolist()}")
