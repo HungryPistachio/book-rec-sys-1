@@ -7,7 +7,6 @@ logging.basicConfig(level=logging.INFO)
 
 def get_lime_explanation(recommendations):
     logging.info("Starting LIME explanation generation for multiple recommendations.")
-    logging.info(f"get_lime_explanation received recommendations data: {json.dumps(recommendations, indent=2)}")
 
     # Initialize LIME explainer
     explainer = LimeTextExplainer(class_names=['Book'])
@@ -19,7 +18,8 @@ def get_lime_explanation(recommendations):
             description_vector = rec.get("vectorized_description", [])
             feature_names = rec.get("feature_names", [])
             input_text = ' '.join(feature_names[:85000])  # Limit input text for LIME
-
+            logging.info(f"Received input_text: {input_text}")
+            logging.info(f"Received description_vector: {description_vector}")
             # Generate explanation using LIME
             explanation = explainer.explain_instance(
                 input_text,
