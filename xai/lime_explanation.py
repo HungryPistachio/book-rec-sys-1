@@ -28,13 +28,14 @@ def get_lime_explanation(recommendations):
                 num_features=len(feature_names),  # Use more features for wider coverage
                 num_samples=1000  # Adjust for potentially finer granularity
             )
+            logging.info(f"LIME explanation after explanation: {explanation}")
 
             # Get the top 10 most influential features, with an inclusion threshold for low-weight features
             inclusion_threshold = 0.05  # Set threshold for minimum weight to include in output
             explanation_output = [
-                (word, weight) for word, weight in explanation.as_list()
-                if abs(weight) >= inclusion_threshold
-            ][:5]  # Take up to 10 if available
+                                     (word, weight) for word, weight in explanation.as_list()
+                                     if abs(weight) >= inclusion_threshold
+                                 ][:5]  # Take up to 10 if available
 
             # If no features meet the threshold, include the 10 highest regardless of weight
             if not explanation_output:
