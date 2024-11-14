@@ -28,6 +28,7 @@ def get_top_features(feature_names, description_vector, top_n=20):
     sorted_features = sorted(feature_importance, key=lambda x: abs(x[1]), reverse=True)
     # Select the top N features
     top_features = [feature for feature, _ in sorted_features[:top_n]]
+    logging.info(f"Top {top_n} features from get_top_features: {top_features}")
     return ' '.join(top_features)  # Join as a single input text
 
 def get_anchor_explanation_for_recommendation(recommendation, original_vector):
@@ -36,6 +37,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
 
     # Select the top 20 features based on their vector weights
     input_text = get_top_features(feature_names, description_vector, top_n=20)
+    logging.info(f"get_anchor_explanation_for_recommendation generated input_text: {input_text}")
     if not input_text:
         logging.warning("Recommendation has no usable features.")
         return {
@@ -70,7 +72,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
             )
 
         # Generate binary predictions based on similarity threshold
-        predictions = np.array([int(sim >= 0.7) for sim in similarities])
+        predictions = np.array([int(sim >= 0.75) for sim in similarities])
 
         # Log similarities for debugging
         # logging.info(f"Computed similarities: {similarities.tolist()}")
@@ -86,7 +88,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
 
     try:
         # Generate the anchor explanation
-        explanation = explainer.explain(input_text, threshold=0.60)
+        explanation = explainer.explain(input_text, threshold=0.30)
         anchor_words = " AND ".join(explanation.data['anchor'])
         precision = explanation.data['precision']
 
