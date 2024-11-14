@@ -70,11 +70,11 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
             )
 
         # Generate binary predictions based on similarity threshold
-        predictions = np.array([int(sim >= 0.5) for sim in similarities])
+        predictions = np.array([int(sim >= 0.7) for sim in similarities])
 
         # Log similarities for debugging
-        logging.info(f"Computed similarities: {similarities.tolist()}")
-        logging.info(f"Generated predictions: {predictions.tolist()}")
+        # logging.info(f"Computed similarities: {similarities.tolist()}")
+        # logging.info(f"Generated predictions: {predictions.tolist()}")
 
         # Pad predictions to match the original input length if needed
         return np.pad(predictions, (0, len(texts) - len(predictions)), 'constant')
@@ -86,7 +86,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
 
     try:
         # Generate the anchor explanation
-        explanation = explainer.explain(input_text, threshold=0.80)
+        explanation = explainer.explain(input_text, threshold=0.60)
         anchor_words = " AND ".join(explanation.data['anchor'])
         precision = explanation.data['precision']
 
