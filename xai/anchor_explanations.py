@@ -3,6 +3,7 @@ import logging
 from alibi.explainers import AnchorText
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
+import numpy as np  # Ensure this import is included for array manipulation
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -50,9 +51,9 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
             "precision": 0.0
         }
 
-    # Dummy predictor returning constant values
+    # Dummy predictor returning constant values as a NumPy array
     def dummy_predictor(texts):
-        return [1 for _ in texts]  # Always return "similar"
+        return np.ones(len(texts))  # Return a NumPy array of ones
 
     # Initialize AnchorText explainer with dummy predictor
     explainer = AnchorText(nlp=nlp, predictor=dummy_predictor)
