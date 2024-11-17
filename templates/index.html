@@ -56,7 +56,7 @@
       <ul id="recommendationsAnchor"></ul>
       <div id="anchorExplanation">
         <h2>Anchor Explanations for Recommended Books:</h2>
-        <p id="anchorExplanationGeneral"> These recommendations are formed using the description of your original book, which was used to search for similar books within the Google Books Repository. 
+        <p id="anchorExplanationGeneral"> These recommendations are formed using the description of your original book, which was used to search for similar books within the Google Books Repository.
           The Anchor explanation identifies the most critical features (or "anchors") from the book description that strongly support why the recommendation was made. These anchors represent words or phrases that are most influential in determining the similarity and relevance of this book as a good recommendation. </p>
         <ul id="anchorExplanationList"></ul>
       </div>
@@ -282,39 +282,54 @@
 
     async function fetchAnchorExplanation(type, recommendations, originalDescription = "") {
       const url = `/${type}-explanation`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ recommendations, original_description: originalDescription })
-      });
-      if (!response.ok) {
-        console.error(`Error: ${response.status} - ${response.statusText}`);
-        return { error: `Failed to fetch explanation for ${type}` };
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recommendations, original_description: originalDescription })
+        });
+
+        if (!response.ok) {
+          console.error(`Error: ${response.status} - ${response.statusText}`);
+          return { error: `Failed to fetch explanation for ${type}` };
+        }
+
+        const explanationData = await response.json();
+        console.log("Explanation data received:", explanationData); // Log explanation data
+        return explanationData;
+      } catch (error) {
+        console.error("Error during fetchAnchorExplanation:", error);
+        return { error: "An error occurred while fetching Anchor explanations." };
       }
-      const explanationData = await response.json();
-      console.log("Explanation data received:", explanationData);
-      return explanationData;
     }
+
 
     function displayAnchorExplanation(data) {
       const explanationContainer = document.getElementById('anchorExplanationList');
       explanationContainer.innerHTML = ''; // Clear previous explanations
 
+      if (!Array.isArray(data) || data.length === 0) {
+        explanationContainer.innerHTML = '<li>No Anchor explanations available.</li>';
+        return;
+      }
+
       data.forEach((explanation, index) => {
         const title = document.createElement('h3');
-        title.textContent = explanation.title;
+        title.textContent = explanation.title || `Recommendation ${index + 1}`;
 
         const anchorWords = document.createElement('p');
-        anchorWords.textContent = `Anchor Words: ${explanation.anchor_words}`;
+        anchorWords.textContent = `Anchor Words: ${explanation.anchor_words || 'None'}`;
 
         const precision = document.createElement('p');
-        precision.textContent = `Precision: ${explanation.precision.toFixed(2)}`;
+        precision.textContent = `Precision: ${explanation.precision ? explanation.precision.toFixed(2) : 'N/A'}`;
 
         explanationContainer.appendChild(title);
         explanationContainer.appendChild(anchorWords);
         explanationContainer.appendChild(precision);
       });
     }
+
 
 
     function displayLimeExplanation(data, type) {
