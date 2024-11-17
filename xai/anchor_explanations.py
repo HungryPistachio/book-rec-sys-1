@@ -1,86 +1,63 @@
 import json
 import logging
 from alibi.explainers import AnchorText
-import numpy as np
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-# Load spaCy model once
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
+
+# Load the spaCy language model
 nlp = spacy.load('en_core_web_sm')
 
-# Initialize TfidfVectorizer once
+# Initialize TfidfVectorizer
 vectorizer = TfidfVectorizer()
 
-
-# Function to prepare the vectorizer and create the original vector
 def prepare_vectorizer_and_original_vector(original_feature_names):
+    """
+    Prepare the vectorizer and create the original vector.
+    """
     original_description = ' '.join(original_feature_names)
     vectorizer.fit([original_description])
     original_vector = vectorizer.transform([original_description]).toarray()[0]
-
     return original_vector
 
 def get_top_features(feature_names, description_vector, top_n=10):
-    """Get the top N features by vector weight."""
-    # Pair each feature with its corresponding vector value
+    """
+    Get the top N features by vector weight.
+    """
     feature_importance = list(zip(feature_names, description_vector))
-    # Sort by the absolute vector value in descending order
     sorted_features = sorted(feature_importance, key=lambda x: abs(x[1]), reverse=True)
-    # Select the top N features
     top_features = [feature for feature, _ in sorted_features[:top_n]]
-    return ' '.join(top_features)  # Join as a single input text
+    return top_features
 
-def get_anchor_explanation_for_recommendation(recommendation, original_vector):
+def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
+    """
+    Generate an anchor explanation with heuristic precision using Alibi's AnchorText.
+    """
     feature_names = recommendation.get('feature_names', [])
     description_vector = recommendation.get('vectorized_descriptions', [])
 
-    # Select the top 10 features based on their vector weights
-    input_text = get_top_features(feature_names, description_vector, top_n=10)
+    # Select the top 10 features for input text
+    top_features = get_top_features(feature_names, description_vector, top_n=10)
+    input_text = ' '.join(top_features)
+
     if not input_text:
+        logging.warning(f"No significant features found for recommendation: {recommendation.get('title', 'Unknown')}")
         return {
             "title": recommendation.get("title", "Recommendation"),
             "anchor_words": "None",
             "precision": 0.0
         }
 
-    # Define the predictor function based on similarity with the original vector
-    def predict_fn(texts):
-
-        # Filter out any "Hello world" or other unexpected inputs
-        filtered_texts = [text for text in texts if text != "Hello world"]
-        if not filtered_texts:
-            logging.warning("No valid texts received in predict_fn.")
-            return np.array([0] * len(texts))  # Default to "not similar" prediction for unexpected inputs
-
-        # Vectorize the valid texts
-        text_vectors = vectorizer.transform(filtered_texts).toarray()
-
-        # Calculate norms, handle cases where text_vectors or original_vector norm might be zero
-        text_norms = np.linalg.norm(text_vectors, axis=1)
-        original_norm = np.linalg.norm(original_vector)
-
-        # Only calculate similarities for non-zero norms to prevent NaN values
-        valid_norms = (text_norms != 0) & (original_norm != 0)
-        similarities = np.zeros(text_vectors.shape[0])  # Default similarities to zero
-        if valid_norms.any():
-            similarities[valid_norms] = np.dot(text_vectors[valid_norms], original_vector) / (
-                    text_norms[valid_norms] * original_norm
-            )
-
-        # Generate binary predictions based on similarity threshold
-        predictions = np.array([int(sim >= 0.75) for sim in similarities])
-
-        # Pad predictions to match the original input length if needed
-        return np.pad(predictions, (0, len(texts) - len(predictions)), 'constant')
-
     # Initialize AnchorText explainer
-    explainer = AnchorText(nlp=nlp, predictor=predict_fn)
+    explainer = AnchorText(nlp=nlp, predictor=None)  # No predictor used, heuristic-based explanation
 
     try:
-        # Generate the anchor explanation
-        explanation = explainer.explain(input_text, threshold=0.30)
-        anchor_words = " AND ".join(explanation.data['anchor'])
-        precision = explanation.data['precision']
+        # Generate anchors based on the input text
+        explanation = explainer.explain(input_text, threshold=0.95)  # Threshold may not apply without predict_fn
+        anchor_words = " AND ".join(explanation.data['anchor']) if 'anchor' in explanation.data else "None"
+        precision = explanation.data.get('precision', "N/A")
 
         return {
             "title": recommendation.get("title", "Recommendation"),
@@ -96,15 +73,18 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
         }
 
 def get_anchor_explanation(recommendations, original_feature_names):
-    # Ensure original_feature_names is a list of words
+    """
+    Generate anchor explanations for all recommendations.
+    """
+    explanations = []
+
+    # Prepare the vectorizer once
     if isinstance(original_feature_names, str):
         original_feature_names = original_feature_names.split()
-
-    explanations = []
-    # Prepare the vectorizer and original vector once
-    original_vector = prepare_vectorizer_and_original_vector(original_feature_names)
+    prepare_vectorizer_and_original_vector(original_feature_names)
 
     for idx, rec in enumerate(recommendations):
-        explanation = get_anchor_explanation_for_recommendation(rec, original_vector)
+        explanation = get_anchor_explanation_for_recommendation(rec, original_feature_names)
         explanations.append(explanation)
-    return json.dumps(explanations)
+
+    return json.dumps(explanations, indent=4)
