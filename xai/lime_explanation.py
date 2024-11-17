@@ -8,42 +8,38 @@ logging.basicConfig(level=logging.INFO)
 def get_lime_explanation(recommendations):
     logging.info("Starting LIME explanation generation for multiple recommendations.")
 
-    # Initialize LIME explainer
     explainer = LimeTextExplainer(class_names=['Book'])
     explanations = []
 
-    # Loop through each recommendation
     for idx, rec in enumerate(recommendations):
         try:
-            description_vector = rec.get("vectorized_descriptions", [])
+            # Extract already filtered features from frontend
             feature_names = rec.get("feature_names", [])
-            input_text = ' '.join(feature_names[:20000])  # Limit input text for LIME
+            vectorized_descriptions = rec.get("vectorized_descriptions", [])
 
-            # Generate explanation using LIME with increased num_features and num_samples
+            if not feature_names or not vectorized_descriptions:
+                raise ValueError("Feature names or vectorized descriptions missing.")
+
+            # Use the top features for input text
+            input_text = ' '.join(feature_names)
+
+            # Define a mock prediction function using the provided vector
+            def mock_predict(texts):
+                return np.array([[np.sum(vectorized_descriptions)] for _ in texts])
+
+            # Generate LIME explanation
             explanation = explainer.explain_instance(
                 input_text,
-                lambda x: np.array([description_vector] * len(x)),
-                num_features=len(feature_names),  # Use more features for wider coverage
-                num_samples=20000  # Adjust for potentially finer granularity
+                mock_predict,
+                num_features=min(len(feature_names), 20),  # Limit to top 20 features for better interpretability
+                num_samples=5000  # Sufficient sample size for meaningful results
             )
-            # Extract explanation details and log them meaningfully
-            explanation_details = explanation.as_list()  # Get feature list with weights
-            logging.info(f"LIME explanation generated: {json.dumps(explanation_details, indent=2)}")
 
-            # Get the top 10 most influential features, with an inclusion threshold for low-weight features
-            inclusion_threshold = 0.02  # Set threshold for minimum weight to include in output
-            explanation_output = [
-                                     (word, weight) for word, weight in explanation.as_list()
-                                     if abs(weight) >= inclusion_threshold
-                                 ][:5]  # Take up to 10 if available
+            # Extract explanation details
+            explanation_output = explanation.as_list()
 
-            # If no features meet the threshold, include the 10 highest regardless of weight
-            if not explanation_output:
-                explanation_output = sorted(
-                    explanation.as_list(), key=lambda x: abs(x[1]), reverse=True
-                )[:5]
-
-            # Add to explanations list
+            # Log and append explanation
+            logging.info(f"LIME explanation generated: {explanation_output}")
             explanations.append({
                 "title": rec.get("title", f"Recommendation {idx + 1}"),
                 "general_explanation": "LIME explanation for the book recommendation.",
