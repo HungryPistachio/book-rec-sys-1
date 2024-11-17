@@ -42,8 +42,10 @@ def get_lime_explanation(recommendations):
                 num_samples=2000  # Reduced perturbation count
             )
 
-            # Extract explanation details
-            explanation_output = explanation.as_list()  # Include all features
+            # Extract and sort explanation details
+            explanation_output = sorted(
+                explanation.as_list(), key=lambda x: abs(x[1]), reverse=True
+            )[:10]  # Top 10 features only
 
             logging.info(f"LIME explanation generated: {explanation_output}")
 
