@@ -13,7 +13,6 @@ def get_lime_explanation(recommendations):
 
     for idx, rec in enumerate(recommendations):
         try:
-            # Extract vectorized descriptions and feature names
             description_vector = rec.get("vectorized_descriptions", [])
             feature_names = rec.get("feature_names", [])
 
@@ -22,13 +21,16 @@ def get_lime_explanation(recommendations):
             if description_vector.max() > 0:
                 description_vector = description_vector / description_vector.max()
 
-            # Select top 300 features based on weight
+            # Select top 300 features and amplify their importance
             top_features = sorted(
                 zip(description_vector, feature_names),
                 key=lambda x: x[0],
                 reverse=True
             )[:300]
-            input_text = ' '.join([feature for _, feature in top_features])
+            amplified_features = [
+                ' '.join([feature] * int(weight * 10)) for weight, feature in top_features
+            ]
+            input_text = ' '.join(amplified_features)
 
             logging.info(f"Input text for LIME explanation: {input_text[:200]}...")  # Log snippet of input text
 
@@ -36,12 +38,12 @@ def get_lime_explanation(recommendations):
             explanation = explainer.explain_instance(
                 input_text,
                 lambda x: np.array([description_vector] * len(x)),  # Dummy classifier
-                num_features=100,  # Analyze top 100 features
-                num_samples=3000  # Moderate perturbation count
+                num_features=50,  # Analyze top 50 features
+                num_samples=2000  # Reduced perturbation count
             )
 
             # Extract explanation details
-            explanation_output = explanation.as_list()[:10]  # Take top 10 features regardless of weight
+            explanation_output = explanation.as_list()  # Include all features
 
             logging.info(f"LIME explanation generated: {explanation_output}")
 
