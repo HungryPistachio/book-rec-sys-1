@@ -17,23 +17,21 @@ def get_lime_explanation(recommendations):
         try:
             description_vector = rec.get("vectorized_descriptions", [])
             feature_names = rec.get("feature_names", [])
-            input_text = ' '.join(feature_names[:85000])  # Limit input text for LIME
-            logging.info(f"Received input_text: {input_text}")
-            logging.info(f"Received description_vector: {description_vector}")
+            input_text = ' '.join(feature_names[:20000])  # Limit input text for LIME
 
             # Generate explanation using LIME with increased num_features and num_samples
             explanation = explainer.explain_instance(
                 input_text,
                 lambda x: np.array([description_vector] * len(x)),
                 num_features=len(feature_names),  # Use more features for wider coverage
-                num_samples=1000  # Adjust for potentially finer granularity
+                num_samples=20000  # Adjust for potentially finer granularity
             )
             # Extract explanation details and log them meaningfully
             explanation_details = explanation.as_list()  # Get feature list with weights
             logging.info(f"LIME explanation generated: {json.dumps(explanation_details, indent=2)}")
 
             # Get the top 10 most influential features, with an inclusion threshold for low-weight features
-            inclusion_threshold = 0.05  # Set threshold for minimum weight to include in output
+            inclusion_threshold = 0.02  # Set threshold for minimum weight to include in output
             explanation_output = [
                                      (word, weight) for word, weight in explanation.as_list()
                                      if abs(weight) >= inclusion_threshold
