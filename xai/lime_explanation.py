@@ -27,23 +27,25 @@ def get_lime_explanation(recommendations):
             # Define a mock prediction function
             def mock_predict(texts):
                 """
-                Simulates predictions by mapping perturbed texts to feature significance.
+                Simulates predictions for LIME by using feature importance weights.
+                Generates probabilities for the single class 'Book'.
                 """
-                # Simulate predictions for each perturbed text
-                predictions = []
+                probabilities = []
                 for text in texts:
-                    # Calculate relevance scores by matching features in perturbed text
+                    # Calculate the relevance score by summing weights of matched features
                     scores = [vectorized_descriptions[feature_names.index(word)] 
                               if word in feature_names else 0 
                               for word in text.split()]
-                    
-                    # Aggregate the scores (e.g., mean or sum)
-                    predictions.append([sum(scores)])
-                
-                # Convert predictions to a 2D array
-                predictions = np.array(predictions)
-                logging.info(f"Mock predictions shape: {predictions.shape}, Example: {predictions[:1]}")
-                return predictions
+                    relevance_score = sum(scores)
+
+                    # Convert the relevance score to a probability (normalized between 0 and 1)
+                    probability = np.clip(relevance_score / max(vectorized_descriptions, default=1), 0, 1)
+                    probabilities.append([probability])
+
+                # Return a 2D array where each row corresponds to a sample
+                probabilities = np.array(probabilities)
+                logging.info(f"Mock predictions shape: {probabilities.shape}, Example: {probabilities[:1]}")
+                return probabilities
 
             # Generate LIME explanation
             explanation = explainer.explain_instance(
