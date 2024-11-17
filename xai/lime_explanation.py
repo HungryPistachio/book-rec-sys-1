@@ -13,53 +13,46 @@ def get_lime_explanation(recommendations):
 
     for idx, rec in enumerate(recommendations):
         try:
-            # Extract features from the frontend recommendation
+            description_vector = rec.get("vectorized_descriptions", [])
             feature_names = rec.get("feature_names", [])
-            vectorized_descriptions = rec.get("vectorized_descriptions", [])
 
-            if not feature_names or not vectorized_descriptions:
-                raise ValueError("Feature names or vectorized descriptions missing.")
+            # Normalize description vector to prevent skew
+            description_vector = np.array(description_vector)
+            if description_vector.max() > 0:
+                description_vector = description_vector / description_vector.max()
 
-            # Use the significant features as input text
-            input_text = ' '.join(feature_names)
-            logging.info(f"Input text for LIME explanation: {input_text}")
+            # Refine input text using the most relevant features
+            input_text = ' '.join(
+                [feature for _, feature in sorted(
+                    zip(description_vector, feature_names),
+                    reverse=True
+                )[:min(len(feature_names), 30)]]  
+            )
 
-            # Define a mock prediction function
-            def mock_predict(texts):
-                """
-                Simulates predictions for LIME by using feature importance weights.
-                Generates probabilities for the single class 'Book'.
-                """
-                probabilities = []
-                for text in texts:
-                    # Calculate the relevance score by summing weights of matched features
-                    scores = [vectorized_descriptions[feature_names.index(word)] 
-                              if word in feature_names else 0 
-                              for word in text.split()]
-                    relevance_score = sum(scores)
+            logging.info(f"Input text for LIME explanation: {input_text[:30]}...")  # Log snippet of input text
 
-                    # Convert the relevance score to a probability (normalized between 0 and 1)
-                    probability = np.clip(relevance_score / max(vectorized_descriptions, default=1), 0, 1)
-                    probabilities.append([probability])
-
-                # Return a 2D array where each row corresponds to a sample
-                probabilities = np.array(probabilities)
-                logging.info(f"Mock predictions shape: {probabilities.shape}, Example: {probabilities[:1]}")
-                return probabilities
-
-            # Generate LIME explanation
+            # Generate explanation using LIME
             explanation = explainer.explain_instance(
                 input_text,
-                mock_predict,
-                num_features=min(len(feature_names), 20),  # Limit to top 20 features for better interpretability
-                num_samples=5000  # Sufficient sample size for meaningful results
+                lambda x: np.array([description_vector] * len(x)),
+                num_features=min(len(feature_names), 100),  # Limit to top 100 features
+                num_samples=5000  # Focused sampling for better perturbations
             )
 
             # Extract explanation details
-            explanation_output = explanation.as_list()
+            inclusion_threshold = 0.005  # Include features with at least 0.5% weight
+            explanation_output = [
+                                     (word, weight) for word, weight in explanation.as_list()
+                                     if abs(weight) >= inclusion_threshold
+                                 ][:10]  # Take top 10 features
 
-            # Log and append explanation
+            if not explanation_output:  # Fallback: Include features with highest weights
+                explanation_output = sorted(
+                    explanation.as_list(), key=lambda x: abs(x[1]), reverse=True
+                )[:10]
+
             logging.info(f"LIME explanation generated: {explanation_output}")
+
             explanations.append({
                 "title": rec.get("title", f"Recommendation {idx + 1}"),
                 "general_explanation": "LIME explanation for the book recommendation.",
