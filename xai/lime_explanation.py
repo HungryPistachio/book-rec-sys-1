@@ -24,12 +24,12 @@ def get_lime_explanation(recommendations):
             # Refine input text using the most relevant features
             input_text = ' '.join(
                 [feature for _, feature in sorted(
-                    zip(description_vector, feature_names),
+                    zip(description_vector, feature_names), 
                     reverse=True
-                )[:min(len(feature_names), 30)]]  
+                )[:min(len(feature_names), 500)]]  # Limit to top 500 features
             )
 
-            logging.info(f"Input text for LIME explanation: {input_text[:30]}...")  # Log snippet of input text
+            logging.info(f"Input text for LIME explanation: {input_text[:200]}...")  # Log snippet of input text
 
             # Generate explanation using LIME
             explanation = explainer.explain_instance(
@@ -42,9 +42,9 @@ def get_lime_explanation(recommendations):
             # Extract explanation details
             inclusion_threshold = 0.005  # Include features with at least 0.5% weight
             explanation_output = [
-                                     (word, weight) for word, weight in explanation.as_list()
-                                     if abs(weight) >= inclusion_threshold
-                                 ][:10]  # Take top 10 features
+                (word, weight) for word, weight in explanation.as_list()
+                if abs(weight) >= inclusion_threshold
+            ][:10]  # Take top 10 features
 
             if not explanation_output:  # Fallback: Include features with highest weights
                 explanation_output = sorted(
