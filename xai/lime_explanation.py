@@ -22,7 +22,8 @@ def get_lime_explanation(recommendations):
 
             # Use the top features for input text
             input_text = ' '.join(feature_names)
-
+            logging.info(f"Input text for LIME explanation: {input_text}")
+            
             # Define a mock prediction function
             def mock_predict(texts):
                 """
@@ -31,6 +32,8 @@ def get_lime_explanation(recommendations):
                 """
                 probabilities = np.array([[1.0] for _ in texts])  # Single class with probability 1.0
                 return probabilities
+                logging.info(f"Mock prediction for LIME explanation: {probabilities}")
+            # Vectorize the input text
 
             # Generate LIME explanation
             explanation = explainer.explain_instance(
@@ -42,6 +45,7 @@ def get_lime_explanation(recommendations):
 
             # Extract explanation details
             explanation_output = explanation.as_list()
+            logging.info(f"Explanation for recommendation {idx + 1}: {explanation_output}")
 
             # Log and append explanation
             logging.info(f"LIME explanation generated: {explanation_output}")
