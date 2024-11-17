@@ -8,8 +8,17 @@ import numpy as np
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
-# Load the spaCy language model
-nlp = spacy.load('en_core_web_sm')
+# Global NLP model
+nlp = None
+
+def get_spacy_model():
+    """
+    Load spaCy model only when needed to conserve memory.
+    """
+    global nlp
+    if nlp is None:
+        nlp = spacy.load('en_core_web_sm')
+    return nlp
 
 # Initialize TfidfVectorizer
 vectorizer = TfidfVectorizer()
@@ -23,7 +32,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
     original_vector = vectorizer.transform([original_description]).toarray()[0]
     return original_vector
 
-def get_top_features(feature_names, description_vector, top_n=6):
+def get_top_features(feature_names, description_vector, top_n=3):
     """
     Get the top N features by vector weight.
     """
@@ -39,8 +48,8 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     feature_names = recommendation.get('feature_names', [])
     description_vector = recommendation.get('vectorized_descriptions', [])
 
-    # Select the top 6 features for input text
-    top_features = get_top_features(feature_names, description_vector, top_n=6)
+    # Select the top 3 features for input text
+    top_features = get_top_features(feature_names, description_vector, top_n=3)
     input_text = ' '.join(top_features)
 
     if not input_text:
@@ -56,15 +65,15 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         return np.ones(len(texts), dtype=np.int32)
 
     # Initialize AnchorText explainer with dummy predictor
-    explainer = AnchorText(nlp=nlp, predictor=dummy_predictor)
+    explainer = AnchorText(nlp=get_spacy_model(), predictor=dummy_predictor)
 
     try:
         # Generate anchors with optimized sampling parameters
         explanation = explainer.explain(
             input_text,
             threshold=0.95,
-            beam_size=1,  # Reduce beam search effort
-            sample_proba=0.2  # Lower sampling probability
+            beam_size=1,  # Minimal beam size
+            sample_proba=0.1  # Minimal sampling probability
         )
         anchor_words = " AND ".join(explanation.data['anchor']) if 'anchor' in explanation.data else "None"
         precision = explanation.data.get('precision', "N/A")
