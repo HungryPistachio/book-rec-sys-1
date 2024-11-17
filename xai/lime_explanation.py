@@ -23,9 +23,14 @@ def get_lime_explanation(recommendations):
             # Use the top features for input text
             input_text = ' '.join(feature_names)
 
-            # Define a mock prediction function using the provided vector
+            # Define a mock prediction function
             def mock_predict(texts):
-                return np.array([[np.sum(vectorized_descriptions)] for _ in texts])
+                """
+                Mock prediction function for LIME.
+                Simulates predictions with one class probability for the 'Book' class.
+                """
+                probabilities = np.array([[1.0] for _ in texts])  # Single class with probability 1.0
+                return probabilities
 
             # Generate LIME explanation
             explanation = explainer.explain_instance(
