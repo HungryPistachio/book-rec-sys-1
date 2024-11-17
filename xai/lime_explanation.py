@@ -13,52 +13,35 @@ def get_lime_explanation(recommendations):
 
     for idx, rec in enumerate(recommendations):
         try:
+            # Extract vectorized descriptions and feature names
             description_vector = rec.get("vectorized_descriptions", [])
             feature_names = rec.get("feature_names", [])
 
             # Normalize feature weights
             description_vector = np.array(description_vector)
-            if max(description_vector) > 0:
-                description_vector = description_vector / max(description_vector)
+            if description_vector.max() > 0:
+                description_vector = description_vector / description_vector.max()
 
-            # Focus on top 200 features
+            # Select top 300 features based on weight
             top_features = sorted(
                 zip(description_vector, feature_names),
                 key=lambda x: x[0],
                 reverse=True
-            )[:200]
+            )[:300]
             input_text = ' '.join([feature for _, feature in top_features])
 
-            logging.info(f"Input text for LIME explanation: {input_text[:200]}...")  # Log a snippet
+            logging.info(f"Input text for LIME explanation: {input_text[:200]}...")  # Log snippet of input text
 
-            # Dynamic classifier for perturbation variability
-            def dynamic_classifier(perturbations):
-                predictions = []
-                for text in perturbations:
-                    overlap = sum([description_vector[feature_names.index(word)] if word in feature_names else 0 
-                                   for word in text.split()])
-                    predictions.append([overlap / len(text.split()) if len(text.split()) > 0 else 0])
-                return np.array(predictions)
-
-            # Generate explanation using LIME
+            # Generate LIME explanation
             explanation = explainer.explain_instance(
                 input_text,
-                dynamic_classifier,
-                num_features=100,  # Limit to top 100 features
-                num_samples=3000  # Focused sample size
+                lambda x: np.array([description_vector] * len(x)),  # Dummy classifier
+                num_features=100,  # Analyze top 100 features
+                num_samples=3000  # Moderate perturbation count
             )
 
             # Extract explanation details
-            inclusion_threshold = 0.001  # Include minor contributions
-            explanation_output = [
-                (word, weight) for word, weight in explanation.as_list() 
-                if abs(weight) >= inclusion_threshold
-            ][:10]
-
-            if not explanation_output:  # Fallback: Include features with highest weights
-                explanation_output = sorted(
-                    explanation.as_list(), key=lambda x: abs(x[1]), reverse=True
-                )[:10]
+            explanation_output = explanation.as_list()[:10]  # Take top 10 features regardless of weight
 
             logging.info(f"LIME explanation generated: {explanation_output}")
 
