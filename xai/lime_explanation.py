@@ -13,27 +13,37 @@ def get_lime_explanation(recommendations):
 
     for idx, rec in enumerate(recommendations):
         try:
-            # Extract already filtered features from frontend
+            # Extract features from the frontend recommendation
             feature_names = rec.get("feature_names", [])
             vectorized_descriptions = rec.get("vectorized_descriptions", [])
 
             if not feature_names or not vectorized_descriptions:
                 raise ValueError("Feature names or vectorized descriptions missing.")
 
-            # Use the top features for input text
+            # Use the significant features as input text
             input_text = ' '.join(feature_names)
             logging.info(f"Input text for LIME explanation: {input_text}")
-            
+
             # Define a mock prediction function
             def mock_predict(texts):
                 """
-                Mock prediction function for LIME.
-                Simulates predictions with one class probability for the 'Book' class.
+                Simulates predictions by mapping perturbed texts to feature significance.
                 """
-                probabilities = np.array([[1.0] for _ in texts])  # Single class with probability 1.0
-                return probabilities
-                logging.info(f"Mock prediction for LIME explanation: {probabilities}")
-            # Vectorize the input text
+                # Simulate predictions for each perturbed text
+                predictions = []
+                for text in texts:
+                    # Calculate relevance scores by matching features in perturbed text
+                    scores = [vectorized_descriptions[feature_names.index(word)] 
+                              if word in feature_names else 0 
+                              for word in text.split()]
+                    
+                    # Aggregate the scores (e.g., mean or sum)
+                    predictions.append([sum(scores)])
+                
+                # Convert predictions to a 2D array
+                predictions = np.array(predictions)
+                logging.info(f"Mock predictions shape: {predictions.shape}, Example: {predictions[:1]}")
+                return predictions
 
             # Generate LIME explanation
             explanation = explainer.explain_instance(
@@ -45,7 +55,6 @@ def get_lime_explanation(recommendations):
 
             # Extract explanation details
             explanation_output = explanation.as_list()
-            logging.info(f"Explanation for recommendation {idx + 1}: {explanation_output}")
 
             # Log and append explanation
             logging.info(f"LIME explanation generated: {explanation_output}")
