@@ -20,7 +20,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
 
     return original_vector
 
-def get_top_features(feature_names, description_vector, top_n=20):
+def get_top_features(feature_names, description_vector, top_n=10):
     """Get the top N features by vector weight."""
     # Pair each feature with its corresponding vector value
     feature_importance = list(zip(feature_names, description_vector))
@@ -34,8 +34,8 @@ def get_anchor_explanation_for_recommendation(recommendation, original_vector):
     feature_names = recommendation.get('feature_names', [])
     description_vector = recommendation.get('vectorized_descriptions', [])
 
-    # Select the top 20 features based on their vector weights
-    input_text = get_top_features(feature_names, description_vector, top_n=20)
+    # Select the top 10 features based on their vector weights
+    input_text = get_top_features(feature_names, description_vector, top_n=10)
     if not input_text:
         return {
             "title": recommendation.get("title", "Recommendation"),
