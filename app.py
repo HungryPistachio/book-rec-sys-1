@@ -89,11 +89,7 @@ async def anchor_explanation(request: Request):
     data = await request.json()
     recommendations = data.get("recommendations", [])
     original_description = data.get("original_description", "")
-
     logging.info("Received request for Anchor explanation.")
-        # Log the received recommendations for debugging
-    logging.info(f"Received recommendations data: {json.dumps(recommendations, indent=2)}")
-    
 
     try:
         explanation = get_anchor_explanation(recommendations, original_description)
@@ -102,6 +98,7 @@ async def anchor_explanation(request: Request):
     except Exception as e:
         logging.error(f"Error in Anchor explanation generation: {e}")
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
 
 
 
