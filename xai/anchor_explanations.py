@@ -33,7 +33,7 @@ def get_top_features(feature_names, description_vector, top_n=10):
 
 def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
     """
-    Generate an anchor explanation with heuristic precision using Alibi's AnchorText.
+    Generate an anchor explanation using a dummy predictor.
     """
     feature_names = recommendation.get('feature_names', [])
     description_vector = recommendation.get('vectorized_descriptions', [])
@@ -50,12 +50,16 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
             "precision": 0.0
         }
 
-    # Initialize AnchorText explainer
-    explainer = AnchorText(nlp=nlp, predictor=None)  # No predictor used, heuristic-based explanation
+    # Dummy predictor returning constant values
+    def dummy_predictor(texts):
+        return [1 for _ in texts]  # Always return "similar"
+
+    # Initialize AnchorText explainer with dummy predictor
+    explainer = AnchorText(nlp=nlp, predictor=dummy_predictor)
 
     try:
         # Generate anchors based on the input text
-        explanation = explainer.explain(input_text, threshold=0.95)  # Threshold may not apply without predict_fn
+        explanation = explainer.explain(input_text, threshold=0.95)
         anchor_words = " AND ".join(explanation.data['anchor']) if 'anchor' in explanation.data else "None"
         precision = explanation.data.get('precision', "N/A")
 
