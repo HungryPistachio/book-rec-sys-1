@@ -21,22 +21,31 @@ def get_lime_explanation(recommendations):
             if max(description_vector) > 0:
                 description_vector = description_vector / max(description_vector)
 
-            # Focus on top features
+            # Focus on top 200 features
             top_features = sorted(
-                zip(description_vector, feature_names), 
-                key=lambda x: x[0], 
+                zip(description_vector, feature_names),
+                key=lambda x: x[0],
                 reverse=True
-            )[:300]  # Top 300 features
+            )[:200]
             input_text = ' '.join([feature for _, feature in top_features])
 
             logging.info(f"Input text for LIME explanation: {input_text[:200]}...")  # Log a snippet
 
+            # Dynamic classifier for perturbation variability
+            def dynamic_classifier(perturbations):
+                predictions = []
+                for text in perturbations:
+                    overlap = sum([description_vector[feature_names.index(word)] if word in feature_names else 0 
+                                   for word in text.split()])
+                    predictions.append([overlap / len(text.split()) if len(text.split()) > 0 else 0])
+                return np.array(predictions)
+
             # Generate explanation using LIME
             explanation = explainer.explain_instance(
                 input_text,
-                lambda x: np.array([description_vector] * len(x)),  # Dummy classifier
-                num_features=100,  # Focus on top 100 features
-                num_samples=5000  # Moderate sample size for better diversity
+                dynamic_classifier,
+                num_features=100,  # Limit to top 100 features
+                num_samples=3000  # Focused sample size
             )
 
             # Extract explanation details
