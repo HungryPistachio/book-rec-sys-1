@@ -45,14 +45,19 @@ def get_lime_explanation(recommendations):
             # Extract and sort explanation details
             explanation_output = sorted(
                 explanation.as_list(), key=lambda x: abs(x[1]), reverse=True
-            )[:10]  # Top 10 features only
+            )[:6]  # Top 6 features only
 
-            logging.info(f"LIME explanation generated: {explanation_output}")
+            # Format explanation as a numbered list of words
+            formatted_explanation = [
+                f"{i+1}. {word}" for i, (word, _) in enumerate(explanation_output)
+            ]
+
+            logging.info(f"LIME explanation generated: {formatted_explanation}")
 
             explanations.append({
                 "title": rec.get("title", f"Recommendation {idx + 1}"),
                 "general_explanation": "LIME explanation for the book recommendation.",
-                "explanation_output": explanation_output
+                "explanation_output": formatted_explanation
             })
 
         except Exception as e:
