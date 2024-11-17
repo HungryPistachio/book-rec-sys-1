@@ -38,14 +38,15 @@
       <ul id="recommendationsLime"></ul>
       <div id="limeExplanation">
         <h2>LIME Explanations for Recommended Books:<span id="explainedTitleLime"></span></h2>
-        <p id="limeExplanationGeneral">These recommendations are formed using the description of your original book and using this to search for similar books.
-          The LIME explanation displays the relevant words within the description and the weight of these words.
-          The higher the number the more the word helped to identify this book as a good recommendation.</p>
+        <p id="limeExplanationGeneral">These recommendations are formed using the description of your original book, which was used to search for similar books within Google Books Respository.
+          The LIME explanation displays the relevant words within the description, starting with the highest weighted word.
+          These words from the description are available as an explanation for why this book as a good recommendation.</p>
         <ul id="limeExplanationList"></ul>
       </div>
     </div>
     <div id="anchor" class="tab-content" style="display:none;">
       <h2>Anchor Explanation</h2>
+      <p> Please allow a few moments for the explanations to load.</p>
       <input type="text" id="bookTitleAnchor" placeholder="Enter a book title">
       <div class="toggle-label">
         <input type="checkbox" id="includeSameAuthorAnchor" checked>
@@ -55,6 +56,8 @@
       <ul id="recommendationsAnchor"></ul>
       <div id="anchorExplanation">
         <h2>Anchor Explanations for Recommended Books:</h2>
+        <p id="anchorExplanationGeneral"> These recommendations are formed using the description of your original book, which was used to search for similar books within the Google Books Repository. 
+          The Anchor explanation identifies the most critical features (or "anchors") from the book description that strongly support why the recommendation was made. These anchors represent words or phrases that are most influential in determining the similarity and relevance of this book as a good recommendation. </p>
         <ul id="anchorExplanationList"></ul>
       </div>
     </div>
