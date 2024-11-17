@@ -28,7 +28,6 @@ def get_top_features(feature_names, description_vector, top_n=20):
     sorted_features = sorted(feature_importance, key=lambda x: abs(x[1]), reverse=True)
     # Select the top N features
     top_features = [feature for feature, _ in sorted_features[:top_n]]
-    logging.info(f"Top {top_n} features from get_top_features: {top_features}")
     return ' '.join(top_features)  # Join as a single input text
 
 def get_anchor_explanation_for_recommendation(recommendation, original_vector):
