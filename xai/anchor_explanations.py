@@ -3,7 +3,7 @@ import logging
 from alibi.explainers import AnchorText
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
-import numpy as np  # Ensure this import is included for array manipulation
+import numpy as np
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
@@ -23,7 +23,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
     original_vector = vectorizer.transform([original_description]).toarray()[0]
     return original_vector
 
-def get_top_features(feature_names, description_vector, top_n=10):
+def get_top_features(feature_names, description_vector, top_n=6):
     """
     Get the top N features by vector weight.
     """
@@ -39,8 +39,8 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     feature_names = recommendation.get('feature_names', [])
     description_vector = recommendation.get('vectorized_descriptions', [])
 
-    # Select the top 10 features for input text
-    top_features = get_top_features(feature_names, description_vector, top_n=10)
+    # Select the top 6 features for input text
+    top_features = get_top_features(feature_names, description_vector, top_n=6)
     input_text = ' '.join(top_features)
 
     if not input_text:
@@ -53,14 +53,19 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
 
     # Dummy predictor returning constant values as a NumPy array
     def dummy_predictor(texts):
-        return np.ones(len(texts))  # Return a NumPy array of ones
+        return np.ones(len(texts), dtype=np.int32)
 
     # Initialize AnchorText explainer with dummy predictor
     explainer = AnchorText(nlp=nlp, predictor=dummy_predictor)
 
     try:
-        # Generate anchors based on the input text
-        explanation = explainer.explain(input_text, threshold=0.95)
+        # Generate anchors with optimized sampling parameters
+        explanation = explainer.explain(
+            input_text,
+            threshold=0.95,
+            beam_size=1,  # Reduce beam search effort
+            sample_proba=0.2  # Lower sampling probability
+        )
         anchor_words = " AND ".join(explanation.data['anchor']) if 'anchor' in explanation.data else "None"
         precision = explanation.data.get('precision', "N/A")
 
@@ -90,6 +95,8 @@ def get_anchor_explanation(recommendations, original_feature_names):
 
     for idx, rec in enumerate(recommendations):
         explanation = get_anchor_explanation_for_recommendation(rec, original_feature_names)
+        # Convert NumPy types to native Python types for JSON serialization
+        explanation = json.loads(json.dumps(explanation, default=lambda o: o.tolist() if isinstance(o, np.ndarray) else o))
         explanations.append(explanation)
 
     return json.dumps(explanations, indent=4)
