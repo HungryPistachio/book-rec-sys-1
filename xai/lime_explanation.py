@@ -16,35 +16,35 @@ def get_lime_explanation(recommendations):
             description_vector = rec.get("vectorized_descriptions", [])
             feature_names = rec.get("feature_names", [])
 
-            # Normalize description vector to prevent skew
+            # Normalize feature weights
             description_vector = np.array(description_vector)
-            if description_vector.max() > 0:
-                description_vector = description_vector / description_vector.max()
+            if max(description_vector) > 0:
+                description_vector = description_vector / max(description_vector)
 
-            # Refine input text using the most relevant features
-            input_text = ' '.join(
-                [feature for _, feature in sorted(
-                    zip(description_vector, feature_names), 
-                    reverse=True
-                )[:min(len(feature_names), 500)]]  # Limit to top 500 features
-            )
+            # Focus on top features
+            top_features = sorted(
+                zip(description_vector, feature_names), 
+                key=lambda x: x[0], 
+                reverse=True
+            )[:300]  # Top 300 features
+            input_text = ' '.join([feature for _, feature in top_features])
 
-            logging.info(f"Input text for LIME explanation: {input_text[:200]}...")  # Log snippet of input text
+            logging.info(f"Input text for LIME explanation: {input_text[:200]}...")  # Log a snippet
 
             # Generate explanation using LIME
             explanation = explainer.explain_instance(
                 input_text,
-                lambda x: np.array([description_vector] * len(x)),
-                num_features=min(len(feature_names), 100),  # Limit to top 100 features
-                num_samples=5000  # Focused sampling for better perturbations
+                lambda x: np.array([description_vector] * len(x)),  # Dummy classifier
+                num_features=100,  # Focus on top 100 features
+                num_samples=5000  # Moderate sample size for better diversity
             )
 
             # Extract explanation details
-            inclusion_threshold = 0.005  # Include features with at least 0.5% weight
+            inclusion_threshold = 0.001  # Include minor contributions
             explanation_output = [
-                (word, weight) for word, weight in explanation.as_list()
+                (word, weight) for word, weight in explanation.as_list() 
                 if abs(weight) >= inclusion_threshold
-            ][:10]  # Take top 10 features
+            ][:10]
 
             if not explanation_output:  # Fallback: Include features with highest weights
                 explanation_output = sorted(
