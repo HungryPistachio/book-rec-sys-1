@@ -9,7 +9,7 @@
 <body>
 <div class="container">
   <h1>Book Recommendation System</h1>
-    <div class="tabs">
+  <div class="tabs">
     <button class="tab" data-tab="noXAI">No XAI</button>
     <button class="tab" data-tab="lime">LIME</button>
     <button class="tab" data-tab="anchor">Anchor</button>
@@ -319,26 +319,21 @@
 
       const explanationContainer = document.getElementById('limeExplanationList');
 
-      // Check if the explanationContainer element is found
       if (!explanationContainer) {
         console.error("limeExplanationList element not found in DOM");
         return;
       }
 
-      console.log("limeExplanationList container found:", explanationContainer);
       explanationContainer.innerHTML = ''; // Clear previous explanations
 
-      // Check if the data is in the expected format (array)
       if (!Array.isArray(data)) {
         console.error("Invalid data format for explanation display. Expected array, received:", typeof data);
         explanationContainer.innerHTML = "<li>No explanation data available.</li>";
         return;
       }
 
-      // Log the length of the data array to ensure explanations are available
       console.log(`Number of explanations to display: ${data.length}`);
 
-      // Loop through each explanation item in data
       data.forEach((explanationData, idx) => {
         console.log(`Processing explanation #${idx + 1}:`, explanationData);
 
@@ -348,27 +343,17 @@
 
         const generalExplanation = document.createElement('p');
         generalExplanation.textContent = explanationData.general_explanation || "No general explanation provided.";
-        console.log("General explanation:", generalExplanation.textContent);
 
         const explanationList = document.createElement('ul');
-
-        // Log explanation_output to verify it has content and structure
-        const explanationOutput = explanationData.explanation_output.filter(item => Math.abs(item[1]) > 0.0);
-        console.log(`Explanation output for ${recommendationTitle}:`, explanationOutput);
+        const explanationOutput = explanationData.explanation_output || [];
 
         if (Array.isArray(explanationOutput) && explanationOutput.length > 0) {
-          explanationOutput.forEach((item, itemIndex) => {
+          explanationOutput.forEach(item => {
             const listItem = document.createElement('li');
-
-            // Check the weight before formatting
-            const weight = Math.abs(item[1]) < 1e-2 ? item[1].toExponential(3) : item[1].toFixed(3);
-            listItem.textContent = `${item[0]}: ${weight}`;
-
-            console.log(`Feature #${itemIndex + 1} - Word: ${item[0]}, Weight: ${weight}`);
+            listItem.textContent = item; // Directly render the string
             explanationList.appendChild(listItem);
           });
         } else {
-          console.warn(`No significant features found in explanation for ${recommendationTitle}`);
           const noExplanationItem = document.createElement('li');
           noExplanationItem.textContent = "No significant features found in the explanation.";
           explanationList.appendChild(noExplanationItem);
@@ -379,6 +364,7 @@
         explanationContainer.appendChild(explanationList);
       });
     }
+
 
 
 
@@ -447,4 +433,3 @@
 </script>
 </body>
 </html>
-
