@@ -72,7 +72,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         # Generate explanation with optimized sampling parameters
         explanation = explainer.explain(
             input_text,
-            threshold=0.95,  # Adjusted for more meaningful anchors
+            threshold=0.1,  # Adjusted for more meaningful anchors
             beam_size=1,
             sample_proba=0.1
         )
