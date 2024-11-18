@@ -81,9 +81,9 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     try:
         explanation = explainer.explain(
             input_text,
-            threshold=0.1,  # Adjusted threshold
-            beam_size=10,  # Moderate beam size for efficiency
-            sample_proba=0.6  # Balanced sampling probability
+            threshold=0.05,  # Lower threshold for flexibility
+            beam_size=20,    # Larger beam size for more exploration
+            sample_proba=0.7 # Higher sampling diversity
         )
         logging.info(f"Anchor explanation data: {explanation.data}")
         anchor_words = " AND ".join(explanation.data.get('anchor', []))
@@ -92,7 +92,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.info(f"Generated explanation with precision: {precision}, anchors: {anchor_words}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": anchor_words,
+            "anchor_words": anchor_words if anchor_words else "None",
             "precision": precision
         }
     except Exception as e:
@@ -102,6 +102,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
             "anchor_words": "",
             "precision": 0.0
         }
+
 
 
 def get_anchor_explanation(recommendations, original_feature_names):
