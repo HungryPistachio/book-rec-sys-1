@@ -81,9 +81,9 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     try:
         explanation = explainer.explain(
             input_text,
-            threshold=0.15,  # Adjusted threshold
-            beam_size=15,  # Moderate beam size for efficiency
-            sample_proba=0.4  # Balanced sampling probability
+            threshold=0.1,  # Adjusted threshold
+            beam_size=10,  # Moderate beam size for efficiency
+            sample_proba=0.6  # Balanced sampling probability
         )
         anchor_words = " AND ".join(explanation.data.get('anchor', []))
         precision = float(explanation.data.get('precision', 0.0))
