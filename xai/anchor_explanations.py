@@ -54,9 +54,10 @@ def meaningful_predictor(texts):
     similarities = np.dot(text_vectors, original_vector) / (
             np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
     )
-    predictions = (similarities > 0.15).astype(int)  # Threshold for similarity
-    logging.info(f"Predictor outputs for texts: {texts}, predictions: {predictions}")
+    predictions = (similarities > 0.2).astype(int)  # Increased threshold for sensitivity
+    logging.info(f"Predictor outputs for texts: {texts}, predictions: {predictions}, similarities: {similarities}")
     return predictions
+
 
 def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
     feature_names = recommendation.get("feature_names", [])
@@ -83,7 +84,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
             input_text,
             threshold=0.05,  # Lower threshold for flexibility
             beam_size=20,    # Larger beam size for more exploration
-            sample_proba=0.7 # Higher sampling diversity
+            sample_proba=0.8 # Higher sampling diversity
         )
         logging.info(f"Anchor explanation data: {explanation.data}")
         anchor_words = " AND ".join(explanation.data.get('anchor', []))
