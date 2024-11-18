@@ -287,8 +287,10 @@
         const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recommendations, original_description: originalDescription })
+          body: JSON.stringify({ recommendations, original_description: originalDescription }),
         });
+
+        console.log("Raw response object:", response);
 
         if (!response.ok) {
           console.error(`Error: ${response.status} - ${response.statusText}`);
@@ -296,7 +298,7 @@
         }
 
         const explanationData = await response.json();
-        console.log("Explanation data received:", explanationData); // Log explanation data
+        console.log("Explanation data received:", explanationData);
         return explanationData;
       } catch (error) {
         console.error("Error during fetchAnchorExplanation:", error);
@@ -305,11 +307,15 @@
     }
 
 
+
     function displayAnchorExplanation(data) {
       const explanationContainer = document.getElementById('anchorExplanationList');
       explanationContainer.innerHTML = ''; // Clear previous explanations
 
+      console.log("Displaying Anchor explanations:", data);
+
       if (!Array.isArray(data) || data.length === 0) {
+        console.error("No valid Anchor explanation data received:", data);
         explanationContainer.innerHTML = '<li>No Anchor explanations available.</li>';
         return;
       }
@@ -329,6 +335,7 @@
         explanationContainer.appendChild(precision);
       });
     }
+
 
 
 
