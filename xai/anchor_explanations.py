@@ -99,7 +99,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.warning(f"No significant features for recommendation: {recommendation.get('title', 'Unknown')}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "No significant anchors identified",
+            "anchor_words": "",
             "precision": 0.0
         }
 
