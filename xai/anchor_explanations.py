@@ -48,51 +48,49 @@ def dummy_predictor(texts):
     return np.ones(len(texts), dtype=np.int32)
 
 def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
-    """
-    Generate an Anchor explanation for a single recommendation.
-    """
     feature_names = recommendation.get("feature_names", [])
     description_vector = recommendation.get("vectorized_descriptions", [])
-    top_features = get_top_features(feature_names, description_vector)
 
-    if not top_features:
-        logging.warning(f"No significant features found for recommendation: {recommendation.get('title', 'Unknown')}")
+    # Use top 10 features for input text
+    top_features = get_top_features(feature_names, description_vector, top_n=10)
+    input_text = ' '.join(top_features)
+    logging.info(f"Input text for Anchor explanation: {input_text}")
+
+    if not input_text:
+        logging.warning(f"No significant features for recommendation: {recommendation.get('title', 'Unknown')}")
         return {
             "title": recommendation.get("title", "Recommendation"),
             "anchor_words": "None",
             "precision": 0.0
         }
-
-    input_text = ' '.join(top_features)
 
     # Initialize AnchorText explainer
     explainer = AnchorText(nlp=get_spacy_model(), predictor=dummy_predictor)
 
     try:
-        # Generate explanation with optimized sampling parameters
         explanation = explainer.explain(
             input_text,
-            threshold=0.1,  # Adjusted for more meaningful anchors
-            beam_size=1,
-            sample_proba=0.1
+            threshold=0.10,  # Lower threshold
+            beam_size=10,  # Increase beam search
+            sample_proba=0.5  # Adjust sampling
         )
-        anchor_words = " AND ".join(explanation.data['anchor']) if 'anchor' in explanation.data else "None"
-        precision = explanation.data.get('precision', [0.0])
-        precision_value = float(precision[0]) if isinstance(precision, list) and precision else 0.0
+        anchor_words = " AND ".join(explanation.data.get('anchor', []))
+        precision = explanation.data.get('precision', 0.0)
 
-        logging.info(f"Generated explanation with precision: {precision_value}")
+        logging.info(f"Generated explanation with precision: {precision}, anchors: {anchor_words}")
         return {
             "title": recommendation.get("title", "Recommendation"),
             "anchor_words": anchor_words,
-            "precision": precision_value
+            "precision": float(precision)
         }
     except Exception as e:
-        logging.error(f"Error generating Anchor explanation for {recommendation.get('title', 'Unknown')}: {e}")
+        logging.error(f"Error generating Anchor explanation: {e}")
         return {
             "title": recommendation.get("title", "Recommendation"),
             "anchor_words": "None",
             "precision": 0.0
         }
+
 
 def get_anchor_explanation(recommendations, original_feature_names):
     """
