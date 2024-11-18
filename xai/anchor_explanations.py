@@ -1,5 +1,6 @@
 import json
 import logging
+import pandas as pd
 from alibi.explainers import AnchorText
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -10,6 +11,18 @@ logging.basicConfig(level=logging.INFO)
 
 # Global NLP model
 nlp = None
+
+# Load vocabulary
+vocab_df = pd.read_csv('static/fixed_vocabulary.csv')
+vocab = set(vocab_df['Vocabulary'])  # Convert to lowercase for consistency
+
+def preprocess_text(text, vocab):
+    """
+    Preprocess text to remove words not in the vocabulary.
+    """
+    tokens = text.split()
+    cleaned_tokens = [word for word in tokens if word.lower() in vocab]
+    return ' '.join(cleaned_tokens)
 
 def get_spacy_model():
     """
@@ -51,7 +64,7 @@ def meaningful_predictor(texts):
     ignoring perturbed examples with UNK tokens.
     """
     global original_vector
-    clean_texts = [text for text in texts if "UNK" not in text]
+    clean_texts = [preprocess_text(text, vocab) for text in texts if "UNK" not in text]
     if not clean_texts:
         logging.warning("All perturbed examples contained UNK tokens and were skipped.")
         return np.zeros(len(texts))  # Return 0 for all if no valid examples exist
@@ -73,14 +86,13 @@ def meaningful_predictor(texts):
 
     return full_predictions
 
-
 def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
     feature_names = recommendation.get("feature_names", [])
     description_vector = recommendation.get("vectorized_descriptions", [])
 
     # Use top 10 features for input text
     top_features = get_top_features(feature_names, description_vector, top_n=10)
-    input_text = ' '.join(top_features)
+    input_text = preprocess_text(' '.join(top_features), vocab)
     logging.info(f"Input text for Anchor explanation: {input_text}")
 
     if not input_text:
