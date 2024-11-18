@@ -49,7 +49,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
     original_vector = vectorizer.transform([original_description]).toarray()[0]
     return original_vector
 
-def get_top_features(feature_names, description_vector, top_n=10):
+def get_top_features(feature_names, description_vector, top_n=20):
     """
     Get the top N features by vector weight.
     """
@@ -75,8 +75,7 @@ def meaningful_predictor(texts):
     )
 
     # Map predictions back to the original input size
-    predictions = (similarities > 0.15).astype(int)
-    logging.info(f"Perturbed texts: {texts}, predictions: {predictions}, similarities: {similarities}")
+    predictions = (similarities > 0.05).astype(int)
 
     # Fill skipped examples with default prediction (e.g., 0)
     full_predictions = np.zeros(len(texts))
@@ -91,7 +90,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     description_vector = recommendation.get("vectorized_descriptions", [])
 
     # Use top 10 features for input text
-    top_features = get_top_features(feature_names, description_vector, top_n=10)
+    top_features = get_top_features(feature_names, description_vector, top_n=20)
     input_text = preprocess_text(' '.join(top_features), vocab)
     logging.info(f"Input text for Anchor explanation: {input_text}")
 
