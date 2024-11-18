@@ -47,14 +47,14 @@ def get_top_features(feature_names, description_vector, top_n=10):
 
 def meaningful_predictor(texts):
     """
-    A predictor function that returns a binary prediction (1 if similar, 0 otherwise).
+    A predictor function that returns a binary prediction based on similarity.
     """
     global original_vector
     text_vectors = vectorizer.transform(texts).toarray()
     similarities = np.dot(text_vectors, original_vector) / (
         np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
     )
-    predictions = (similarities > 0.5).astype(int)  # Adjust threshold as needed
+    predictions = (similarities > 0.6).astype(int)  # Threshold for similarity
     logging.info(f"Predictor outputs for texts: {texts}, predictions: {predictions}")
     return predictions
 
@@ -71,7 +71,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.warning(f"No significant features for recommendation: {recommendation.get('title', 'Unknown')}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "None",
+            "anchor_words": "",
             "precision": 0.0
         }
 
@@ -81,9 +81,9 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     try:
         explanation = explainer.explain(
             input_text,
-            threshold=0.10,  # Lower threshold
-            beam_size=20,  # Increase beam search for better exploration
-            sample_proba=0.3  # Adjust sampling for broader diversity
+            threshold=0.25,  # Adjusted threshold
+            beam_size=15,  # Moderate beam size for efficiency
+            sample_proba=0.4  # Balanced sampling probability
         )
         anchor_words = " AND ".join(explanation.data.get('anchor', []))
         precision = float(explanation.data.get('precision', 0.0))
@@ -98,7 +98,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.error(f"Error generating Anchor explanation: {e}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "None",
+            "anchor_words": "",
             "precision": 0.0
         }
 
