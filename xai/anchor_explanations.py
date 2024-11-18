@@ -77,6 +77,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         )
         anchor_words = " AND ".join(explanation.data['anchor']) if 'anchor' in explanation.data else "None"
         precision = explanation.data.get('precision', "N/A")
+        logging.info(f"Generated explanation with precision: {precision}")
 
         return {
             "title": recommendation.get("title", "Recommendation"),
