@@ -47,16 +47,31 @@ def get_top_features(feature_names, description_vector, top_n=10):
 
 def meaningful_predictor(texts):
     """
-    A predictor function that returns a binary prediction based on similarity.
+    A predictor function that returns a binary prediction based on similarity,
+    ignoring perturbed examples with UNK tokens.
     """
     global original_vector
-    text_vectors = vectorizer.transform(texts).toarray()
+    clean_texts = [text for text in texts if "UNK" not in text]
+    if not clean_texts:
+        logging.warning("All perturbed examples contained UNK tokens and were skipped.")
+        return np.zeros(len(texts))  # Return 0 for all if no valid examples exist
+
+    text_vectors = vectorizer.transform(clean_texts).toarray()
     similarities = np.dot(text_vectors, original_vector) / (
             np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
     )
-    predictions = (similarities > 0.05).astype(int)  # Increased threshold for sensitivity
-    logging.info(f"Predictor outputs for texts: {texts}, predictions: {predictions}, similarities: {similarities}")
-    return predictions
+
+    # Map predictions back to the original input size
+    predictions = (similarities > 0.15).astype(int)
+    logging.info(f"Perturbed texts: {texts}, predictions: {predictions}, similarities: {similarities}")
+
+    # Fill skipped examples with default prediction (e.g., 0)
+    full_predictions = np.zeros(len(texts))
+    valid_idx = [i for i, text in enumerate(texts) if "UNK" not in text]
+    for idx, pred in zip(valid_idx, predictions):
+        full_predictions[idx] = pred
+
+    return full_predictions
 
 
 def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
@@ -76,13 +91,8 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
             "precision": 0.0
         }
 
-    # Initialize AnchorText explainer with parameters to avoid UNK tokens
-    explainer = AnchorText(
-        nlp=get_spacy_model(),
-        predictor=meaningful_predictor,
-        use_unknown_label=False,  # Disable UNK token usage
-        stopwords=[],  # Ensure no stopwords are excluded
-    )
+    # Initialize AnchorText explainer
+    explainer = AnchorText(nlp=get_spacy_model(), predictor=meaningful_predictor)
 
     try:
         explanation = explainer.explain(
