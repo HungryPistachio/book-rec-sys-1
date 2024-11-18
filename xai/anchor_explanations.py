@@ -23,10 +23,14 @@ def get_spacy_model():
 # Initialize TfidfVectorizer
 vectorizer = TfidfVectorizer()
 
+# Global original vector for similarity computation
+original_vector = None
+
 def prepare_vectorizer_and_original_vector(original_feature_names):
     """
     Prepare the vectorizer and create the original vector.
     """
+    global original_vector
     original_description = ' '.join(original_feature_names)
     vectorizer.fit([original_description])
     original_vector = vectorizer.transform([original_description]).toarray()[0]
@@ -41,11 +45,18 @@ def get_top_features(feature_names, description_vector, top_n=10):
     top_features = [feature for feature, _ in sorted_features[:top_n]]
     return top_features
 
-def dummy_predictor(texts):
-    predictions = np.ones(len(texts), dtype=np.int32)  # Dummy predictions
+def meaningful_predictor(texts):
+    """
+    A predictor function that returns a binary prediction (1 if similar, 0 otherwise).
+    """
+    global original_vector
+    text_vectors = vectorizer.transform(texts).toarray()
+    similarities = np.dot(text_vectors, original_vector) / (
+        np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
+    )
+    predictions = (similarities > 0.5).astype(int)  # Adjust threshold as needed
     logging.info(f"Predictor outputs for texts: {texts}, predictions: {predictions}")
     return predictions
-
 
 def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
     feature_names = recommendation.get("feature_names", [])
@@ -65,24 +76,23 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         }
 
     # Initialize AnchorText explainer
-    explainer = AnchorText(nlp=get_spacy_model(), predictor=dummy_predictor)
-    logging.info(f"Input text for Anchor explanation: {input_text}")
+    explainer = AnchorText(nlp=get_spacy_model(), predictor=meaningful_predictor)
 
     try:
         explanation = explainer.explain(
             input_text,
             threshold=0.10,  # Lower threshold
-            beam_size=10,  # Increase beam search
-            sample_proba=0.5  # Adjust sampling
+            beam_size=20,  # Increase beam search for better exploration
+            sample_proba=0.3  # Adjust sampling for broader diversity
         )
         anchor_words = " AND ".join(explanation.data.get('anchor', []))
-        precision = explanation.data.get('precision', 0.0)
+        precision = float(explanation.data.get('precision', 0.0))
 
         logging.info(f"Generated explanation with precision: {precision}, anchors: {anchor_words}")
         return {
             "title": recommendation.get("title", "Recommendation"),
             "anchor_words": anchor_words,
-            "precision": float(precision)
+            "precision": precision
         }
     except Exception as e:
         logging.error(f"Error generating Anchor explanation: {e}")
@@ -99,7 +109,7 @@ def get_anchor_explanation(recommendations, original_feature_names):
     """
     explanations = []
 
-    # Prepare the vectorizer once
+    # Prepare the vectorizer and original vector once
     if isinstance(original_feature_names, str):
         original_feature_names = original_feature_names.split()
     prepare_vectorizer_and_original_vector(original_feature_names)
