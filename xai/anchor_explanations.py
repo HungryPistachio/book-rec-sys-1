@@ -76,21 +76,24 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
             "precision": 0.0
         }
 
-    # Initialize AnchorText explainer without handling UNK tokens
+    # Initialize AnchorText explainer with parameters to avoid UNK tokens
     explainer = AnchorText(
         nlp=get_spacy_model(),
         predictor=meaningful_predictor,
-        use_unknown_label=False  # Disable UNK token usage
+        use_unknown_label=False,  # Disable UNK token usage
+        stopwords=[],  # Ensure no stopwords are excluded
     )
 
     try:
         explanation = explainer.explain(
             input_text,
-            threshold=0.05,  # Relaxed precision requirement
-            beam_size=20,    # Broader search space
-            sample_proba=0.8 # Increased sampling diversity
+            threshold=0.1,  # Threshold for explanation
+            beam_size=15,   # Beam size to increase coverage
+            sample_proba=0.5  # Sampling diversity
         )
-        logging.info(f"Anchor explanation raw data: {explanation.data['raw']}")
+
+        # Log raw explanation data for debugging
+        logging.info(f"Anchor explanation raw data: {explanation.data}")
 
         anchor_words = " AND ".join(explanation.data.get('anchor', []))
         precision = float(explanation.data.get('precision', 0.0))
@@ -108,6 +111,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
             "anchor_words": "None",
             "precision": 0.0
         }
+
 
 
 
