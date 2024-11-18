@@ -32,7 +32,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
     original_vector = vectorizer.transform([original_description]).toarray()[0]
     return original_vector
 
-def get_top_features(feature_names, description_vector, top_n=3):
+def get_top_features(feature_names, description_vector, top_n=10):
     """
     Get the top N features by vector weight.
     """
@@ -42,10 +42,10 @@ def get_top_features(feature_names, description_vector, top_n=3):
     return top_features
 
 def dummy_predictor(texts):
-    """
-    Dummy predictor returning constant values as a NumPy array.
-    """
-    return np.ones(len(texts), dtype=np.int32)
+    predictions = np.ones(len(texts), dtype=np.int32)  # Dummy predictions
+    logging.info(f"Predictor outputs for texts: {texts}, predictions: {predictions}")
+    return predictions
+
 
 def get_anchor_explanation_for_recommendation(recommendation, original_feature_names):
     feature_names = recommendation.get("feature_names", [])
@@ -66,6 +66,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
 
     # Initialize AnchorText explainer
     explainer = AnchorText(nlp=get_spacy_model(), predictor=dummy_predictor)
+    logging.info(f"Input text for Anchor explanation: {input_text}")
 
     try:
         explanation = explainer.explain(
