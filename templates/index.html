@@ -312,8 +312,6 @@
       const explanationContainer = document.getElementById('anchorExplanationList');
       explanationContainer.innerHTML = ''; // Clear previous explanations
 
-      console.log("Displaying Anchor explanations:", data);
-
       if (!Array.isArray(data) || data.length === 0) {
         console.error("No valid Anchor explanation data received:", data);
         explanationContainer.innerHTML = '<li>No Anchor explanations available.</li>';
@@ -321,6 +319,8 @@
       }
 
       data.forEach((explanation, index) => {
+        console.log("Processing explanation:", explanation);
+
         const title = document.createElement('h3');
         title.textContent = explanation.title || `Recommendation ${index + 1}`;
 
@@ -328,13 +328,21 @@
         anchorWords.textContent = `Anchor Words: ${explanation.anchor_words || 'None'}`;
 
         const precision = document.createElement('p');
-        precision.textContent = `Precision: ${explanation.precision ? explanation.precision.toFixed(2) : 'N/A'}`;
+        const precisionValue = explanation.precision;
+        console.log("Precision value:", precisionValue);
+        if (typeof precisionValue === "number") {
+          precision.textContent = `Precision: ${precisionValue.toFixed(2)}`;
+        } else {
+          precision.textContent = "Precision: N/A";
+          console.warn(`Invalid precision value for explanation ${index + 1}:`, precisionValue);
+        }
 
         explanationContainer.appendChild(title);
         explanationContainer.appendChild(anchorWords);
         explanationContainer.appendChild(precision);
       });
     }
+
 
 
 
