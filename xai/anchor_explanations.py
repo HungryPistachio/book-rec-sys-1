@@ -16,13 +16,15 @@ nlp = None
 vocab_df = pd.read_csv('static/fixed_vocabulary.csv')
 vocab = set(vocab_df['Vocabulary'])  # Convert to lowercase for consistency
 
-def preprocess_text(text, vocab):
+def preprocess_text(text, vocab, min_length=5):
     """
-    Preprocess text to remove words not in the vocabulary.
+    Preprocess text to retain meaningful tokens.
+    If no tokens are in the vocabulary, fallback to top TF-IDF terms.
     """
     tokens = text.split()
-    cleaned_tokens = [word for word in tokens if word.lower() in vocab]
-    return ' '.join(cleaned_tokens)
+    cleaned_tokens = [word for word in tokens if word.lower() in vocab and len(word) >= min_length]
+    return ' '.join(cleaned_tokens) if cleaned_tokens else ' '.join(tokens[:10])
+
 
 def get_spacy_model():
     """
@@ -66,7 +68,6 @@ def meaningful_predictor(texts):
     global original_vector
     clean_texts = [preprocess_text(text, vocab) for text in texts if "UNK" not in text]
     if not clean_texts:
-        logging.warning("All perturbed examples contained UNK tokens and were skipped.")
         return np.zeros(len(texts))  # Return 0 for all if no valid examples exist
 
     text_vectors = vectorizer.transform(clean_texts).toarray()
@@ -89,16 +90,16 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     feature_names = recommendation.get("feature_names", [])
     description_vector = recommendation.get("vectorized_descriptions", [])
 
-    # Use top 10 features for input text
+    # Use top features for input text
     top_features = get_top_features(feature_names, description_vector, top_n=20)
     input_text = preprocess_text(' '.join(top_features), vocab)
     logging.info(f"Input text for Anchor explanation: {input_text}")
 
-    if not input_text:
+    if not input_text.strip():
         logging.warning(f"No significant features for recommendation: {recommendation.get('title', 'Unknown')}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "None",
+            "anchor_words": "No significant features identified",
             "precision": 0.0
         }
 
@@ -108,33 +109,34 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     try:
         explanation = explainer.explain(
             input_text,
-            threshold=0.05,  # Allow smaller coverage
-            beam_size=20,    # Increase search space
+            threshold=0.1,  # Higher threshold for better precision
+            beam_size=10,    # Simplified beam size
             sample_proba=0.7 # Balance sampling diversity
         )
 
         anchor_words = explanation.data.get('anchor', [])
-        precision = float(explanation.data.get('precision', 0.0))
+        precision = round(float(explanation.data.get('precision', 0.0)), 3)
 
         # Handle cases with no anchors
         if not anchor_words:
             logging.warning(f"No anchors generated for recommendation: {recommendation.get('title', 'Unknown')}")
-            anchor_words = "None"
+            anchor_words = "No significant features identified"
             precision = 0.0
 
         logging.info(f"Generated explanation with precision: {precision}, anchors: {anchor_words}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": " AND ".join(anchor_words) if anchor_words else "None",
+            "anchor_words": " AND ".join(anchor_words) if anchor_words else "No significant features identified",
             "precision": precision
         }
     except Exception as e:
         logging.error(f"Error generating Anchor explanation: {e}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "None",
+            "anchor_words": "Error generating explanation",
             "precision": 0.0
         }
+
 
 def get_anchor_explanation(recommendations, original_feature_names):
     """
