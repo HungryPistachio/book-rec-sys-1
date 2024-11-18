@@ -54,7 +54,7 @@ def meaningful_predictor(texts):
     similarities = np.dot(text_vectors, original_vector) / (
             np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
     )
-    predictions = (similarities > 0.2).astype(int)  # Increased threshold for sensitivity
+    predictions = (similarities > 0.05).astype(int)  # Increased threshold for sensitivity
     logging.info(f"Predictor outputs for texts: {texts}, predictions: {predictions}, similarities: {similarities}")
     return predictions
 
