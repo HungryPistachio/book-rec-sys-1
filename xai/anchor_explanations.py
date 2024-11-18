@@ -52,9 +52,9 @@ def meaningful_predictor(texts):
     global original_vector
     text_vectors = vectorizer.transform(texts).toarray()
     similarities = np.dot(text_vectors, original_vector) / (
-        np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
+            np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
     )
-    predictions = (similarities > 0.6).astype(int)  # Threshold for similarity
+    predictions = (similarities > 0.15).astype(int)  # Threshold for similarity
     logging.info(f"Predictor outputs for texts: {texts}, predictions: {predictions}")
     return predictions
 
@@ -81,7 +81,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     try:
         explanation = explainer.explain(
             input_text,
-            threshold=0.25,  # Adjusted threshold
+            threshold=0.15,  # Adjusted threshold
             beam_size=15,  # Moderate beam size for efficiency
             sample_proba=0.4  # Balanced sampling probability
         )
