@@ -99,7 +99,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.warning(f"No significant features for recommendation: {recommendation.get('title', 'Unknown')}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "",
+            "anchor_words": "No significant anchors identified",
             "precision": 0.0
         }
 
@@ -120,13 +120,13 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         # Handle cases with no anchors
         if not anchor_words:
             logging.warning(f"No anchors generated for recommendation: {recommendation.get('title', 'Unknown')}")
-            anchor_words = "No significant anchors identified"
+            anchor_words = "None"
             precision = 0.0
 
         logging.info(f"Generated explanation with precision: {precision}, anchors: {anchor_words}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": " AND ".join(anchor_words) if anchor_words else "No significant anchors identified",
+            "anchor_words": " AND ".join(anchor_words),
             "precision": precision
         }
     except Exception as e:
