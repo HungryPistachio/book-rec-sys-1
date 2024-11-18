@@ -85,6 +85,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
             beam_size=10,  # Moderate beam size for efficiency
             sample_proba=0.6  # Balanced sampling probability
         )
+        logging.info(f"Anchor explanation data: {explanation.data}")
         anchor_words = " AND ".join(explanation.data.get('anchor', []))
         precision = float(explanation.data.get('precision', 0.0))
 
