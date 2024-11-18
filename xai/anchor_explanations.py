@@ -72,21 +72,26 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.warning(f"No significant features for recommendation: {recommendation.get('title', 'Unknown')}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "",
+            "anchor_words": "None",
             "precision": 0.0
         }
 
-    # Initialize AnchorText explainer
-    explainer = AnchorText(nlp=get_spacy_model(), predictor=meaningful_predictor)
+    # Initialize AnchorText explainer without handling UNK tokens
+    explainer = AnchorText(
+        nlp=get_spacy_model(),
+        predictor=meaningful_predictor,
+        use_unknown_label=False  # Disable UNK token usage
+    )
 
     try:
         explanation = explainer.explain(
             input_text,
-            threshold=0.05,  # Lower threshold for flexibility
-            beam_size=20,    # Larger beam size for more exploration
-            sample_proba=0.8 # Higher sampling diversity
+            threshold=0.05,  # Relaxed precision requirement
+            beam_size=20,    # Broader search space
+            sample_proba=0.8 # Increased sampling diversity
         )
-        logging.info(f"Anchor explanation data: {explanation.data}")
+        logging.info(f"Anchor explanation raw data: {explanation.data['raw']}")
+
         anchor_words = " AND ".join(explanation.data.get('anchor', []))
         precision = float(explanation.data.get('precision', 0.0))
 
@@ -100,9 +105,10 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.error(f"Error generating Anchor explanation: {e}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "",
+            "anchor_words": "None",
             "precision": 0.0
         }
+
 
 
 
