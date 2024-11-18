@@ -93,7 +93,7 @@ async def anchor_explanation(request: Request):
 
     try:
         explanation = get_anchor_explanation(recommendations, original_description)
-        logging.info("Anchor explanations generated successfully.")
+        logging.info(f"Response data: {explanation}")
         return JSONResponse(content=json.loads(explanation))
     except Exception as e:
         logging.error(f"Error in Anchor explanation generation: {e}")
