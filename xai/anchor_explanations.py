@@ -16,8 +16,6 @@ nlp = None
 vocab_df = pd.read_csv('static/fixed_vocabulary.csv')
 vocab = set(vocab_df['Vocabulary'])  # Convert to lowercase for consistency
 
-
-
 def get_spacy_model():
     """
     Load spaCy model only when needed to conserve memory.
