@@ -63,20 +63,11 @@ def meaningful_predictor(texts):
         return np.zeros(len(texts))  # Return 0 for all if no valid examples exist
 
     text_vectors = vectorizer.transform(clean_texts).toarray()
-    text_norms = np.linalg.norm(text_vectors, axis=1)
-    original_norm = np.linalg.norm(original_vector)
+    similarities = np.dot(text_vectors, original_vector) / (
+            np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
+    )
 
-    # Handle zero norms to avoid invalid division
-    valid_indices = (text_norms > 0) & (original_norm > 0)
-
-    # Initialize similarities array with zeros
-    similarities = np.zeros(len(text_vectors))
-    if valid_indices.any():
-        similarities[valid_indices] = np.dot(
-            text_vectors[valid_indices], original_vector
-        ) / (text_norms[valid_indices] * original_norm)
-
-    # Map predictions based on a similarity threshold
+    # Map predictions back to the original input size
     predictions = (similarities > 0.05).astype(int)
 
     # Fill skipped examples with default prediction (e.g., 0)
@@ -86,7 +77,6 @@ def meaningful_predictor(texts):
         full_predictions[idx] = pred
 
     return full_predictions
-
 
 def preprocess_text(text, vocab):
     """
