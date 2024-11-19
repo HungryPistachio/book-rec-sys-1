@@ -115,7 +115,8 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         )
 
         anchor_words = explanation.data.get('anchor', [])
-        precision = float(explanation.data.get('precision', 0.0))
+        precision = round(float(explanation.data.get('precision', 0.0)), 4)
+
 
         # Handle cases with no anchors
         if not anchor_words:
@@ -126,7 +127,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.info(f"Generated explanation with precision: {precision}, anchors: {anchor_words}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": " AND ".join(anchor_words),
+            "anchor_words": " - ".join(anchor_words),
             "precision": precision
         }
     except Exception as e:
