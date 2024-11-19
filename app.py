@@ -55,17 +55,12 @@ async def vectorize_descriptions(request: Request):
         logging.error("No descriptions provided.")
         return JSONResponse(content={"error": "No descriptions provided"}, status_code=400)
 
-    # TF-IDF with parameter adjustments
-    vectorizer = TfidfVectorizer(
-        max_df=0.85,        # Exclude very frequent terms (e.g., common across >85% of descriptions)
-        min_df=0.01,        # Exclude very rare terms (e.g., appearing in <1% of descriptions)
-        sublinear_tf=True,  # Use sublinear scaling to reduce the impact of highly frequent terms
-        ngram_range=(1, 2)  # Include both unigrams and bigrams for richer context
-    )
+    # Dynamically generate vocabulary based on descriptions
+    vectorizer = TfidfVectorizer()  # No fixed vocabulary
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
     feature_names = vectorizer.get_feature_names_out()
-
     vectorized_descriptions = tfidf_matrix[0].tolist()
+
     logging.info("TF-IDF vectorization complete.")
     return JSONResponse(content={
         "vectorized_descriptions": vectorized_descriptions,
