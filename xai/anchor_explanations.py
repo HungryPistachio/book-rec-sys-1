@@ -120,7 +120,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         # Handle cases with no anchors
         if not anchor_words:
             logging.warning(f"No anchors generated for recommendation: {recommendation.get('title', 'Unknown')}")
-            anchor_words = "No significant anchors identified"
+            anchor_words = "0"
             precision = 0.0
 
         logging.info(f"Generated explanation with precision: {precision}, anchors: {anchor_words}")
