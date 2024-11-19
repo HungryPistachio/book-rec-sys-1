@@ -118,6 +118,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         precision = round(float(explanation.data.get('precision', 0.0)), 4)
 
 
+
         # Handle cases with no anchors
         if not anchor_words:
             logging.warning(f"No anchors generated for recommendation: {recommendation.get('title', 'Unknown')}")
