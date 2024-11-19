@@ -133,7 +133,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.error(f"Error generating Anchor explanation: {e}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "No significant anchors identified",
+            "anchor_words": "0",
             "precision": 0.0
         }
 
