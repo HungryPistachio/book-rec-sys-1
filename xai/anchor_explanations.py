@@ -43,14 +43,27 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
     original_vector = vectorizer.transform([original_description]).toarray()[0]
     return original_vector
 
-def get_top_features(feature_names, description_vector, top_n=20):
+def get_top_features(feature_names, description_vector, top_n=20, min_weight=0.01):
     """
-    Get the top N features by vector weight.
+    Get the top N features by vector weight, excluding words with zero or negligible weight.
+
+    Args:
+    - feature_names: List of feature names (words).
+    - description_vector: The TF-IDF weights for the features.
+    - top_n: Number of top features to return.
+    - min_weight: Minimum weight threshold to include a feature.
+
+    Returns:
+    - List of top features above the weight threshold.
     """
     feature_importance = list(zip(feature_names, description_vector))
-    sorted_features = sorted(feature_importance, key=lambda x: abs(x[1]), reverse=True)
+    filtered_features = [
+        (feature, weight) for feature, weight in feature_importance if abs(weight) >= min_weight
+    ]
+    sorted_features = sorted(filtered_features, key=lambda x: abs(x[1]), reverse=True)
     top_features = [feature for feature, _ in sorted_features[:top_n]]
     return top_features
+
 
 def meaningful_predictor(texts):
     """
@@ -90,8 +103,8 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
     feature_names = recommendation.get("feature_names", [])
     description_vector = recommendation.get("vectorized_descriptions", [])
 
-    # Use top 10 features for input text
-    top_features = get_top_features(feature_names, description_vector, top_n=20)
+    # Use top features with non-zero weights for input text
+    top_features = get_top_features(feature_names, description_vector, top_n=20, min_weight=0.01)
     input_text = preprocess_text(' '.join(top_features), vocab)
     logging.info(f"Input text for Anchor explanation: {input_text}")
 
@@ -99,7 +112,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.warning(f"No significant features for recommendation: {recommendation.get('title', 'Unknown')}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "0",
+            "anchor_words": "No significant anchors identified",
             "precision": 0.0
         }
 
@@ -117,12 +130,10 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         anchor_words = explanation.data.get('anchor', [])
         precision = round(float(explanation.data.get('precision', 0.0)), 4)
 
-
-
         # Handle cases with no anchors
         if not anchor_words:
             logging.warning(f"No anchors generated for recommendation: {recommendation.get('title', 'Unknown')}")
-            anchor_words = "0"
+            anchor_words = "No significant anchors identified"
             precision = 0.0
 
         logging.info(f"Generated explanation with precision: {precision}, anchors: {anchor_words}")
@@ -138,9 +149,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
             "anchor_words": "No significant anchors identified",
             "precision": 0.0
         }
-
-
-
+    
 def get_anchor_explanation(recommendations, original_feature_names):
     """
     Generate anchor explanations for all recommendations.
