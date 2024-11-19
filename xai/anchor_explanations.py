@@ -64,8 +64,16 @@ def meaningful_predictor(texts):
     if not clean_texts:
         return np.zeros(len(texts))  # Return 0 for all if no valid examples exist
 
+    # Transform texts into vectors
     text_vectors = vectorizer.transform(clean_texts).toarray()
-    similarities = np.dot(text_vectors, original_vector) / (np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector))
+
+    # Calculate norms, adding epsilon to prevent division by zero
+    epsilon = 1e-10  # Small constant to avoid division by zero
+    text_vector_norms = np.linalg.norm(text_vectors, axis=1) + epsilon
+    original_vector_norm = np.linalg.norm(original_vector) + epsilon
+
+    # Compute cosine similarities
+    similarities = np.dot(text_vectors, original_vector) / (text_vector_norms * original_vector_norm)
 
     # Map predictions back to the original input size
     predictions = (similarities > 0.05).astype(int)
@@ -77,6 +85,7 @@ def meaningful_predictor(texts):
         full_predictions[idx] = pred
 
     return full_predictions
+
 
 def preprocess_text(text, vocab):
     """
