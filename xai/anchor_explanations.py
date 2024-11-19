@@ -44,18 +44,7 @@ def prepare_vectorizer_and_original_vector(original_feature_names):
     return original_vector
 
 def get_top_features(feature_names, description_vector, top_n=20, min_weight=0.01):
-    """
-    Get the top N features by vector weight, excluding words with zero or negligible weight.
 
-    Args:
-    - feature_names: List of feature names (words).
-    - description_vector: The TF-IDF weights for the features.
-    - top_n: Number of top features to return.
-    - min_weight: Minimum weight threshold to include a feature.
-
-    Returns:
-    - List of top features above the weight threshold.
-    """
     feature_importance = list(zip(feature_names, description_vector))
     filtered_features = [
         (feature, weight) for feature, weight in feature_importance if abs(weight) >= min_weight
@@ -76,9 +65,7 @@ def meaningful_predictor(texts):
         return np.zeros(len(texts))  # Return 0 for all if no valid examples exist
 
     text_vectors = vectorizer.transform(clean_texts).toarray()
-    similarities = np.dot(text_vectors, original_vector) / (
-            np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector)
-    )
+    similarities = np.dot(text_vectors, original_vector) / (np.linalg.norm(text_vectors, axis=1) * np.linalg.norm(original_vector))
 
     # Map predictions back to the original input size
     predictions = (similarities > 0.05).astype(int)
@@ -112,7 +99,7 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.warning(f"No significant features for recommendation: {recommendation.get('title', 'Unknown')}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "No significant anchors identified",
+            "anchor_words": "0",
             "precision": 0.0
         }
 
@@ -146,10 +133,10 @@ def get_anchor_explanation_for_recommendation(recommendation, original_feature_n
         logging.error(f"Error generating Anchor explanation: {e}")
         return {
             "title": recommendation.get("title", "Recommendation"),
-            "anchor_words": "0",
+            "anchor_words": "No significant anchors identified",
             "precision": 0.0
         }
-    
+
 def get_anchor_explanation(recommendations, original_feature_names):
     """
     Generate anchor explanations for all recommendations.
