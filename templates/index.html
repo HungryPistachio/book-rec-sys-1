@@ -19,6 +19,7 @@
     <div id="noXAI" class="tab-content" style="display:none;">
       <h2>This tab does not have explanations</h2>
       <input type="text" id="bookTitleNoXAI" placeholder="Enter a book title">
+      <p id="errorMessageNoXAI" style="color: red; display: none;"></p>
       <div class="toggle-label">
         <input type="checkbox" id="includeSameAuthorNoXAI" checked>
         <label for="includeSameAuthorNoXAI">Include recommendations by the same author</label>
@@ -29,6 +30,7 @@
     <div id="lime" class="tab-content" style="display:none;">
       <p style="color: red;"> Please allow a few moments for the explanations to load.</p>
       <input type="text" id="bookTitleLime" placeholder="Enter a book title">
+      <p id="errorMessageLime" style="color: red; display: none;"></p>
       <div class="toggle-label">
         <input type="checkbox" id="includeSameAuthorLime" checked>
         <label for="includeSameAuthorLime">Include recommendations by the same author</label>
@@ -48,10 +50,11 @@
       </div>
     </div>
     <div id="anchor" class="tab-content" style="display:none;">
-      <p style="color: red;"> Please allow a few moments for the explanations to load.<br> 
+      <p style="color: red;"> Please allow a few moments for the explanations to load.<br>
         It can take a while. This is normal. <br>
         An error message will appear if the explanations fail to load.</p>
       <input type="text" id="bookTitleAnchor" placeholder="Enter a book title">
+      <p id="errorMessageAnchor" style="color: red; display: none;"></p>
       <div class="toggle-label">
         <input type="checkbox" id="includeSameAuthorAnchor" checked>
         <label for="includeSameAuthorAnchor">Include recommendations by the same author</label>
@@ -154,6 +157,7 @@
     const recommendationsList = document.getElementById(recommendationsId);
     recommendationsList.innerHTML = '';
 
+    const errorMessageElement = document.getElementById(`errorMessage${capitalize(tab)}`);
     const includeSameAuthor = document.getElementById(`includeSameAuthor${capitalize(tab)}`).checked;
     const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs'; // Replace with your actual API key
     const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
@@ -182,8 +186,18 @@
 
     if (!selectedBook) {
       console.error("Selected book not found in API response");
+      // Display error message
+      errorMessageElement.textContent = "Book not found. Please check the title and try again.";
+      errorMessageElement.style.display = "block";
       return;
     }
+
+    // Hide error message if book is found
+    errorMessageElement.style.display = "none";
+
+    // Rest of the function remains the same
+    // ...
+  }
 
     let tfidfData;
     try {
