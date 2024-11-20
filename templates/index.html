@@ -35,15 +35,16 @@
         <label for="includeSameAuthorLime">Include recommendations by the same author</label>
       </div>
       <button class="get-recommendations-button" data-tab="lime">Get Recommendations</button>
+      <h2>Recommended Books</h2>
       <ul id="recommendationsLime"></ul>
       <div id="limeExplanation">
-        <h2>LIME Explanations for Recommended Books<span id="explainedTitleLime"></span></h2>
-        <ul id="limeExplanationGeneral">
-          <li>Recommendations based on input book's description</li>
-          <li>Google Books Repository used for search</li>
-          <li>LIME explanation shows relevant words from within recommended book's description</li>
-          <li>Words ranked by influence for recommendation (highest weight first)</li>
-        </ul>
+        <h2>LIME Explanations<span id="explainedTitleLime"></span></h2>
+        <p id="limeExplanationGeneral">
+          • Recommendations based on input book's description<br>
+          • Google Books Repository used for search<br>
+          • LIME explanation shows relevant words from within recommended book's description<br>
+          • Words ranked by influence for recommendation (highest weight first)
+        </p>
         <ul id="limeExplanationList"></ul>
       </div>
     </div>
@@ -56,16 +57,18 @@
         <label for="includeSameAuthorAnchor">Include recommendations by the same author</label>
       </div>
       <button class="get-recommendations-button" data-tab="anchor">Get Recommendations</button>
+      <h2>Recommended Books</h2>
       <ul id="recommendationsAnchor"></ul>
       <div id="anchorExplanation">
-        <h2>Anchor Explanations for Recommended Books</h2>
-        <ul id="anchorExplanationGeneral">
-          <li>Recommendations are based on the input book's description</li>
-          <li>Google Books Repository used for search</li>
-          <li>Anchor explanation highlights critical features</li>
-          <li>Anchors = influential words/phrases for similarity</li>
-          <li>Precision measures explanation accuracy (as %)</li>
-        </ul>
+        <h2>Anchor Explanations</h2>
+        <p id="anchorExplanationGeneral">
+          • Recommendations are based on the input book's description<br>
+          • Google Books Repository used for search<br>
+          • Anchor explanation highlights critical features<br>
+          • Anchors = influential words/phrases for similarity<br>
+          • Precision measures explanation accuracy (as %)
+        </p>
+
         <ul id="anchorExplanationList"></ul>
       </div>
     </div>
@@ -120,8 +123,8 @@
                               "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there",
                               "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some",
                               "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will",
-                              "just", "don", "should", "now", "12th", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", 
-                              "book", "writing", "novel", "publishing", "published", "international", "bestseller" 
+                              "just", "don", "should", "now", "12th", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th",
+                              "book", "writing", "novel", "publishing", "published", "international", "bestseller"
                             ]);
 
 
