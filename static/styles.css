@@ -15,17 +15,6 @@ p {
     color: black;
 }
 
-#limeExplanationGeneral li {
-    list-style-type: disc; /* This gives the traditional bullet point */
-    padding-left: 20px; /* This gives some indentation */
-}
-
-/* Style for anchorExplanationGeneral */
-#anchorExplanationGeneral li {
-    list-style-type: disc; /* This gives the traditional bullet point */
-    padding-left: 20px; /* This gives some indentation */
-}
-
 .toggle-label {
     display: flex;
     align-items: center; /* Aligns items vertically */
@@ -181,8 +170,7 @@ ul {
 }
 
 li {
-    background: black;
-    color: white;
+    background: slategrey;
     margin: 5px 0;
     padding: 10px;
     border-radius: 5px;
