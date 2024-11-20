@@ -15,13 +15,13 @@ p {
     color: black;
 }
 
-#limeExplanationGeneral {
+#limeExplanationGeneral li {
     list-style-type: disc; /* This gives the traditional bullet point */
     padding-left: 20px; /* This gives some indentation */
 }
 
 /* Style for anchorExplanationGeneral */
-#anchorExplanationGeneral {
+#anchorExplanationGeneral li {
     list-style-type: disc; /* This gives the traditional bullet point */
     padding-left: 20px; /* This gives some indentation */
 }
@@ -181,7 +181,8 @@ ul {
 }
 
 li {
-    background: #e9ecef;
+    background: black;
+    color: white;
     margin: 5px 0;
     padding: 10px;
     border-radius: 5px;
