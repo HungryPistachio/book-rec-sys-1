@@ -28,7 +28,7 @@
     </div>
     <div id="lime" class="tab-content" style="display:none;">
       <h2>LIME Explanation</h2>
-      <p> Please allow a few moments for the explanations to load.</p>
+      <p style="color: red;"> Please allow a few moments for the explanations to load.</p>
       <input type="text" id="bookTitleLime" placeholder="Enter a book title">
       <div class="toggle-label">
         <input type="checkbox" id="includeSameAuthorLime" checked>
@@ -37,16 +37,19 @@
       <button class="get-recommendations-button" data-tab="lime">Get Recommendations</button>
       <ul id="recommendationsLime"></ul>
       <div id="limeExplanation">
-        <h2>LIME Explanations for Recommended Books:<span id="explainedTitleLime"></span></h2>
-        <p id="limeExplanationGeneral">These recommendations are formed using the description of your original book, which was used to search for similar books within Google Books Respository.
-          The LIME explanation displays the relevant words within the description, starting with the highest weighted word.
-          These words from the description are available as an explanation for why this book as a good recommendation.</p>
+        <h2>LIME Explanations for Recommended Books<span id="explainedTitleLime"></span></h2>
+        <ul id="limeExplanationGeneral">
+          <li>Recommendations based on input book's description</li>
+          <li>Google Books Repository used for search</li>
+          <li>LIME explanation shows relevant words from within recommended book's description</li>
+          <li>Words ranked by influence for recommendation (highest weight first)</li>
+        </ul>
         <ul id="limeExplanationList"></ul>
       </div>
     </div>
     <div id="anchor" class="tab-content" style="display:none;">
       <h2>Anchor Explanation</h2>
-      <p> Please allow a few moments for the explanations to load. It can take a while. This is normal. An error message will appear if the explanations fail to load.</p>
+      <p style="color: red;"> Please allow a few moments for the explanations to load. It can take a while. This is normal. An error message will appear if the explanations fail to load.</p>
       <input type="text" id="bookTitleAnchor" placeholder="Enter a book title">
       <div class="toggle-label">
         <input type="checkbox" id="includeSameAuthorAnchor" checked>
@@ -55,10 +58,14 @@
       <button class="get-recommendations-button" data-tab="anchor">Get Recommendations</button>
       <ul id="recommendationsAnchor"></ul>
       <div id="anchorExplanation">
-        <h2>Anchor Explanations for Recommended Books:</h2>
-        <p id="anchorExplanationGeneral"> These recommendations are formed using the description of your original book, which was used to search for similar books within the Google Books Repository.
-          The Anchor explanation identifies the most critical features (or "anchors") from the book description that strongly support why the recommendation was made. These anchors represent words or phrases that are most influential in determining the similarity and relevance of this book as a good recommendation.
-          The precision is a measure of how often the explanation's key features correctly predict the recommendation, expressed as a percentage of accuracy. </p>
+        <h2>Anchor Explanations for Recommended Books</h2>
+        <ul id="anchorExplanationGeneral">
+          <li>Recommendations are based on the input book's description</li>
+          <li>Google Books Repository used for search</li>
+          <li>Anchor explanation highlights critical features</li>
+          <li>Anchors = influential words/phrases for similarity</li>
+          <li>Precision measures explanation accuracy (as %)</li>
+        </ul>
         <ul id="anchorExplanationList"></ul>
       </div>
     </div>
@@ -113,7 +120,8 @@
                               "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there",
                               "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some",
                               "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will",
-                              "just", "don", "should", "now", "12th", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th"
+                              "just", "don", "should", "now", "12th", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", 
+                              "book", "writing", "novel", "publishing", "published", "international", "bestseller" 
                             ]);
 
 
