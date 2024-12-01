@@ -148,121 +148,158 @@
   }
 
 
-  async function getRecommendations(tab) {
+async function getRecommendations(tab) {
     console.log(`Fetching recommendations for tab: ${tab}`);
-    const recommendations = [];
+    
+    const recommendationsList = [];
     const inputId = `bookTitle${capitalize(tab)}`;
     const bookTitle = document.getElementById(inputId).value.toLowerCase();
     const recommendationsId = `recommendations${capitalize(tab)}`;
-    const recommendationsList = document.getElementById(recommendationsId);
-    recommendationsList.innerHTML = '';
+    const recommendationsElement = document.getElementById(recommendationsId);
+    recommendationsElement.innerHTML = '';
 
     const errorMessageElement = document.getElementById(`errorMessage${capitalize(tab)}`);
     const includeSameAuthor = document.getElementById(`includeSameAuthor${capitalize(tab)}`).checked;
-    const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs';
-    const googleApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=40&key=${googleApiKey}`;
+    const googleApiKey = 'YOUR_GOOGLE_API_KEY';
+    const firstApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=1&key=${googleApiKey}`;
 
-    let books;
+    let selectedBook;
     try {
-      const apiResponse = await fetch(googleApiUrl);
-      const apiData = await apiResponse.json();
-      books = apiData.items || [];
-      console.log("Books fetched from Google API:", books);
+        // Step 1: Fetch input book details
+        const response = await fetch(firstApiUrl);
+        const data = await response.json();
+        if (!data.items || data.items.length === 0) {
+            throw new Error("No book found for the provided title.");
+        }
+        selectedBook = {
+            title: data.items[0].volumeInfo.title || "Unknown Title",
+            authors: data.items[0].volumeInfo.authors || [],
+            description: cleanDescription(data.items[0].volumeInfo.description || "No description available"),
+            link: data.items[0].volumeInfo.infoLink || "#"
+        };
+        console.log("Selected Book:", selectedBook);
     } catch (error) {
-      console.error("Error fetching books from Google API", error);
-      errorMessageElement.textContent = "Error fetching books. Please try again.";
-      errorMessageElement.style.display = "block";
-      return;
+        console.error("Error fetching input book:", error);
+        errorMessageElement.textContent = "Error fetching input book. Please try again.";
+        errorMessageElement.style.display = "block";
+        return;
     }
 
-    const processedBooks = books.map(book => ({
-      title: book.volumeInfo.title || "Unknown Title",
-      authors: book.volumeInfo.authors || [],
-      description: cleanDescription(book.volumeInfo.description || "No description available"),
-      link: book.volumeInfo.infoLink || "#"
-    })).filter(book => book.description && book.description.length > 50);
-
-    const descriptions = processedBooks.map(book => book.description);
-    const selectedBook = processedBooks.find(book => book.title.toLowerCase() === bookTitle.toLowerCase());
-
-    if (!selectedBook) {
-      console.error("Selected book not found in API response");
-      errorMessageElement.textContent = "Book not found. Please check the title and try again.";
-      errorMessageElement.style.display = "block";
-      return;
-    }
-
-    errorMessageElement.style.display = "none";
-
-    let tfidfData;
+    // Step 2: Generate keywords from the book description
+    let keywords;
     try {
-      const response = await fetch("/vectorize-descriptions", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({descriptions})
-      });
-      tfidfData = await response.json();
-      console.log("TF-IDF vectorization data received from backend:", tfidfData);
+        const response = await fetch("/generate-keywords", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ description: selectedBook.description })
+        });
+        const result = await response.json();
+        keywords = result.keywords;
+        console.log("Generated Keywords:", keywords);
     } catch (error) {
-      console.error("Error during TF-IDF vectorization:", error);
-      errorMessageElement.textContent = "Error processing book data. Please try again.";
-      errorMessageElement.style.display = "block";
-      return;
+        console.error("Error generating keywords:", error);
+        errorMessageElement.textContent = "Error processing the book description. Please try again.";
+        errorMessageElement.style.display = "block";
+        return;
     }
 
-    const {tfidf_matrix, feature_names, vectorized_descriptions} = tfidfData;
-    console.log("Processed Books:", processedBooks);
-    console.log("TF-IDF Matrix:", tfidf_matrix);
-    console.log("Vectorized Descriptions:", vectorized_descriptions);
+    // Step 3: Fetch related books based on keywords
+    const secondApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(keywords.join(" "))}&maxResults=40&key=${googleApiKey}`;
+    let relatedBooks = [];
+    try {
+        const response = await fetch(secondApiUrl);
+        const data = await response.json();
 
-    const finalRecommendations = filterRecommendations(processedBooks, tfidf_matrix, vectorized_descriptions, includeSameAuthor);
-    console.log("Final filtered recommendations:", finalRecommendations);
+        // Step 4: Process fetched books
+        relatedBooks = (data.items || []).map(book => ({
+            title: book.volumeInfo.title || "Unknown Title",
+            authors: book.volumeInfo.authors || [],
+            description: cleanDescription(book.volumeInfo.description || "No description available"),
+            link: book.volumeInfo.infoLink || "#"
+        })).filter(book => book.description && book.description.length > 50);
 
-    if (finalRecommendations.length === 0) {
-      recommendationsList.innerHTML = "<li>No valid recommendations found.</li>";
-      return;
+        console.log("Related Books (Pre-Vectorization):", relatedBooks);
+    } catch (error) {
+        console.error("Error fetching related books:", error);
+        errorMessageElement.textContent = "Error fetching related books. Please try again.";
+        errorMessageElement.style.display = "block";
+        return;
     }
 
-    finalRecommendations.forEach((bookInfo, index) => {
-      const bookVector = tfidf_matrix[index];
-      const nonZeroFeatures = filterNonZeroFeatures(bookVector, feature_names);
+    // Step 5: Vectorize descriptions of the related books
+    let recommendations = [];
+    try {
+        const descriptions = relatedBooks.map(book => book.description);
+        const vectorizeResponse = await fetch("/vectorize-descriptions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ descriptions })
+        });
 
-      recommendations.push({
-                             title: bookInfo.title,
-                             vectorized_descriptions: nonZeroFeatures.vectorized_descriptions,
-                             feature_names: nonZeroFeatures.feature_names
-                           });
+        if (!vectorizeResponse.ok) {
+            throw new Error("Error during vectorization of related books");
+        }
 
-      console.log("Recommendation added:", {
-        title: bookInfo.title,
-        vectorized_descriptions: nonZeroFeatures.vectorized_descriptions,
-        feature_names: nonZeroFeatures.feature_names
-      });
+        const { tfidf_matrix, feature_names, vectorized_descriptions } = await vectorizeResponse.json();
+        console.log("Vectorization Results:", { tfidf_matrix, feature_names, vectorized_descriptions });
 
-      const li = document.createElement("li");
-      const link = document.createElement("a");
-      link.href = bookInfo.link;
-      link.target = "_blank";
-      link.textContent = `${bookInfo.title} by ${bookInfo.authors.join(', ')}`;
-      li.appendChild(link);
-      recommendationsList.appendChild(li);
+        // Step 6: Compute similarity and filter top 5 recommendations
+        const similarityScores = relatedBooks.map((book, index) => {
+            const bookVector = tfidf_matrix[index];
+            const similarity = cosineSimilarity(vectorized_descriptions[0], bookVector);
+            return {
+                book: {
+                    ...book,
+                    vectorized_descriptions: tfidf_matrix[index],
+                    feature_names
+                },
+                similarity
+            };
+        });
+
+        similarityScores.sort((a, b) => b.similarity - a.similarity);
+        recommendations = similarityScores.slice(0, 5).map(entry => entry.book);
+
+        console.log("Top 5 Recommendations (Sorted by Similarity):", recommendations);
+    } catch (error) {
+        console.error("Error processing related books:", error);
+        errorMessageElement.textContent = "Error processing related books. Please try again.";
+        errorMessageElement.style.display = "block";
+        return;
+    }
+
+    // Step 7: Display recommendations
+    if (recommendations.length === 0) {
+        recommendationsElement.innerHTML = "<li>No valid recommendations found.</li>";
+        return;
+    }
+    recommendations.forEach(book => {
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = book.link;
+        link.target = "_blank";
+        link.textContent = `${book.title} by ${book.authors.join(", ")}`;
+        li.appendChild(link);
+        recommendationsElement.appendChild(li);
     });
 
+    // Step 8: Send books for explanation (if applicable)
     try {
-      let explanationData;
-      if (tab === "lime") {
-        explanationData = await fetchLimeExplanation('lime', recommendations);
-        displayLimeExplanation(explanationData, 'lime');
-      } else if (tab === "anchor") {
-        explanationData = await fetchAnchorExplanation('anchor', recommendations, selectedBook.description);
-        displayAnchorExplanation(explanationData);
-      }
+        let explanationData;
+        if (tab === "lime") {
+            explanationData = await fetchLimeExplanation('lime', recommendations);
+            displayLimeExplanation(explanationData, 'lime');
+        } else if (tab === "anchor") {
+            explanationData = await fetchAnchorExplanation('anchor', recommendations, selectedBook.description);
+            displayAnchorExplanation(explanationData);
+        }
     } catch (error) {
-      console.error("Error fetching explanation:", error);
-      errorMessageElement.textContent = "Error fetching explanations. Please try again.";
-      errorMessageElement.style.display = "block";
+        console.error("Error fetching explanation:", error);
+        errorMessageElement.textContent = "Error fetching explanations. Please try again.";
+        errorMessageElement.style.display = "block";
     }
-  }
+}
+
 
 
     function capitalize(word) {
