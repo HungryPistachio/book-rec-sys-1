@@ -185,6 +185,8 @@ async function getRecommendations(tab) {
         return;
     }
 
+    const inputTitleNormalized = normalizeTitle(selectedBook.title);
+
     // Step 2: Generate keywords from the book description
     let keywords;
     try {
@@ -243,7 +245,7 @@ async function getRecommendations(tab) {
         const { tfidf_matrix, feature_names, vectorized_descriptions } = await vectorizeResponse.json();
         console.log("Vectorization Results:", { tfidf_matrix, feature_names, vectorized_descriptions });
 
-        // Step 6: Compute similarity and filter top 5 recommendations
+        // Step 6: Compute similarity and filter recommendations
         const similarityScores = relatedBooks.map((book, index) => {
             const bookVector = tfidf_matrix[index];
             const similarity = cosineSimilarity(vectorized_descriptions[0], bookVector);
@@ -258,9 +260,34 @@ async function getRecommendations(tab) {
         });
 
         similarityScores.sort((a, b) => b.similarity - a.similarity);
-        recommendations = similarityScores.slice(0, 5).map(entry => entry.book);
 
-        console.log("Top 5 Recommendations (Sorted by Similarity):", recommendations);
+        // Step 7: Apply filters
+        const addedTitles = new Set();
+        recommendations = similarityScores
+            .filter(({ book }) => {
+                const normalizedTitle = normalizeTitle(book.title);
+
+                // Exclude input book
+                if (normalizedTitle === inputTitleNormalized) return false;
+
+                // Avoid duplicates
+                if (addedTitles.has(normalizedTitle)) return false;
+
+                // Exclude books by the same author (if checkbox is unchecked)
+                if (!includeSameAuthor && book.authors.some(author =>
+                    selectedBook.authors.some(selectedAuthor =>
+                        normalizeAuthorName(author) === normalizeAuthorName(selectedAuthor)
+                    )
+                )) return false;
+
+                // Add title to the set of added titles
+                addedTitles.add(normalizedTitle);
+                return true;
+            })
+            .slice(0, 5) // Limit to top 5 based on similarity
+            .map(entry => entry.book);
+
+        console.log("Final Recommendations (Filtered by Title and Author):", recommendations);
     } catch (error) {
         console.error("Error processing related books:", error);
         errorMessageElement.textContent = "Error processing related books. Please try again.";
@@ -268,7 +295,7 @@ async function getRecommendations(tab) {
         return;
     }
 
-    // Step 7: Display recommendations
+    // Step 8: Display recommendations
     if (recommendations.length === 0) {
         recommendationsElement.innerHTML = "<li>No valid recommendations found.</li>";
         return;
@@ -283,7 +310,7 @@ async function getRecommendations(tab) {
         recommendationsElement.appendChild(li);
     });
 
-    // Step 8: Send books for explanation (if applicable)
+    // Step 9: Send books for explanation (if applicable)
     try {
         let explanationData;
         if (tab === "lime") {
@@ -299,7 +326,6 @@ async function getRecommendations(tab) {
         errorMessageElement.style.display = "block";
     }
 }
-
 
 
     function capitalize(word) {
