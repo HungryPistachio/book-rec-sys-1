@@ -164,7 +164,7 @@ async function getRecommendations(tab) {
   // Step 5: Vectorize descriptions of the related books
   let recommendations = [];
   try {
-    const descriptions = relatedBooks.map(book => book.description);
+    const descriptions = [selectedBook.description, ...relatedBooks.map(book => book.description)];
     const vectorizeResponse = await fetch("/vectorize-descriptions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
