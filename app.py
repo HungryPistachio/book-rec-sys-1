@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 import logging
@@ -7,7 +7,7 @@ from xai.lime_explanation import get_lime_explanation
 from xai.anchor_explanations import get_anchor_explanation
 from sklearn.feature_extraction.text import TfidfVectorizer
 from pathlib import Path
-
+from pydantic import BaseModel
 
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG)
@@ -43,13 +43,31 @@ async def root():
         html_content = file.read()
     return HTMLResponse(content=html_content)
 
+# Request body model
+class DescriptionInput(BaseModel):
+    description: str
+
+@app.post("/generate-keywords")
+async def generate_keywords(data: DescriptionInput):
+    description = data.description.strip()
+
+    if not description:
+        raise HTTPException(status_code=400, detail="No description provided")
+
+    # Generate keywords using TfidfVectorizer
+    vectorizer = TfidfVectorizer(stop_words='english', max_features=10)
+    tfidf_matrix = vectorizer.fit_transform([description])
+    keywords = vectorizer.get_feature_names_out()
+
+    return {"keywords": list(keywords)}
+
 
 
 @app.post("/vectorize-descriptions")
 async def vectorize_descriptions(request: Request):
     data = await request.json()
     descriptions = data.get("descriptions", [])
-    logging.info("Received descriptions for TF-IDF vectorization.")
+    logging.info(f"Received {len(descriptions)} descriptions for TF-IDF vectorization.")
 
     if not descriptions:
         logging.error("No descriptions provided.")
@@ -59,14 +77,18 @@ async def vectorize_descriptions(request: Request):
     vectorizer = TfidfVectorizer()  # No fixed vocabulary
     tfidf_matrix = vectorizer.fit_transform(descriptions).toarray()
     feature_names = vectorizer.get_feature_names_out()
-    vectorized_descriptions = tfidf_matrix[0].tolist()
 
-    logging.info("TF-IDF vectorization complete.")
+    # Log details about the generated matrix
+    logging.info(f"TF-IDF matrix shape: {tfidf_matrix.shape}")
+    logging.debug(f"Feature names: {feature_names}")
+
+    # Respond with vectors for all descriptions
     return JSONResponse(content={
-        "vectorized_descriptions": vectorized_descriptions,
+        "vectorized_descriptions": tfidf_matrix.tolist(),  # Full matrix of vectors
         "feature_names": feature_names.tolist(),
         "tfidf_matrix": tfidf_matrix.tolist()
     })
+
 
 
 # LIME Explanation Endpoint
