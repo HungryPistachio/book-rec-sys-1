@@ -160,7 +160,7 @@ async function getRecommendations(tab) {
 
     const errorMessageElement = document.getElementById(`errorMessage${capitalize(tab)}`);
     const includeSameAuthor = document.getElementById(`includeSameAuthor${capitalize(tab)}`).checked;
-    const googleApiKey = 'YOUR_GOOGLE_API_KEY';
+    const googleApiKey = 'AIzaSyDQTQy3LT7BOO_LLClbWuEvqiPbUbWWKBs';
     const firstApiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(bookTitle)}&maxResults=1&key=${googleApiKey}`;
 
     let selectedBook;
