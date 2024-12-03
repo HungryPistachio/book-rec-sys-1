@@ -112,6 +112,12 @@ async function getRecommendations(tab) {
       link: data.items[0].volumeInfo.infoLink || "#"
     };
     console.log("Selected Book:", selectedBook);
+    
+      // Check if the book description has fewer than 10 words
+    const descriptionWordCount = selectedBook.description.split(" ").length;
+    if (descriptionWordCount < 10) {
+      throw new Error("This book description does not have enough detail to accurately find good recommendations.");
+    }
   } catch (error) {
     console.error("Error fetching input book:", error);
     errorMessageElement.textContent = "Error fetching input book. Please try again.";
