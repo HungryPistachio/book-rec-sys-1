@@ -101,6 +101,7 @@ async function getRecommendations(tab) {
     // Step 1: Fetch input book details
     const response = await fetch(firstApiUrl);
     const data = await response.json();
+    console.log("Google Books API Data (Input Book):", data);
     if (!data.items || data.items.length === 0) {
       throw new Error("No book found for the provided title.");
     }
